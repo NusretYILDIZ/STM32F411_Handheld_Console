@@ -1,7 +1,0 @@
-../Core/STM32_Handheld_Console/input/input_driver.c:8:9:get_key	1
-../Core/STM32_Handheld_Console/input/input_driver.c:13:9:get_key_down	2
-../Core/STM32_Handheld_Console/input/input_driver.c:18:9:get_key_up	2
-../Core/STM32_Handheld_Console/input/input_driver.c:23:9:get_key_held	2
-../Core/STM32_Handheld_Console/input/input_driver.c:29:7:get_joystick_x	2
-../Core/STM32_Handheld_Console/input/input_driver.c:34:7:get_joystick_y	2
-../Core/STM32_Handheld_Console/input/input_driver.c:44:6:update_inputs	1
