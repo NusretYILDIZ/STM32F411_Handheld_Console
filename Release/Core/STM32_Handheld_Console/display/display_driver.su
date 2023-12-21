@@ -1,0 +1,10 @@
+../Core/STM32_Handheld_Console/display/display_driver.c:44:6:draw_pixel	8	static
+../Core/STM32_Handheld_Console/display/display_driver.c:52:6:draw_v_line	12	static
+../Core/STM32_Handheld_Console/display/display_driver.c:68:6:draw_h_line	16	static
+../Core/STM32_Handheld_Console/display/display_driver.c:84:6:draw_rect	32	static
+../Core/STM32_Handheld_Console/display/display_driver.c:92:6:fill_rect	20	static
+../Core/STM32_Handheld_Console/display/display_driver.c:120:6:fill_screen	0	static
+../Core/STM32_Handheld_Console/display/display_driver.c:125:6:clear_screen	0	static
+../Core/STM32_Handheld_Console/display/./arm/stm32f411_ili9486l.h:111:6:init_ili9486l	40	static
+../Core/STM32_Handheld_Console/display/display_driver.c:134:9:init_display	8	static
+../Core/STM32_Handheld_Console/display/display_driver.c:142:6:update_display	36	static
