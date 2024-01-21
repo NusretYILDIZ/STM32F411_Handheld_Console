@@ -41,8 +41,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
-
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -53,7 +51,6 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -93,19 +90,21 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_FATFS_Init();
-  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   init_display();
   clear_screen();
-  for(uint8_t y = 0; y < DISPLAY_HEIGHT; ++y)
+
+  /*for(uint8_t y = 0; y < DISPLAY_HEIGHT; ++y)
   {
 	  for(uint8_t x = 0; x < DISPLAY_WIDTH; ++x)
 	  {
 		  draw_pixel(x, y, (y * DISPLAY_WIDTH + x) & 0xFF);
 	  }
-  }
+  }*/
   //draw_rect(20, 10, 200, 90, rgb888_to_rgb332(255, 0, 0));
+  draw_rect(20, 10, 200, 90, rgb888_to_rgb332(0, 200, 0));
   //fill_rect(40, 80, 100, 75, rgb888_to_rgb332(0, 200, 0));
+  fill_rect(40, 80, 100, 75, rgb888_to_rgb332(255, 0, 0));
   update_display();
   /* USER CODE END 2 */
 
@@ -114,17 +113,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  /*clear_screen();
-	  uint8_t x = rand() % 30;
-	  uint8_t y1 = rand() % 30;
-	  uint8_t y2 = 80 + rand() % 30;
-	  uint8_t w1 = 100 + rand() % 50;
-	  uint8_t w2 = 80 + rand() % 50;
-	  uint8_t h = 50 + rand() % 50;
-	  draw_rect(x, y1, w1, h, rgb888_to_rgb332(255, 0, 0));
-	  fill_rect(x, y2, w2, h, rgb888_to_rgb332(0, 200, 0));
-	  update_display();
-	  HAL_Delay(500);*/
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -173,58 +162,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_ADC1_Init(void)
-{
-
-  /* USER CODE BEGIN ADC1_Init 0 */
-
-  /* USER CODE END ADC1_Init 0 */
-
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  /* USER CODE BEGIN ADC1_Init 1 */
-
-  /* USER CODE END ADC1_Init 1 */
-
-  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
-  hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
-  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
-  if (HAL_ADC_Init(&hadc1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
-  sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
-  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN ADC1_Init 2 */
-
-  /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
@@ -282,32 +219,37 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, TFT_D0_Pin|TFT_D1_Pin|TFT_D2_Pin|TFT_D10_Pin
+                          |TFT_D12_Pin|TFT_D13_Pin|TFT_D14_Pin|TFT_D15_Pin
+                          |TFT_D3_Pin|TFT_D4_Pin|TFT_D5_Pin|TFT_D6_Pin
+                          |TFT_D7_Pin|TFT_D8_Pin|TFT_D9_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_14
-                          |GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, TFT_WR_Pin|TFT_RS_Pin|TFT_RST_Pin|TFT_CS_Pin
+                          |TFT_D11_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PB0 PB1 PB2 PB10
-                           PB12 PB13 PB14 PB15
-                           PB3 PB4 PB5 PB6
-                           PB7 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+  /*Configure GPIO pins : TFT_D0_Pin TFT_D1_Pin TFT_D2_Pin TFT_D10_Pin
+                           TFT_D12_Pin TFT_D13_Pin TFT_D14_Pin TFT_D15_Pin
+                           TFT_D3_Pin TFT_D4_Pin TFT_D5_Pin TFT_D6_Pin
+                           TFT_D7_Pin TFT_D8_Pin TFT_D9_Pin */
+  GPIO_InitStruct.Pin = TFT_D0_Pin|TFT_D1_Pin|TFT_D2_Pin|TFT_D10_Pin
+                          |TFT_D12_Pin|TFT_D13_Pin|TFT_D14_Pin|TFT_D15_Pin
+                          |TFT_D3_Pin|TFT_D4_Pin|TFT_D5_Pin|TFT_D6_Pin
+                          |TFT_D7_Pin|TFT_D8_Pin|TFT_D9_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA8 PA9 PA10 PA14
-                           PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_14
-                          |GPIO_PIN_15;
+  /*Configure GPIO pins : TFT_WR_Pin TFT_RST_Pin */
+  GPIO_InitStruct.Pin = TFT_WR_Pin|TFT_RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TFT_RS_Pin TFT_CS_Pin TFT_D11_Pin */
+  GPIO_InitStruct.Pin = TFT_RS_Pin|TFT_CS_Pin|TFT_D11_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;

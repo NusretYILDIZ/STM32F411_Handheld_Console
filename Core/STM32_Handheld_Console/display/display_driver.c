@@ -6,6 +6,8 @@
 uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
 
 // Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
+
+// This look-up table causes bugged binary with STM32 compiler
 const uint16_t rgb332_to_rgb565[256] = {
     0x0000, 0x000a, 0x0015, 0x001f, 0x0120, 0x012a, 0x0135, 0x013f, 
     0x0240, 0x024a, 0x0255, 0x025f, 0x0360, 0x036a, 0x0375, 0x037f, 
@@ -40,6 +42,30 @@ const uint16_t rgb332_to_rgb565[256] = {
     0xfc80, 0xfc8a, 0xfc95, 0xfc9f, 0xfda0, 0xfdaa, 0xfdb5, 0xfdbf, 
     0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xffff 
 };
+
+// Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
+/*const unsigned char b3to6lookup[8] = { 0, 9, 18, 27, 36, 45, 54, 63 };
+const unsigned char b3to5lookup[8] = { 0, 4, 9, 13, 18, 22, 27, 31 };
+const unsigned char b2to5lookup[4] = { 0, 10, 21, 31 };
+
+// Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
+uint16_t ConvertRGB332toRGB565(unsigned char rgb332)
+{
+	uint16_t red, green, blue;
+
+	red = (rgb332 & 0xe0) >> 5;		// rgb332 3 red bits now right justified
+	red = (uint16_t)b3to5lookup[red];		// 3 bits converted to 5 bits
+	red = red << 11;			// red bits now 5 MSB bits
+
+	green = (rgb332 & 0x1c) >> 2;		// rgb332 3 green bits now right justified
+	green = (uint16_t)b3to6lookup[green];	// 3 bits converted to 6 bits
+	green = green << 5;			// green bits now 6 "middle" bits
+
+	blue = rgb332 & 0x03;			// rgb332 2 blue bits are right justified
+	blue = (uint16_t)b2to5lookup[blue];	// 2 bits converted to 5 bits, right justified
+
+	return (uint16_t)(red | green | blue);
+}*/
 
 void draw_pixel(int16_t x, int16_t y, uint8_t color)
 {
@@ -85,8 +111,8 @@ void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 {
 	draw_h_line(x        , y        , w    , color);
 	draw_h_line(x        , y + h - 1, w    , color);
-	draw_v_line(x        , y        , h - 2, color);
-	draw_v_line(x + w - 1, y        , h - 2, color);
+	draw_v_line(x        , y + 1    , h - 2, color);
+	draw_v_line(x + w - 1, y + 1    , h - 2, color);
 }
 
 void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
@@ -135,6 +161,7 @@ uint8_t init_display()
 {
 	tft_start_write();
 	init_ili9486l();
+	clear_screen();
 	tft_end_write();
 	return 0;
 }
@@ -142,17 +169,35 @@ uint8_t init_display()
 void update_display()
 {
 	tft_start_write();
-	tft_set_write_window(0, 0, 479, 319);
+	tft_set_write_window(0, 0, 480, 320);
 	
-	for(uint16_t y = 0; y < 320; ++y)
+	/*for(uint16_t y = 0; y < 320; ++y)
 	{
 		for(uint16_t x = 0; x < 480; ++x)
 		{
 			//tft_send_color(rgb332_to_rgb565[vram[(y >> 1) * DISPLAY_WIDTH + (x >> 1)]]);
 			tft_send_color(rgb332_to_rgb565[vram[(x >> 1)][(y >> 1)]]);
 		}
+	}*/
+
+	uint16_t x = 0, y = 0, col = 0;
+
+	while(y < 320)
+	{
+		x = 0;
+		while(x < 240)
+		{
+			col = rgb332_to_rgb565[(vram[(x)][(y / 2)])];
+			//col = ConvertRGB332toRGB565(vram[(x)][(y / 2)]);
+			//tft_send_color(col);
+			tft_set_data_16(col);
+			tft_write_pulse();
+			tft_write_pulse();
+			x++;
+		}
+		y++;
 	}
-	
+
 	tft_end_write();
 }
 

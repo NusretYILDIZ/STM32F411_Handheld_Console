@@ -44,47 +44,60 @@
 #define NGAMCTRL    0xE1    // Negative Gamma Control
 
 // Output Pins
-#define D11_LO    GPIOA->BSRR = (uint32_t)(GPIO_PIN_15 << 16)
-#define D11_HI    GPIOA->BSRR = (uint32_t)(GPIO_PIN_15)
+#define D11_LO    GPIOA->BSRR = GPIO_PIN_15 << 16
+#define D11_HI    GPIOA->BSRR = GPIO_PIN_15
 
-#define WR_LO     GPIOA->BSRR = (uint32_t)(GPIO_PIN_8 << 16)
-#define WR_HI     GPIOA->BSRR = (uint32_t)(GPIO_PIN_8)
+// GPIO Speed = Medium -> 6~10 ns
+#define WR_LO     GPIOA->BSRR = GPIO_PIN_8 << 16
+#define WR_HI     GPIOA->BSRR = GPIO_PIN_8
 
-#define RS_CMD    GPIOA->BSRR = (uint32_t)(GPIO_PIN_9 << 16)
-#define RS_DAT    GPIOA->BSRR = (uint32_t)(GPIO_PIN_9)
+#define RS_CMD    GPIOA->BSRR = GPIO_PIN_9 << 16
+#define RS_DAT    GPIOA->BSRR = GPIO_PIN_9
 
-#define RST_LO    GPIOA->BSRR = (uint32_t)(GPIO_PIN_10 << 16)
-#define RST_HI    GPIOA->BSRR = (uint32_t)(GPIO_PIN_10)
+#define RST_LO    GPIOA->BSRR = GPIO_PIN_10 << 16
+#define RST_HI    GPIOA->BSRR = GPIO_PIN_10
 
-#define CS_LO     GPIOA->BSRR = (uint32_t)(GPIO_PIN_14 << 16)
-#define CS_HI     GPIOA->BSRR = (uint32_t)(GPIO_PIN_14)
+#define CS_LO     GPIOA->BSRR = GPIO_PIN_14 << 16
+#define CS_HI     GPIOA->BSRR = GPIO_PIN_14
 
 // Macros For Sending Data
 #define tft_set_data_8(data_8)      GPIOB->BSRR = (0xFFFF0000 | (uint8_t)(data_8))
 
 #define tft_set_data_16(data_16)    GPIOB->BSRR = (0xFFFF0000 | (uint16_t)(data_16)); \
-                                    ((uint16_t)(data_16) & (uint16_t)0x800) ? (D11_HI) : (D11_LO)
+                                    ((uint16_t)(data_16) & (uint16_t)0x0800) ? (D11_HI) : (D11_LO)
 
-#define tft_write_pulse()        WR_LO; WR_LO; WR_LO; WR_HI; WR_HI
-#define tft_write_8(data_8)      tft_set_data_8(data_8);   tft_write_pulse()
-#define tft_write_16(data_16)    tft_set_data_16(data_16); tft_write_pulse()
+//#define tft_write_pulse()        WR_LO; WR_LO; WR_LO; WR_LO; WR_LO;  WR_HI; WR_HI; WR_HI; WR_HI
+#define tft_write_pulse()        WR_LO; WR_LO; WR_LO;  WR_HI; WR_HI
+#define tft_write_8(data_8)      tft_set_data_8((data_8));   tft_write_pulse()
+#define tft_write_16(data_16)    tft_set_data_16((data_16)); tft_write_pulse()
 
 #define tft_start_write()    CS_LO
 #define tft_end_write()      CS_HI
 
-#define tft_send_command(cmd)    tft_start_write(); RS_CMD; tft_write_8(cmd); RS_DAT; tft_end_write()
-#define tft_send_data(dat)       tft_start_write(); tft_write_8(dat);  tft_end_write()
-#define tft_send_color(col)      tft_start_write(); tft_write_16(col); tft_end_write()
+#define tft_send_command(cmd)    RS_CMD; tft_start_write(); tft_write_8((cmd)); RS_DAT; tft_end_write()
+#define tft_send_data(dat)       tft_start_write(); tft_write_8((dat));  tft_end_write()
+#define tft_send_color(col)      tft_start_write(); tft_write_16((col)); tft_end_write()
 
-#define tft_set_write_window(x0, y0, x1, y1)    tft_send_command(CASET); \
+/*#define tft_set_write_window(x0, y0, x1, y1)    tft_send_command(CASET); \
                                                 tft_send_data((x0) >> 8); tft_send_data(x0); \
                                                 tft_send_data((x1) >> 8); tft_send_data(x1); \
                                                 tft_send_command(PASET); \
                                                 tft_send_data((y0) >> 8); tft_send_data(y0); \
                                                 tft_send_data((y1) >> 8); tft_send_data(y1); \
-                                                tft_send_command(RAMWR)
+                                                tft_send_command(RAMWR)*/
 
-#define tft_send_pulses(count)      uint32_t tft_pixels_left = (uint32_t)(count); \
+void tft_set_write_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+{
+	RS_CMD; tft_write_8(CASET); RS_DAT;
+	tft_write_8(((x) >> 8)); tft_write_8((x));
+	tft_write_8(((x + w - 1) >> 8)); tft_write_8((x + w - 1));
+	RS_CMD; tft_write_8(PASET); RS_DAT;
+	tft_write_8(((y) >> 8)); tft_write_8((y));
+	tft_write_8(((y + h - 1) >> 8)); tft_write_8((y + h - 1));
+	RS_CMD; tft_write_8(RAMWR); RS_DAT;
+}
+
+/*#define tft_send_pulses(count)      uint32_t tft_pixels_left = (uint32_t)(count); \
                                     do { \
                                         while(tft_pixels_left > 31) { \
                                             tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse(); \
@@ -106,7 +119,34 @@
                                             tft_write_pulse(); \
                                             --tft_pixels_left; \
                                         } \
-                                    } while(0)
+                                    } while(0)*/
+
+void tft_send_pulses(uint32_t count)
+{
+	while(count > 31)
+	{
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		count -= 32;
+	}
+	while(count > 7)
+	{
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse();
+		count -= 8;
+	}
+	while(count)
+	{
+		tft_write_pulse();
+		--count;
+	}
+}
 
 void init_ili9486l()
 {
