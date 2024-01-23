@@ -110,44 +110,63 @@ int main(void)
   set_text_color(assault_text_color, rgb888_to_rgb332(0, 0, 0));
   set_text_wrap(1);
 
-  const char *assault_text = "POLICE ASSAULT IN PROGRESS  ///  @@@@@@  ///  POLICE ASSAULT";
+  const char *assault_text = "POLiS SALDIRISI  ///  @@@  ///  POLiS SALDIRISI";
   //print_str("STM32F411CEU Handheld Gaming Console Print String And Text Area Test");
 
   update_display();
 
   int16_t x = 200;
+  uint32_t frames = 0, frames_to_draw_display = 0, ticks = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  //ticks = HAL_GetTick();
+	  	  frames = HAL_GetTick();
+	  	  clear_screen();
+	  	  draw_v_line(151, 1, 3, assault_text_color);
+	  	  draw_v_line(151, 13, 3, assault_text_color);
+	  	  draw_v_line(227, 1, 3, assault_text_color);
+	  	  draw_v_line(227, 13, 3, assault_text_color);
+	  	  draw_h_line(151, 1, 3, assault_text_color);
+	  	  draw_h_line(151, 15, 3, assault_text_color);
+	  	  draw_h_line(225, 1, 3, assault_text_color);
+	  	  draw_h_line(225, 15, 3, assault_text_color);
+	  	  fill_rect(230, 1, 9, 9, assault_text_color);
+	  	  draw_pixel(234, 3, 0);
+	  	  draw_pixel(232, 6, 0);
+	  	  draw_pixel(236, 6, 0);
+	  	  draw_v_line(233, 4, 2, 0);
+	  	  draw_v_line(235, 4, 2, 0);
+	  	  draw_h_line(232, 7, 5, 0);
+	  	  set_text_area(157, 5, 227, 11);
+	  	  set_cursor(x, 5);
+	  	  print_str(assault_text);
+
+	  	  if(x < 151 - 32 * 6)
+	  		  x = 151;
+	  	  x -= 1;
+
+	  	  set_text_area(0, 0, 239, 159);
+	  	  print_str("TPF: ");
+	  	  frames = HAL_GetTick() - frames;
+	  	  print_int(frames);
+	  	  print_str(" ms\nDT: ");
+	  	  print_int(frames_to_draw_display);
+	  	  print_str(" ms");
+
+	  	  frames_to_draw_display = HAL_GetTick();
+
+	  	  update_display();
+
+	  	  frames_to_draw_display = HAL_GetTick() - frames_to_draw_display;
+
+	  	  //while(HAL_GetTick() <= ticks + 50);
     /* USER CODE END WHILE */
-	  clear_screen();
-	  draw_v_line(151, 1, 3, assault_text_color);
-	  draw_v_line(151, 13, 3, assault_text_color);
-	  draw_v_line(227, 1, 3, assault_text_color);
-	  draw_v_line(227, 13, 3, assault_text_color);
-	  draw_h_line(151, 1, 3, assault_text_color);
-	  draw_h_line(151, 15, 3, assault_text_color);
-	  draw_h_line(225, 1, 3, assault_text_color);
-	  draw_h_line(225, 15, 3, assault_text_color);
-	  fill_rect(230, 1, 9, 9, assault_text_color);
-	  draw_pixel(234, 3, 0);
-	  draw_pixel(232, 6, 0);
-	  draw_pixel(236, 6, 0);
-	  draw_v_line(233, 4, 2, 0);
-	  draw_v_line(235, 4, 2, 0);
-	  draw_h_line(232, 7, 5, 0);
-	  set_cursor(x, 5);
-	  print_str(assault_text);
-	  update_display();
 
-	  if(x < 151 - 46 * 6)
-		  x = 151;
-	  x--;
-
-	  //HAL_Delay(16);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -259,8 +278,7 @@ static void MX_GPIO_Init(void)
                           |TFT_D7_Pin|TFT_D8_Pin|TFT_D9_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, TFT_WR_Pin|TFT_RS_Pin|TFT_RST_Pin|TFT_CS_Pin
-                          |TFT_D11_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, TFT_WR_Pin|TFT_RS_Pin|TFT_RST_Pin|TFT_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : TFT_D0_Pin TFT_D1_Pin TFT_D2_Pin TFT_D10_Pin
                            TFT_D12_Pin TFT_D13_Pin TFT_D14_Pin TFT_D15_Pin
@@ -275,15 +293,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TFT_WR_Pin TFT_RST_Pin */
-  GPIO_InitStruct.Pin = TFT_WR_Pin|TFT_RST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : TFT_RS_Pin TFT_CS_Pin TFT_D11_Pin */
-  GPIO_InitStruct.Pin = TFT_RS_Pin|TFT_CS_Pin|TFT_D11_Pin;
+  /*Configure GPIO pins : TFT_WR_Pin TFT_RS_Pin TFT_RST_Pin TFT_CS_Pin */
+  GPIO_InitStruct.Pin = TFT_WR_Pin|TFT_RS_Pin|TFT_RST_Pin|TFT_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;

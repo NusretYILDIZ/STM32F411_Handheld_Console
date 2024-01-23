@@ -63,11 +63,11 @@
 // Macros For Sending Data
 #define tft_set_data_8(data_8)      GPIOB->BSRR = (0xFFFF0000 | (uint8_t)(data_8))
 
-#define tft_set_data_16(data_16)    GPIOB->BSRR = (0xFFFF0000 | (uint16_t)(data_16)); \
-                                    ((uint16_t)(data_16) & (uint16_t)0x0800) ? (D11_HI) : (D11_LO)
+#define tft_set_data_16(data_16)    GPIOB->BSRR = (0xFFFF0000 | (uint16_t)(data_16))//; \
+                                    //((uint16_t)(data_16) & (uint16_t)0x0800) ? (D11_HI) : (D11_LO)
 
 //#define tft_write_pulse()        WR_LO; WR_LO; WR_LO; WR_LO; WR_LO;  WR_HI; WR_HI; WR_HI; WR_HI
-#define tft_write_pulse()        WR_LO; WR_LO; WR_LO;  WR_HI; WR_HI
+#define tft_write_pulse()        WR_LO;   WR_HI
 #define tft_write_8(data_8)      tft_set_data_8((data_8));   tft_write_pulse()
 #define tft_write_16(data_16)    tft_set_data_16((data_16)); tft_write_pulse()
 
