@@ -105,7 +105,17 @@ int main(void)
   draw_rect(20, 10, 200, 90, rgb888_to_rgb332(0, 200, 0));
   //fill_rect(40, 80, 100, 75, rgb888_to_rgb332(0, 200, 0));
   fill_rect(40, 80, 100, 75, rgb888_to_rgb332(255, 0, 0));
+  set_text_area(157, 5, 227, 11);
+  uint8_t assault_text_color = rgb888_to_rgb332(255, 255, 28);
+  set_text_color(assault_text_color, rgb888_to_rgb332(0, 0, 0));
+  set_text_wrap(1);
+
+  const char *assault_text = "POLICE ASSAULT IN PROGRESS  ///  @@@@@@  ///  POLICE ASSAULT";
+  //print_str("STM32F411CEU Handheld Gaming Console Print String And Text Area Test");
+
   update_display();
+
+  int16_t x = 200;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,7 +123,31 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  clear_screen();
+	  draw_v_line(151, 1, 3, assault_text_color);
+	  draw_v_line(151, 13, 3, assault_text_color);
+	  draw_v_line(227, 1, 3, assault_text_color);
+	  draw_v_line(227, 13, 3, assault_text_color);
+	  draw_h_line(151, 1, 3, assault_text_color);
+	  draw_h_line(151, 15, 3, assault_text_color);
+	  draw_h_line(225, 1, 3, assault_text_color);
+	  draw_h_line(225, 15, 3, assault_text_color);
+	  fill_rect(230, 1, 9, 9, assault_text_color);
+	  draw_pixel(234, 3, 0);
+	  draw_pixel(232, 6, 0);
+	  draw_pixel(236, 6, 0);
+	  draw_v_line(233, 4, 2, 0);
+	  draw_v_line(235, 4, 2, 0);
+	  draw_h_line(232, 7, 5, 0);
+	  set_cursor(x, 5);
+	  print_str(assault_text);
+	  update_display();
 
+	  if(x < 151 - 46 * 6)
+		  x = 151;
+	  x--;
+
+	  //HAL_Delay(16);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

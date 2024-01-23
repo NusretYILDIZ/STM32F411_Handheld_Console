@@ -1,13 +1,10 @@
 #include "./display_driver.h"
+#include "./glcdfont.c"
 
 #include <stdarg.h>
 #include <string.h>
 
-uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
-
 // Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
-
-// This look-up table causes bugged binary with STM32 compiler
 const uint16_t rgb332_to_rgb565[256] = {
     0x0000, 0x000a, 0x0015, 0x001f, 0x0120, 0x012a, 0x0135, 0x013f, 
     0x0240, 0x024a, 0x0255, 0x025f, 0x0360, 0x036a, 0x0375, 0x037f, 
@@ -43,35 +40,25 @@ const uint16_t rgb332_to_rgb565[256] = {
     0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xffff 
 };
 
-// Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
-/*const unsigned char b3to6lookup[8] = { 0, 9, 18, 27, 36, 45, 54, 63 };
-const unsigned char b3to5lookup[8] = { 0, 4, 9, 13, 18, 22, 27, 31 };
-const unsigned char b2to5lookup[4] = { 0, 10, 21, 31 };
+uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
+GFXfont *gfx_font = NULL;
 
-// Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
-uint16_t ConvertRGB332toRGB565(unsigned char rgb332)
-{
-	uint16_t red, green, blue;
+int16_t cursor_x = 0;
+int16_t cursor_y = 0;
 
-	red = (rgb332 & 0xe0) >> 5;		// rgb332 3 red bits now right justified
-	red = (uint16_t)b3to5lookup[red];		// 3 bits converted to 5 bits
-	red = red << 11;			// red bits now 5 MSB bits
+uint8_t text_size_x = 1;
+uint8_t text_size_y = 1;
 
-	green = (rgb332 & 0x1c) >> 2;		// rgb332 3 green bits now right justified
-	green = (uint16_t)b3to6lookup[green];	// 3 bits converted to 6 bits
-	green = green << 5;			// green bits now 6 "middle" bits
+TextArea text_area = { .start_x = 0, .start_y = 0, .end_x = DISPLAY_WIDTH - 1, .end_y = DISPLAY_HEIGHT - 1 };
+uint8_t wrap_text = 0;
 
-	blue = rgb332 & 0x03;			// rgb332 2 blue bits are right justified
-	blue = (uint16_t)b2to5lookup[blue];	// 2 bits converted to 5 bits, right justified
-
-	return (uint16_t)(red | green | blue);
-}*/
+uint8_t text_fg_color = 0xff;
+uint8_t text_bg_color = 0x00;
 
 void draw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	if(x < 0 || x >= DISPLAY_WIDTH || y < 0 || y >= DISPLAY_HEIGHT) return;
 	
-	//vram[y * DISPLAY_WIDTH + x] = color;
 	vram[x][y] = color;
 }
 
@@ -85,7 +72,6 @@ void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 	
 	while(h)
 	{
-		//vram[(y + h) * DISPLAY_WIDTH + x] = color;
 		vram[x][(y + h - 1)] = color;
 		--h;
 	}
@@ -101,7 +87,6 @@ void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 	
 	while(w)
 	{
-		//vram[y * DISPLAY_WIDTH + (x + w - 1)] = color;
 		vram[(x + w - 1)][y] = color;
 		--w;
 	}
@@ -134,7 +119,6 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 		
 		while(tmp_w)
 		{
-			//vram[(y + h) * DISPLAY_WIDTH + (x + tmp_w)] = color;
 			vram[(x + tmp_w - 1)][(y + h - 1)] = color;
 			--tmp_w;
 		}
@@ -153,6 +137,234 @@ void clear_screen()
 	memset(vram, 0, sizeof(vram));
 }
 
+void set_cursor(int16_t x, int16_t y)
+{
+	cursor_x = x;
+	cursor_y = y;
+}
+
+void set_text_size(uint8_t x, uint8_t y)
+{
+	text_size_x = (x > 0) ? x : 1;
+	text_size_y = (y > 0) ? y : 1;
+}
+
+void set_text_color(uint8_t fg, uint8_t bg)
+{
+	text_fg_color = fg;
+	text_bg_color = bg;
+}
+
+void set_text_wrap(uint8_t wrap)
+{
+	wrap_text = wrap;
+}
+
+void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey)
+{
+	text_area.start_x = (sx >= 0) ? sx : 0;
+	text_area.start_y = (sy >= 0) ? sy : 0;
+	text_area.end_x = (ex < DISPLAY_WIDTH) ? ex : DISPLAY_WIDTH - 1;
+	text_area.end_y = (ey < DISPLAY_HEIGHT) ? ey : DISPLAY_HEIGHT - 1;
+	
+	cursor_x = text_area.start_x;
+	cursor_y = text_area.start_y;
+}
+
+void set_font(const void *new_font)
+{
+	gfx_font = (GFXfont *) new_font;
+}
+
+void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y)
+{
+	if(!gfx_font)
+	{
+		if((x >= text_area.end_x) || 
+		   (y >= text_area.end_y) || 
+		   (x + 6 * size_x - 1 < text_area.start_x) || 
+		   (y + 8 * size_y - 1 < text_area.start_y))
+			return;
+		
+		for(int8_t i = 0; i < 5; ++i)
+		{
+			uint8_t line = font[c * 5 + i];
+			
+			for(int8_t j = 0; j < 8; ++j, line >>= 1)
+			{
+				if(line & 1)
+				{
+					if(size_x == 1 && size_y == 1)
+						draw_pixel(x + i, y + j, text_color);
+					else
+						fill_rect(x + i * size_x, y + j * size_y, size_x, size_y, text_color);
+				}
+				else if(text_color != bg_color)
+				{
+					if(size_x == 1 && size_y == 1)
+						draw_pixel(x + i, y + j, bg_color);
+					else
+						fill_rect(x + i * size_x, y + j * size_y, size_x, size_y, bg_color);
+				}
+			}
+			
+			if(text_color != bg_color)
+			{
+				if(size_x == 1 && size_y == 1)
+					draw_v_line(x + 5, y, 8, bg_color);
+				else
+					fill_rect(x + 5 * size_x, y, size_x, 8 * size_y, bg_color);
+			}
+		}
+	}
+	else
+	{
+		c -= gfx_font->first;
+		GFXglyph *glyph = gfx_font->glyph + c;
+		uint8_t *bitmap = gfx_font->bitmap;
+		
+		uint16_t bo = glyph->bitmapOffset;
+		uint8_t w = glyph->width;
+		uint8_t h = glyph->height;
+		int8_t xo = glyph->xOffset;
+		int8_t yo = glyph->yOffset;
+		uint8_t xx, yy, bits = 0, bit = 0;
+		int16_t xo16 = 0, yo16 = 0;
+		
+		if(size_x > 1 || size_y > 1)
+		{
+			xo16 = xo;
+			yo16 = yo;
+		}
+		
+		for(yy = 0; yy < h; ++yy)
+		{
+			for(xx = 0; xx < w; ++xx)
+			{
+				if(!(bit++ & 7))
+					bits = bitmap[bo++];
+				
+				if(bits & 0x80)
+				{
+					if(size_x == 1 && size_y == 1)
+						draw_pixel(x + xo + xx, y + yo + yy, text_color);
+					else
+						fill_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, text_color);
+				}
+				else
+				{
+					if(text_color != bg_color)
+					{
+						if(size_x == 1 && size_y == 1)
+							draw_pixel(x + xo + xx, y + yo + yy, bg_color);
+						else
+							fill_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, bg_color);
+					}
+				}
+				
+				bits <<= 1;
+			}
+		}
+	}
+}
+
+void write_char(uint8_t c)
+{
+	if(!gfx_font)
+	{
+		if(c == '\n')
+		{
+			cursor_x = text_area.start_x;
+			cursor_y += text_size_y * 8;
+		}
+		else if(c != '\r')
+		{
+			if(wrap_text && (cursor_x + text_size_x * 6 > text_area.end_x))
+			{
+				cursor_x = text_area.start_x;
+				cursor_y += text_size_y * 8;
+			}
+			draw_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
+			cursor_x += text_size_x * 6;
+		}
+	}
+	else
+	{
+		if(c == '\n')
+		{
+			cursor_x = text_area.start_x;
+			cursor_y += text_size_y * gfx_font->yAdvance;
+		}
+		else if(c != '\r')
+		{
+			uint8_t first = gfx_font->first;
+			
+			if((c >= first) && (c <= gfx_font->last))
+			{
+				GFXglyph *glyph = gfx_font->glyph + c - first;
+				uint8_t w = glyph->width;
+				uint8_t h = glyph->height;
+				
+				if(w > 0 && h > 0)
+				{
+					int16_t xo = glyph->xOffset;
+					
+					if(wrap_text && (cursor_x + text_size_x * (xo + w)) > text_area.end_x)
+					{
+						cursor_x = text_area.start_x;
+						cursor_y += text_size_y * gfx_font->yAdvance;
+					}
+					draw_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
+				}
+				
+				cursor_x += text_size_x * glyph->xAdvance;
+			}
+		}
+	}
+}
+
+void print_str(const char* str)
+{
+	size_t len = strlen(str);
+	
+	while(len--)
+	{
+		if(*str)
+		{
+			write_char(*str);
+			++str;
+		}
+		else return;
+	}
+}
+
+void print_int(int64_t num)
+{
+	char buffer[8 * sizeof(long) + 1];
+	char *str = &buffer[sizeof(buffer) - 1];
+	
+	*str = '\0';
+	
+	if(num < 0)
+	{
+		write_char('-');
+		num = -num;
+	}
+	
+	do
+	{
+		char c = num % 10;
+		num /= 10;
+		
+		*--str = c + '0';
+	} while(num);
+	
+	print_str(str);
+}
+
+//void printf_display(const char *text, ...);
+
+
 #if defined(__arm__)
 
 #include "./arm/stm32f411_ili9486l.h"
@@ -169,33 +381,16 @@ uint8_t init_display()
 void update_display()
 {
 	tft_start_write();
-	tft_set_write_window(0, 0, 480, 320);
+	tft_set_write_window(0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
 	
-	/*for(uint16_t y = 0; y < 320; ++y)
+	for(uint16_t y = 0; y < SCREEN_HEIGHT; ++y)
 	{
-		for(uint16_t x = 0; x < 480; ++x)
+		for(uint16_t x = 0; x < SCREEN_WIDTH / 2; ++x)
 		{
-			//tft_send_color(rgb332_to_rgb565[vram[(y >> 1) * DISPLAY_WIDTH + (x >> 1)]]);
-			tft_send_color(rgb332_to_rgb565[vram[(x >> 1)][(y >> 1)]]);
-		}
-	}*/
-
-	uint16_t x = 0, y = 0, col = 0;
-
-	while(y < 320)
-	{
-		x = 0;
-		while(x < 240)
-		{
-			col = rgb332_to_rgb565[(vram[(x)][(y / 2)])];
-			//col = ConvertRGB332toRGB565(vram[(x)][(y / 2)]);
-			//tft_send_color(col);
-			tft_set_data_16(col);
+			tft_set_data_16(rgb332_to_rgb565[(vram[(x)][(y / 2)])]);
 			tft_write_pulse();
 			tft_write_pulse();
-			x++;
 		}
-		y++;
 	}
 
 	tft_end_write();

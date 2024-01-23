@@ -78,15 +78,15 @@
 #define tft_send_data(dat)       tft_start_write(); tft_write_8((dat));  tft_end_write()
 #define tft_send_color(col)      tft_start_write(); tft_write_16((col)); tft_end_write()
 
-/*#define tft_set_write_window(x0, y0, x1, y1)    tft_send_command(CASET); \
-                                                tft_send_data((x0) >> 8); tft_send_data(x0); \
-                                                tft_send_data((x1) >> 8); tft_send_data(x1); \
-                                                tft_send_command(PASET); \
-                                                tft_send_data((y0) >> 8); tft_send_data(y0); \
-                                                tft_send_data((y1) >> 8); tft_send_data(y1); \
-                                                tft_send_command(RAMWR)*/
+#define tft_set_write_window(x0, y0, x1, y1)    RS_CMD; tft_write_8(CASET); RS_DAT; \
+                                                tft_write_8((x0) >> 8); tft_write_8(x0); \
+                                                tft_write_8((x1) >> 8); tft_write_8(x1); \
+                                                RS_CMD; tft_write_8(PASET); RS_DAT; \
+                                                tft_write_8((y0) >> 8); tft_write_8(y0); \
+                                                tft_write_8((y1) >> 8); tft_write_8(y1); \
+                                                RS_CMD; tft_write_8(RAMWR); RS_DAT
 
-void tft_set_write_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
+/*void tft_set_write_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
 	RS_CMD; tft_write_8(CASET); RS_DAT;
 	tft_write_8(((x) >> 8)); tft_write_8((x));
@@ -95,9 +95,9 @@ void tft_set_write_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 	tft_write_8(((y) >> 8)); tft_write_8((y));
 	tft_write_8(((y + h - 1) >> 8)); tft_write_8((y + h - 1));
 	RS_CMD; tft_write_8(RAMWR); RS_DAT;
-}
+}*/
 
-/*#define tft_send_pulses(count)      uint32_t tft_pixels_left = (uint32_t)(count); \
+#define tft_send_pulses(count)      uint32_t tft_pixels_left = (uint32_t)(count); \
                                     do { \
                                         while(tft_pixels_left > 31) { \
                                             tft_write_pulse();  tft_write_pulse();  tft_write_pulse();  tft_write_pulse(); \
@@ -119,9 +119,9 @@ void tft_set_write_window(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
                                             tft_write_pulse(); \
                                             --tft_pixels_left; \
                                         } \
-                                    } while(0)*/
+                                    } while(0)
 
-void tft_send_pulses(uint32_t count)
+/*void tft_send_pulses(uint32_t count)
 {
 	while(count > 31)
 	{
@@ -146,7 +146,7 @@ void tft_send_pulses(uint32_t count)
 		tft_write_pulse();
 		--count;
 	}
-}
+}*/
 
 void init_ili9486l()
 {
