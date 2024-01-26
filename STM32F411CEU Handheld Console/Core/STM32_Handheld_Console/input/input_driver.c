@@ -3,7 +3,7 @@
 uint16_t current_keys = 0;
 uint16_t previous_keys = 0;
 
-Joystick joysticks[2] = { 0 };
+//Joystick joysticks[2] = { 0 };
 
 uint8_t get_key(uint16_t key_code)
 {
@@ -25,7 +25,7 @@ uint8_t get_key_held(uint16_t key_code)
 	return ((previous_keys & key_code) && (current_keys & key_code));
 }
 
-
+/*
 float get_joystick_x(uint8_t joystick)
 {
 	return (joystick == JOYSTICK_LEFT || joystick == JOYSTICK_RIGHT) ? joysticks[joystick].x : 0.0f;
@@ -35,18 +35,20 @@ float get_joystick_y(uint8_t joystick)
 {
 	return (joystick == JOYSTICK_LEFT || joystick == JOYSTICK_RIGHT) ? joysticks[joystick].y : 0.0f;
 }
-
+*/
 
 #if defined(__arm__)
 
 #include "./arm/stm32f411_input.h"
 
+uint32_t gpioa_moder = 0;
+
 void update_inputs()
 {
+	enable_input();
 	previous_keys = current_keys;
-	current_keys = get_gpiob_status();
-	
-	// TODO: Implement analog read
+	current_keys = get_input_status();
+	disable_input();
 }
 
 

@@ -338,9 +338,9 @@ void print_str(const char* str)
 	}
 }
 
-void print_int(int64_t num)
+void print_int(long num)
 {
-	char buffer[8 * sizeof(long) + 1];
+	char buffer[8 * sizeof(long) + 1] = { '\0' };
 	char *str = &buffer[sizeof(buffer) - 1];
 	
 	*str = '\0';

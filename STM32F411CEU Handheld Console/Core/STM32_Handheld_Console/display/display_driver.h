@@ -55,7 +55,7 @@ void set_font(const void *font);
 void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y);
 void write_char(uint8_t c);
 void print_str(const char* str);
-void print_int(int64_t num);
+void print_int(long num);
 void printf_display(const char *text, ...);
 
 #endif // __display_driver_h
