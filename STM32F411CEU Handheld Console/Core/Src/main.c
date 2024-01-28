@@ -41,8 +41,9 @@ typedef struct
 typedef struct
 {
 	Vec3 points[4];
-	uint8_t color;
-} Rectangle;
+	uint8_t color1;
+	uint8_t color2;
+} Quad;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -56,6 +57,8 @@ typedef struct
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -66,6 +69,7 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -103,11 +107,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-	init_display();
-	clear_screen();
   MX_SPI1_Init();
   MX_FATFS_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  init_display();
+  clear_screen();
 
 	/*for(uint8_t y = 0; y < DISPLAY_HEIGHT; ++y)
 	 {
@@ -123,9 +128,9 @@ int main(void)
 	set_text_area(157, 5, 227, 11);
 	uint8_t assault_text_color = rgb888_to_rgb332(255, 255, 28);
 	set_text_color(assault_text_color, rgb888_to_rgb332(0, 0, 0));
-	set_text_wrap(1);
+	//set_text_wrap(1);
 
-	const char *assault_text = "POLiS SALDIRISI  ///  @@@@  ///  POLiS SALDIRISI";
+	const char *assault_text = "POLiS SALDIRISI  ///  @@@  ///  POLiS SALDIRISI";
 	//print_str("STM32F411CEU Handheld Gaming Console Print String And Text Area Test");
 
 	update_display();
@@ -136,7 +141,7 @@ int main(void)
 	update_inputs();
 	set_text_area(0, 0, 239, 159);
 
-	HAL_Delay(1000);
+	/*HAL_Delay(1000);
 
 	FATFS fat_fs = { 0 };
 	FRESULT fres = f_mount(&fat_fs, "", 1);
@@ -176,7 +181,7 @@ int main(void)
 
 	f_mount(NULL, "", 0);
 
-	while(1);
+	while(1);*/
 
   /* USER CODE END 2 */
 
@@ -187,6 +192,9 @@ int main(void)
 		ticks = HAL_GetTick();
 		frames = HAL_GetTick();
 		clear_screen();
+		set_text_area(151, 4, 227, 12);
+		set_cursor(x, 5);
+		print_str(assault_text);
 		draw_v_line(151, 1, 3, assault_text_color);
 		draw_v_line(151, 13, 3, assault_text_color);
 		draw_v_line(227, 1, 3, assault_text_color);
@@ -202,11 +210,8 @@ int main(void)
 		draw_v_line(233, 4, 2, 0);
 		draw_v_line(235, 4, 2, 0);
 		draw_h_line(232, 7, 5, 0);
-		set_text_area(157, 5, 227, 11);
-		set_cursor(x, 5);
-		print_str(assault_text);
 
-		if (x < 151 - 33 * 6)
+		if (x < 151 - 32 * 6)
 			x = 151;
 		x -= 1;
 
@@ -218,8 +223,8 @@ int main(void)
 		print_int(frames_to_draw_display);
 		print_str(" ms\n\nsizeof(Triangle): ");
 		print_int(sizeof(Triangle));
-		print_str("\nsizeof(Rectangle): ");
-		print_int(sizeof(Rectangle));
+		print_str("\nsizeof(Quad): ");
+		print_int(sizeof(Quad));
 
 		frames_to_draw_display = HAL_GetTick();
 
@@ -278,6 +283,58 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc1.Init.ScanConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**

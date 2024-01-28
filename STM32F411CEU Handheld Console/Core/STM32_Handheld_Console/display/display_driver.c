@@ -180,18 +180,22 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 {
 	if(!gfx_font)
 	{
-		if((x >= text_area.end_x) || 
-		   (y >= text_area.end_y) || 
-		   (x + 6 * size_x - 1 < text_area.start_x) || 
-		   (y + 8 * size_y - 1 < text_area.start_y))
+		if((x - 6 * size_x > text_area.end_x) || 
+		   (y - 8 * size_y > text_area.end_y) || 
+		   (x + 6 * size_x < text_area.start_x) || 
+		   (y + 8 * size_y < text_area.start_y))
 			return;
 		
 		for(int8_t i = 0; i < 5; ++i)
 		{
+			if(x + i * size_x > text_area.end_x || x + i * size_x < text_area.start_x) continue;
+			
 			uint8_t line = font[c * 5 + i];
 			
 			for(int8_t j = 0; j < 8; ++j, line >>= 1)
-			{
+			y
+				if(y + j * size_y > text_area.end_y || y + j * size_y < text_area.start_y) continue;
+			
 				if(line & 1)
 				{
 					if(size_x == 1 && size_y == 1)
@@ -239,8 +243,12 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 		
 		for(yy = 0; yy < h; ++yy)
 		{
+			if(y + (yy + yo16) * size_y < text_area.start_y || y + (yy + yo16) * size_y > text_area.end_y) continue;
+			
 			for(xx = 0; xx < w; ++xx)
 			{
+				if(x + (xx + xo16) * size_x < text_area.start_x || x + (xx + xo16) * size_x > text_area.end_x) continue;
+
 				if(!(bit++ & 7))
 					bits = bitmap[bo++];
 				
