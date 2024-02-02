@@ -36,6 +36,11 @@ extern uint8_t text_fg_color;
 uint8_t init_display(void);
 void update_display(void);
 
+void draw_raw_pixel(int16_t _x, int16_t _y, uint8_t color);
+void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color);
+void draw_raw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color);
+void draw_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
+void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void draw_pixel(int16_t _x, int16_t _y, uint8_t color);
 void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color);
 void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color);

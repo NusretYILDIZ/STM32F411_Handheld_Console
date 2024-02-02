@@ -56,6 +56,61 @@ uint8_t wrap_text = 0;
 uint8_t text_fg_color = 0xff;
 uint8_t text_bg_color = 0x00;
 
+void draw_raw_pixel(int16_t x, int16_t y, uint8_t color)
+{
+	vram[x][y] = color;
+}
+
+void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
+{
+	/* while(h)
+	{
+		vram[x][(y + h - 1)] = color;
+		--h;
+	} */
+	
+	memset(&vram[x][y], color, h);
+}
+
+void draw_raw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
+{
+	while(w)
+	{
+		--w;
+		vram[(x + w)][y] = color;
+	}
+}
+
+void draw_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
+{
+	draw_raw_h_line(x        , y        , w    , color);
+	draw_raw_h_line(x        , y + h - 1, w    , color);
+	draw_raw_v_line(x        , y + 1    , h - 2, color);
+	draw_raw_v_line(x + w - 1, y + 1    , h - 2, color);
+}
+
+void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
+{
+	/* while(h)
+	{
+		int16_t tmp_w = w;
+		
+		while(tmp_w)
+		{
+			vram[(x + tmp_w - 1)][(y + h - 1)] = color;
+			--tmp_w;
+		}
+		
+		--h;
+	} */
+	
+	while(w)
+	{
+		--w;
+		memset(&vram[(x + w)][y], color, h);
+	}
+}
+
 void draw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	if(x < 0 || x >= DISPLAY_WIDTH || y < 0 || y >= DISPLAY_HEIGHT) return;
@@ -71,11 +126,13 @@ void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 	if(y + h > DISPLAY_HEIGHT) h = DISPLAY_HEIGHT - y;
 	if(h < 1) return;
 	
-	while(h)
+	/* while(h)
 	{
 		vram[x][(y + h - 1)] = color;
 		--h;
-	}
+	} */
+	
+	memset(&vram[x][y], color, h);
 }
 
 void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
@@ -88,8 +145,8 @@ void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 	
 	while(w)
 	{
-		vram[(x + w - 1)][y] = color;
 		--w;
+		vram[(x + w)][y] = color;
 	}
 }
 
@@ -114,7 +171,7 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 	if(x + w > DISPLAY_WIDTH) w = DISPLAY_WIDTH - x;
 	if(w < 1) return;
 	
-	while(h)
+	/* while(h)
 	{
 		int16_t tmp_w = w;
 		
@@ -125,6 +182,12 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 		}
 		
 		--h;
+	} */
+	
+	while(w)
+	{
+		--w;
+		memset(&vram[(x + w)][y], color, h);
 	}
 }
 
@@ -304,25 +367,25 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 				if(line & 1)
 				{
 					if(size_x == 1 && size_y == 1)
-						draw_pixel(x + i, y + j, text_color);
+						draw_raw_pixel(x + i, y + j, text_color);
 					else
-						fill_rect(x + i * size_x, y + j * size_y, size_x, size_y, text_color);
+						fill_raw_rect(x + i * size_x, y + j * size_y, size_x, size_y, text_color);
 				}
 				else if(text_color != bg_color)
 				{
 					if(size_x == 1 && size_y == 1)
-						draw_pixel(x + i, y + j, bg_color);
+						draw_raw_pixel(x + i, y + j, bg_color);
 					else
-						fill_rect(x + i * size_x, y + j * size_y, size_x, size_y, bg_color);
+						fill_raw_rect(x + i * size_x, y + j * size_y, size_x, size_y, bg_color);
 				}
 			}
 			
 			if(text_color != bg_color)
 			{
 				if(size_x == 1 && size_y == 1)
-					draw_v_line(x + 5, y, 8, bg_color);
+					draw_raw_v_line(x + 5, y, 8, bg_color);
 				else
-					fill_rect(x + 5 * size_x, y, size_x, 8 * size_y, bg_color);
+					fill_raw_rect(x + 5 * size_x, y, size_x, 8 * size_y, bg_color);
 			}
 		}
 	}
@@ -364,20 +427,20 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 				if(bits & 0x80)
 				{
 					if(size_x == 1 && size_y == 1)
-						draw_pixel(x + xo + xx, y + yo + yy, text_color);
+						draw_raw_pixel(x + xo + xx, y + yo + yy, text_color);
 					else
-						fill_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, text_color);
+						fill_raw_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, text_color);
 				}
-				else
+				/* else
 				{
 					if(text_color != bg_color)
 					{
 						if(size_x == 1 && size_y == 1)
-							draw_pixel(x + xo + xx, y + yo + yy, bg_color);
+							draw_raw_pixel(x + xo + xx, y + yo + yy, bg_color);
 						else
-							fill_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, bg_color);
+							fill_raw_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, bg_color);
 					}
-				}
+				} */
 				
 				bits <<= 1;
 			}
