@@ -227,9 +227,10 @@ int main(void)
 
 		set_text_area(0, 0, 239, 159);
 		set_cursor(0, 21);
-		print_str("DT: ");
-		print_int(frames_to_draw_display);
-		print_str(" ms\n");
+		//print_str("DT: ");
+		//print_int(frames_to_draw_display);
+		//print_str(" ms\n");
+		printf_str("DT: %d ms\n", frames_to_draw_display);
 		/*set_text_size(2, 2);
 		print_str("\nsizeof(Triangle): ");
 		print_int(sizeof(Triangle));

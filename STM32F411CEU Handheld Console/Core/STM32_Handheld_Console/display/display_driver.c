@@ -525,7 +525,17 @@ void print_int(long num)
 	print_str(str);
 }
 
-//void printf_display(const char *text, ...);
+void printf_str(const char *text, ...)
+{
+	static char str[150] = { '\0' };
+	va_list args;
+	
+	va_start(args, text);
+	vsnprintf(str, sizeof(str), text, args);
+	va_end(args);
+	
+	print_str(str);
+}
 
 
 #if defined(__arm__)
