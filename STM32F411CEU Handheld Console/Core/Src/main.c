@@ -136,6 +136,13 @@ int main(void)
 	update_display();
 
 	int16_t x = 200;
+	int16_t text_x, text_y;
+	uint16_t text_w1, text_w2, text_w, text_h;
+
+	text_bounds(assault_text, 0, 0, &text_x, &text_y, &text_w1, &text_h);
+	text_bounds(assault_text + 32, 0, 0, &text_x, &text_y, &text_w2, &text_h);
+	text_w = text_w1 - text_w2;
+
 	uint32_t frames = 0, frames_to_draw_display = 0, ticks = 0;
 
 	update_inputs();
@@ -192,8 +199,8 @@ int main(void)
 		ticks = HAL_GetTick();
 		frames = HAL_GetTick();
 		clear_screen();
-		set_text_area(151, 4, 227, 12);
-		set_cursor(x, 5);
+		set_text_area(151, 0, 227, 20);
+		set_cursor(x, 14);
 		print_str(assault_text);
 		draw_v_line(151, 1, 3, assault_text_color);
 		draw_v_line(151, 13, 3, assault_text_color);
@@ -209,22 +216,35 @@ int main(void)
 		draw_pixel(236, 6, 0);
 		draw_v_line(233, 4, 2, 0);
 		draw_v_line(235, 4, 2, 0);
-		draw_h_line(232, 7, 5, 0);
+		draw_h_line(231, 7, 7, 0);
 
-		if (x < 151 - 32 * 6)
+		if (x < 151 - text_w)
 			x = 151;
 		x -= 1;
 
 		set_text_area(0, 0, 239, 159);
-		print_str("RT: ");
-		frames = HAL_GetTick() - frames;
-		print_int(frames);
-		print_str(" ms\nDT: ");
+		set_cursor(0, 21);
+		print_str("DT: ");
 		print_int(frames_to_draw_display);
 		print_str(" ms\n\nsizeof(Triangle): ");
 		print_int(sizeof(Triangle));
 		print_str("\nsizeof(Quad): ");
 		print_int(sizeof(Quad));
+
+		print_str("\n\n");
+
+		set_text_wrap(1);
+		for(int i = '!'; i <= 0x9A; ++i)
+		{
+			print_chr(i);
+		}
+		set_text_wrap(0);
+
+		set_cursor(0, 10);
+		print_str("RT: ");
+		frames = HAL_GetTick() - frames;
+		print_int(frames);
+		print_str(" ms");
 
 		frames_to_draw_display = HAL_GetTick();
 

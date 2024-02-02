@@ -1,5 +1,6 @@
 #include "./display_driver.h"
 #include "./glcdfont.c"
+#include "./YILDIZsoft_5x7.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -171,9 +172,113 @@ void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey)
 	cursor_y = text_area.start_y;
 }
 
-void set_font(const void *new_font)
+void set_font(const GFXfont *new_font)
 {
+	if(new_font)
+	{
+		if(!gfx_font) cursor_y += 6;
+	}
+	else if(gfx_font)
+	{
+		cursor_y -= 6;
+	}
+	
 	gfx_font = (GFXfont *) new_font;
+}
+
+void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y)
+{
+	// Null check
+	if(!(x && y && min_x && min_y && max_x && max_y)) return;
+	
+	if(gfx_font)
+	{
+		if(c == '\n')
+		{
+			*x = text_area.start_x;
+			*y += text_size_y * gfx_font->yAdvance;
+		}
+		else if(c != '\r')
+		{
+			if((c >= gfx_font->first) && (c <= gfx_font->last))
+			{
+				GFXglyph *glyph = gfx_font->glyph + c - gfx_font->first;
+				
+				if(wrap_text && ((*x + ((glyph->xOffset + glyph->width) * text_size_x)) > text_area.end_x))
+				{
+					*x = text_area.start_x;
+					*y += text_size_y * gfx_font->yAdvance;
+				}
+				
+				int16_t x1 = *x + glyph->xOffset * text_size_x,
+						y1 = *y + glyph->yOffset * text_size_y,
+						x2 = x1 + glyph->width * text_size_x - 1,
+						y2 = y1 + glyph->height * text_size_y - 1;
+				
+				if(x1 < *min_x) *min_x = x1;
+				if(y1 < *min_y) *min_y = y1;
+				if(x2 > *max_x) *max_x = x2;
+				if(y2 > *max_y) *max_y = y2;
+				
+				*x += glyph->xAdvance * text_size_x;
+			}
+		}
+	}
+	else
+	{
+		if(c == '\n')
+		{
+			*x = text_area.start_x;
+			*y += text_size_y * 8;
+		}
+		else if(c != '\r')
+		{
+			if(wrap_text && ((*x + text_size_x * 6) > text_area.end_x))
+			{
+				*x = text_area.start_x;
+				*y += text_size_y * 8;
+			}
+			
+			int16_t x2 = *x + text_size_x * 6 - 1,
+					y2 = *y + text_size_y * 8 - 1;
+
+			if(*x < *min_x) *min_x = *x;
+			if(*y < *min_y) *min_y = *y;
+			if(x2 > *max_x) *max_x = x2;
+			if(y2 > *max_y) *max_y = y2;
+			
+			*x += text_size_x * 6;
+		}
+	}
+}
+
+void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
+{
+	// Null check
+	if(!(x1 && y1 && w && h)) return;
+	
+	unsigned char c;
+	int16_t min_x = 0x7FFF, min_y = 0x7FFF, max_x = -1, max_y = -1;
+	
+	*x1 = x;
+	*y1 = y;
+	*w = *h = 0;
+	
+	while((c = *str++))
+	{
+		char_bounds(c, &x, &y, &min_x, &min_y, &max_x, &max_y);
+	}
+	
+	if(max_x >= min_x)
+	{
+		*x1 = min_x;
+		*w = max_x - min_x + 1;
+	}
+	if(max_y >= min_y)
+	{
+		*y1 = min_y;
+		*h = max_y - min_y + 1;
+	}
 }
 
 void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y)
@@ -193,7 +298,7 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 			uint8_t line = font[c * 5 + i];
 			
 			for(int8_t j = 0; j < 8; ++j, line >>= 1)
-			y
+			{
 				if(y + j * size_y > text_area.end_y || y + j * size_y < text_area.start_y) continue;
 			
 				if(line & 1)
@@ -243,15 +348,19 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 		
 		for(yy = 0; yy < h; ++yy)
 		{
-			if(y + (yy + yo16) * size_y < text_area.start_y || y + (yy + yo16) * size_y > text_area.end_y) continue;
+			if((y + (yy + yo16) * size_y < text_area.start_y) || (y + (yy + yo16) * size_y > text_area.end_y)) continue;
 			
 			for(xx = 0; xx < w; ++xx)
 			{
-				if(x + (xx + xo16) * size_x < text_area.start_x || x + (xx + xo16) * size_x > text_area.end_x) continue;
-
 				if(!(bit++ & 7))
 					bits = bitmap[bo++];
 				
+				if(x + (xx + xo16) * size_x < text_area.start_x || x + (xx + xo16) * size_x > text_area.end_x)
+				{
+					bits <<= 1;
+					continue;
+				}
+
 				if(bits & 0x80)
 				{
 					if(size_x == 1 && size_y == 1)
@@ -276,7 +385,7 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 	}
 }
 
-void write_char(uint8_t c)
+void print_chr(uint8_t c)
 {
 	if(!gfx_font)
 	{
@@ -339,7 +448,7 @@ void print_str(const char* str)
 	{
 		if(*str)
 		{
-			write_char(*str);
+			print_chr(*str);
 			++str;
 		}
 		else return;
@@ -355,7 +464,7 @@ void print_int(long num)
 	
 	if(num < 0)
 	{
-		write_char('-');
+		print_chr('-');
 		num = -num;
 	}
 	
@@ -383,6 +492,7 @@ uint8_t init_display()
 	init_ili9486l();
 	clear_screen();
 	tft_end_write();
+	set_font(&YILDIZsoft_5x7);
 	return 0;
 }
 
