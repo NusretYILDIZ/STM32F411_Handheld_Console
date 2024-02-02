@@ -38,7 +38,7 @@ const uint16_t rgb332_to_rgb565[256] = {
     0xf800, 0xf80a, 0xf815, 0xf81f, 0xf920, 0xf92a, 0xf935, 0xf93f, 
     0xfa40, 0xfa4a, 0xfa55, 0xfa5f, 0xfb60, 0xfb6a, 0xfb75, 0xfb7f, 
     0xfc80, 0xfc8a, 0xfc95, 0xfc9f, 0xfda0, 0xfdaa, 0xfdb5, 0xfdbf, 
-    0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xffff 
+    0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xfff5
 };
 
 uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
@@ -231,8 +231,8 @@ void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey)
 	text_area.end_x = (ex < DISPLAY_WIDTH) ? ex : DISPLAY_WIDTH - 1;
 	text_area.end_y = (ey < DISPLAY_HEIGHT) ? ey : DISPLAY_HEIGHT - 1;
 	
-	cursor_x = text_area.start_x;
-	cursor_y = text_area.start_y;
+	//cursor_x = text_area.start_x;
+	//cursor_y = text_area.start_y;
 }
 
 void set_font(const GFXfont *new_font)
@@ -401,24 +401,17 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 		int8_t xo = glyph->xOffset;
 		int8_t yo = glyph->yOffset;
 		uint8_t xx, yy, bits = 0, bit = 0;
-		int16_t xo16 = 0, yo16 = 0;
-		
-		if(size_x > 1 || size_y > 1)
-		{
-			xo16 = xo;
-			yo16 = yo;
-		}
 		
 		for(yy = 0; yy < h; ++yy)
 		{
-			if((y + (yy + yo16) * size_y < text_area.start_y) || (y + (yy + yo16) * size_y > text_area.end_y)) continue;
+			if((y + (yy + yo) * size_y < text_area.start_y) || (y + (yy + yo) * size_y > text_area.end_y)) continue;
 			
 			for(xx = 0; xx < w; ++xx)
 			{
 				if(!(bit++ & 7))
 					bits = bitmap[bo++];
 				
-				if(x + (xx + xo16) * size_x < text_area.start_x || x + (xx + xo16) * size_x > text_area.end_x)
+				if(x + (xx + xo) * size_x < text_area.start_x || x + (xx + xo) * size_x > text_area.end_x)
 				{
 					bits <<= 1;
 					continue;
@@ -429,18 +422,8 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 					if(size_x == 1 && size_y == 1)
 						draw_raw_pixel(x + xo + xx, y + yo + yy, text_color);
 					else
-						fill_raw_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, text_color);
+						fill_raw_rect(x + (xo + xx) * size_x, y + (yo + yy) * size_y, size_x, size_y, text_color);
 				}
-				/* else
-				{
-					if(text_color != bg_color)
-					{
-						if(size_x == 1 && size_y == 1)
-							draw_raw_pixel(x + xo + xx, y + yo + yy, bg_color);
-						else
-							fill_raw_rect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y, size_x, size_y, bg_color);
-					}
-				} */
 				
 				bits <<= 1;
 			}

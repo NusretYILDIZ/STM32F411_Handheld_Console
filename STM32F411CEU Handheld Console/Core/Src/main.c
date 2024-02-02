@@ -127,10 +127,12 @@ int main(void)
 	fill_rect(40, 80, 100, 75, rgb888_to_rgb332(255, 0, 0));
 	set_text_area(157, 5, 227, 11);
 	uint8_t assault_text_color = rgb888_to_rgb332(255, 255, 28);
-	set_text_color(assault_text_color, rgb888_to_rgb332(0, 0, 0));
+	set_text_color(assault_text_color, assault_text_color);
+	//set_text_color(rgb888_to_rgb332(200, 0, 0), rgb888_to_rgb332(200, 0, 0));
 	//set_text_wrap(1);
 
-	const char *assault_text = "POLiS SALDIRISI  ///  @@@  ///  POLiS SALDIRISI";
+	//const char *assault_text = "POLiS SALDIRISI  ///  @@@  ///  POLiS SALDIRISI";
+	const char *assault_text = "POL" "\x82" "S SALDIRISI   ///   @@@   ///   POL" "\x82" "S SALDIRISI";
 	//print_str("STM32F411CEU Handheld Gaming Console Print String And Text Area Test");
 
 	update_display();
@@ -140,7 +142,7 @@ int main(void)
 	uint16_t text_w1, text_w2, text_w, text_h;
 
 	text_bounds(assault_text, 0, 0, &text_x, &text_y, &text_w1, &text_h);
-	text_bounds(assault_text + 32, 0, 0, &text_x, &text_y, &text_w2, &text_h);
+	text_bounds(assault_text + 36, 0, 0, &text_x, &text_y, &text_w2, &text_h);
 	text_w = text_w1 - text_w2;
 
 	uint32_t frames = 0, frames_to_draw_display = 0, ticks = 0;
@@ -201,6 +203,7 @@ int main(void)
 		clear_screen();
 		set_text_area(151, 0, 227, 20);
 		set_cursor(x, 14);
+		set_text_size(1, 1);
 		print_str(assault_text);
 		draw_v_line(151, 1, 3, assault_text_color);
 		draw_v_line(151, 13, 3, assault_text_color);
@@ -226,8 +229,11 @@ int main(void)
 		set_cursor(0, 21);
 		print_str("DT: ");
 		print_int(frames_to_draw_display);
-		print_str(" ms\n\nsizeof(Triangle): ");
+		print_str(" ms\n");
+		/*set_text_size(2, 2);
+		print_str("\nsizeof(Triangle): ");
 		print_int(sizeof(Triangle));
+		set_text_size(1, 1);
 		print_str("\nsizeof(Quad): ");
 		print_int(sizeof(Quad));
 
@@ -238,9 +244,14 @@ int main(void)
 		{
 			print_chr(i);
 		}
-		set_text_wrap(0);
+		set_text_wrap(0);*/
 
+		//show_error_window("HATA TEST" "\x82", "Bunu g" "\x87" "r" "\x8a" "yorsan hata penceresi " "\x86" "al" "\x88" "\x89" "\x88" "yor demektir.\n\n\nHata kodu: ERR_DEBUG");
+		test_assertion(0 && "This assertion will always fail.");
+
+		set_text_area(0, 0, 239, 159);
 		set_cursor(0, 10);
+		set_text_color(assault_text_color, assault_text_color);
 		print_str("RT: ");
 		frames = HAL_GetTick() - frames;
 		print_int(frames);

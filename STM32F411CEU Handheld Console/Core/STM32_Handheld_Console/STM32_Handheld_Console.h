@@ -3,5 +3,6 @@
 
 #include "./display/display_driver.h"
 #include "./input/input_driver.h"
+#include "./system_menu/system_popup.h"
 
 #endif //__stm32_handheld_console_h
