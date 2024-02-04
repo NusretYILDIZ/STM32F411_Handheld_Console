@@ -192,6 +192,17 @@ int main(void)
 
 	while(1);*/
 
+	Menu menu = { .x = 25, .y = 25, .w = 190, .rows = 5, .capacity = 10, .selection = 2, .item_shift = 0,
+				  .bg_color = rgb888_to_rgb332(50, 50, 255),
+				  .selected_text_color = 0xff,
+				  .non_selected_text_color = rgb888_to_rgb332(150, 150, 150),
+				  .selection_bg_color = rgb888_to_rgb332(200, 10, 10)};
+
+	for(uint8_t i = 0; i < menu.capacity; ++i)
+	{
+		snprintf(&menu.items[i].text, sizeof(menu.items[menu.selection].text), "Men"TR_u" se"TR_c"ene"TR_g"i %d", (i + 1));
+	}
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -227,28 +238,15 @@ int main(void)
 
 		set_text_area(0, 0, 239, 159);
 		set_cursor(0, 21);
-		//print_str("DT: ");
-		//print_int(frames_to_draw_display);
-		//print_str(" ms\n");
 		printf_str("DT: %d ms\n", frames_to_draw_display);
-		/*set_text_size(2, 2);
-		print_str("\nsizeof(Triangle): ");
-		print_int(sizeof(Triangle));
-		set_text_size(1, 1);
-		print_str("\nsizeof(Quad): ");
-		print_int(sizeof(Quad));
-
-		print_str("\n\n");
-
-		set_text_wrap(1);
-		for(int i = '!'; i <= 0x9A; ++i)
-		{
-			print_chr(i);
-		}
-		set_text_wrap(0);*/
 
 		//show_error_window("HATA TEST" "\x82", "Bunu g" "\x87" "r" "\x8a" "yorsan hata penceresi " "\x86" "al" "\x88" "\x89" "\x88" "yor demektir.\n\n\nHata kodu: ERR_DEBUG");
-		test_assertion(0 && "This assertion will always fail.");
+		//test_assertion(0 && "This assertion will always fail.");
+		menu_render(&menu);
+
+		update_inputs();
+		if(get_key_down(GAMEPAD_X)) menu_go_down(&menu);
+		if(get_key_down(GAMEPAD_Y)) menu_go_up(&menu);
 
 		set_text_area(0, 0, 239, 159);
 		set_cursor(0, 10);

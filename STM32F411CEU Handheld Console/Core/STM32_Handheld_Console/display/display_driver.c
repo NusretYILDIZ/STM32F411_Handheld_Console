@@ -249,6 +249,11 @@ void set_font(const GFXfont *new_font)
 	gfx_font = (GFXfont *) new_font;
 }
 
+uint8_t get_font_height(void)
+{
+	return (gfx_font) ? gfx_font->yAdvance : 8;
+}
+
 void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y)
 {
 	// Null check

@@ -1,33 +1,5 @@
 #define PROGMEM
 
-#define TR_C         "\x80"
-#define TR_O         "\x81"
-#define TR_I         "\x82"
-#define TR_S         "\x83"
-#define TR_U         "\x84"
-#define TR_G         "\x85"
-#define TR_c         "\x86"
-#define TR_o         "\x87"
-#define TR_i         "\x88"
-#define TR_s         "\x89"
-#define TR_u         "\x8a"
-#define TR_g         "\x8b"
-#define GP_UP        "\x8c"
-#define GP_RIGHT     "\x8d"
-#define GP_DOWN      "\x8e"
-#define GP_LEFT      "\x8f"
-#define GP_X         "\x90"
-#define GP_Y         "\x91"
-#define GP_A         "\x92"
-#define GP_B         "\x93"
-#define GP_HOME      "\x94"
-#define GP_SELECT    "\x95"
-#define GP_START     "\x96"
-#define GP_L1        "\x97"
-#define GP_L2        "\x98"
-#define GP_R1        "\x99"
-#define GP_R2        "\x9a"
-
 const uint8_t YILDIZsoft_5x7_Bitmaps[] PROGMEM = {
   0xFA, 0x00, 0xFA, 0x00, 0xB4, 0x00, 0x52, 0xBE, 0xAF, 0xA9, 0x40, 0x21, 
   0x1F, 0x4A, 0x38, 0xA5, 0xF1, 0x08, 0x00, 0x45, 0x51, 0x20, 0x82, 0x45, 

@@ -9,6 +9,34 @@
 
 #define rgb888_to_rgb332(r, g, b)    ((((r) >> 5) << 5) | (((g) >> 5) << 2) | ((b) >> 6))
 
+#define TR_C         "\x80"
+#define TR_O         "\x81"
+#define TR_I         "\x82"
+#define TR_S         "\x83"
+#define TR_U         "\x84"
+#define TR_G         "\x85"
+#define TR_c         "\x86"
+#define TR_o         "\x87"
+#define TR_i         "\x88"
+#define TR_s         "\x89"
+#define TR_u         "\x8a"
+#define TR_g         "\x8b"
+#define GP_UP        "\x8c"
+#define GP_RIGHT     "\x8d"
+#define GP_DOWN      "\x8e"
+#define GP_LEFT      "\x8f"
+#define GP_X         "\x90"
+#define GP_Y         "\x91"
+#define GP_A         "\x92"
+#define GP_B         "\x93"
+#define GP_HOME      "\x94"
+#define GP_SELECT    "\x95"
+#define GP_START     "\x96"
+#define GP_L1        "\x97"
+#define GP_L2        "\x98"
+#define GP_R1        "\x99"
+#define GP_R2        "\x9a"
+
 extern const uint16_t rgb332_to_rgb565[256];
 extern uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 extern GFXfont *gfx_font;
@@ -57,6 +85,7 @@ void set_text_color(uint8_t fg, uint8_t bg);
 void set_text_wrap(uint8_t wrap);
 void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey);
 void set_font(const GFXfont *font);
+uint8_t get_font_height(void);
 void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y);
 void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
 void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y);

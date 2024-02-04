@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "./system_popup.h"
+#include "./popup.h"
 #include "../display/display_driver.h"
 
 #define ERROR_COLOR    rgb888_to_rgb332(200, 20, 20)
@@ -56,7 +56,10 @@ void show_info_window(const char *title, const char *msg)
 void _test_assertion(const char *e, const char *file_name, int line)
 {
 	char msg[180] = { '\0' };
-	snprintf(msg, sizeof(msg), "Condition: %s\n\nFile: %s\nLine: %d", e, file_name, line);
+	snprintf(msg, sizeof(msg), "%s\n\nFile: %s\nLine: %d", e, file_name, line);
 	
 	show_error_window("ASSERTION FAILED", msg);
+	
+	update_display();
+	while(1);
 }
