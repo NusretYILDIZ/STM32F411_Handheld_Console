@@ -56,6 +56,13 @@ uint8_t wrap_text = 0;
 uint8_t text_fg_color = 0xff;
 uint8_t text_bg_color = 0x00;
 
+GFXglyph *glyph = 0;
+uint16_t glyph_bo = 0;
+uint8_t glyph_w = 0;
+uint8_t glyph_h = 0;
+int8_t glyph_xo = 0;
+int8_t glyph_yo = 0;
+
 void draw_raw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	vram[x][y] = color;
@@ -191,12 +198,12 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 	}
 }
 
-void fill_screen(uint8_t color)
+void fill_display(uint8_t color)
 {
 	memset(vram, color, sizeof(vram));
 }
 
-void clear_screen()
+void clear_display()
 {
 	memset(vram, 0, sizeof(vram));
 }
@@ -257,7 +264,7 @@ uint8_t get_font_height(void)
 void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y)
 {
 	// Null check
-	if(!(x && y && min_x && min_y && max_x && max_y)) return;
+	//if(!(x && y && min_x && min_y && max_x && max_y)) return;
 	
 	if(gfx_font)
 	{
@@ -270,7 +277,8 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 		{
 			if((c >= gfx_font->first) && (c <= gfx_font->last))
 			{
-				GFXglyph *glyph = gfx_font->glyph + c - gfx_font->first;
+				c -= gfx_font->first;
+				glyph = gfx_font->glyph + c;
 				
 				if(wrap_text && ((*x + ((glyph->xOffset + glyph->width) * text_size_x)) > text_area.end_x))
 				{
@@ -323,7 +331,7 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
 {
 	// Null check
-	if(!(x1 && y1 && w && h)) return;
+	//if(!(x1 && y1 && w && h)) return;
 	
 	unsigned char c;
 	int16_t min_x = 0x7FFF, min_y = 0x7FFF, max_x = -1, max_y = -1;
@@ -397,26 +405,26 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 	else
 	{
 		c -= gfx_font->first;
-		GFXglyph *glyph = gfx_font->glyph + c;
+		glyph = gfx_font->glyph + c;
 		uint8_t *bitmap = gfx_font->bitmap;
 		
-		uint16_t bo = glyph->bitmapOffset;
-		uint8_t w = glyph->width;
-		uint8_t h = glyph->height;
-		int8_t xo = glyph->xOffset;
-		int8_t yo = glyph->yOffset;
+		glyph_bo = glyph->bitmapOffset;
+		glyph_w = glyph->width;
+		glyph_h = glyph->height;
+		glyph_xo = glyph->xOffset;
+		glyph_yo = glyph->yOffset;
 		uint8_t xx, yy, bits = 0, bit = 0;
 		
-		for(yy = 0; yy < h; ++yy)
+		for(yy = 0; yy < glyph_h; ++yy)
 		{
-			if((y + (yy + yo) * size_y < text_area.start_y) || (y + (yy + yo) * size_y > text_area.end_y)) continue;
+			if((y + (yy + glyph_yo) * size_y < text_area.start_y) || (y + (yy + glyph_yo) * size_y > text_area.end_y)) continue;
 			
-			for(xx = 0; xx < w; ++xx)
+			for(xx = 0; xx < glyph_w; ++xx)
 			{
 				if(!(bit++ & 7))
-					bits = bitmap[bo++];
+					bits = bitmap[glyph_bo++];
 				
-				if(x + (xx + xo) * size_x < text_area.start_x || x + (xx + xo) * size_x > text_area.end_x)
+				if(x + (xx + glyph_xo) * size_x < text_area.start_x || x + (xx + glyph_xo) * size_x > text_area.end_x)
 				{
 					bits <<= 1;
 					continue;
@@ -425,9 +433,9 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 				if(bits & 0x80)
 				{
 					if(size_x == 1 && size_y == 1)
-						draw_raw_pixel(x + xo + xx, y + yo + yy, text_color);
+						draw_raw_pixel(x + glyph_xo + xx, y + glyph_yo + yy, text_color);
 					else
-						fill_raw_rect(x + (xo + xx) * size_x, y + (yo + yy) * size_y, size_x, size_y, text_color);
+						fill_raw_rect(x + (glyph_xo + xx) * size_x, y + (glyph_yo + yy) * size_y, size_x, size_y, text_color);
 				}
 				
 				bits <<= 1;
@@ -551,9 +559,10 @@ uint8_t init_display()
 {
 	tft_start_write();
 	init_ili9486l();
-	clear_screen();
+	clear_display();
 	tft_end_write();
 	set_font(&YILDIZsoft_5x7);
+	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 	return 0;
 }
 

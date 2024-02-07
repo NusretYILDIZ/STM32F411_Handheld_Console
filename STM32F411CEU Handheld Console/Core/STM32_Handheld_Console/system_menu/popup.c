@@ -3,6 +3,7 @@
 
 #include "./popup.h"
 #include "../display/display_driver.h"
+#include "../input/input_driver.h"
 
 #define ERROR_COLOR    rgb888_to_rgb332(200, 20, 20)
 #define INFO_COLOR     rgb888_to_rgb332(50, 50, 200)
@@ -21,10 +22,10 @@ void show_window_helper(const char *title, const char *msg, unsigned char color)
 	uint16_t text_w, text_h;
 	
 	text_bounds(title, 0, 0, &text_x, &text_y, &text_w, &text_h);
-	fill_raw_rect(WINDOW_X + 1, WINDOW_Y + 1, WINDOW_WIDTH - 1, text_h + 2, color);
+	fill_raw_rect(WINDOW_X + 1, WINDOW_Y + 1, WINDOW_WIDTH - 1, get_font_height() + 2, color);
 	
 	set_text_area(WINDOW_X + 4, WINDOW_Y, WINDOW_X + WINDOW_WIDTH - 8, WINDOW_Y + WINDOW_HEIGHT - 4);
-	set_cursor(WINDOW_X + (WINDOW_WIDTH - text_w) / 2, WINDOW_Y + text_h + 1);
+	set_cursor(WINDOW_X + (WINDOW_WIDTH - text_w) / 2, WINDOW_Y + get_font_height() + 1);
 	uint8_t temp_fg = text_fg_color;
 	uint8_t temp_bg = text_bg_color;
 	set_text_color(0xff, 0xff);
@@ -37,8 +38,21 @@ void show_window_helper(const char *title, const char *msg, unsigned char color)
 	
 	text_bounds(msg, 0, 0, &text_x, &text_y, &text_w, &text_h);
 	set_cursor(WINDOW_X + 4, cursor_y + 3);
-	
 	print_str(msg);
+	
+	fill_raw_rect(WINDOW_X + 45, WINDOW_Y + WINDOW_HEIGHT - 2 * get_font_height(), 100, get_font_height() + 2, color);
+	text_bounds("Tamam", 0, 0, &text_x, &text_y, &text_w, &text_h);
+	set_cursor(WINDOW_X + (WINDOW_WIDTH - text_w) / 2, WINDOW_Y + WINDOW_HEIGHT - get_font_height() + 1);
+	print_str("Tamam");
+	
+	update_display();
+	
+	while(1)
+	{
+		update_inputs();
+		if(get_key_down(GAMEPAD_A)) break;
+	}
+	
 	set_text_wrap(temp_wrap);
 	set_text_color(temp_fg, temp_bg);
 }

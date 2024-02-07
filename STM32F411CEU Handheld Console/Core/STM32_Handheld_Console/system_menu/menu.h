@@ -3,7 +3,17 @@
 
 #include <stdint.h>
 
-#define MAX_MENU_ITEM_COUNT 128
+#define HAS_BITMAP      0x01
+#define RIGHT_ALIGN     0x02
+#define CENTER_ALIGN    0x04
+
+#define MAX_MENU_ITEM_COUNT 256
+
+#if (MAX_MENU_ITEM_COUNT <= 256)
+	typedef uint8_t Menu_Index;
+#else
+	typedef uint16_t Menu_Index;
+#endif
 
 typedef struct Menu_Item
 {
@@ -19,20 +29,22 @@ typedef struct Menu
 	uint16_t w;
 	uint8_t rows;
 	
-	uint8_t bg_color;
 	uint8_t non_selected_text_color;
+	uint8_t non_selected_bg_color;
 	uint8_t selected_text_color;
-	uint8_t selection_bg_color;
+	uint8_t selected_bg_color;
 	
 	Menu_Item items[MAX_MENU_ITEM_COUNT];
-	uint16_t capacity;
-	uint16_t selection;
-	uint16_t item_shift;
+	Menu_Index capacity;
+	Menu_Index selection;
+	Menu_Index item_offset;
+	
+	uint8_t attrib;
 } Menu;
 
 void menu_render(Menu *menu);
-void menu_go_up(Menu *menu);
-void menu_go_down(Menu *menu);
+void menu_prev_item(Menu *menu);
+void menu_next_item(Menu *menu);
 void menu_select(Menu *menu);
 
 #endif //__menu_h

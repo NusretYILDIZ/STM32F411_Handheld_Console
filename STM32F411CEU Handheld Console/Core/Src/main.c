@@ -27,23 +27,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct
-{
-	float x, y, z;
-} Vec3;
 
-typedef struct
-{
-	Vec3 points[3];
-	uint8_t color;
-} Triangle;
-
-typedef struct
-{
-	Vec3 points[4];
-	uint8_t color1;
-	uint8_t color2;
-} Quad;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -111,158 +95,13 @@ int main(void)
   MX_FATFS_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  init_display();
-  clear_screen();
-
-	/*for(uint8_t y = 0; y < DISPLAY_HEIGHT; ++y)
-	 {
-	 for(uint8_t x = 0; x < DISPLAY_WIDTH; ++x)
-	 {
-	 draw_pixel(x, y, (y * DISPLAY_WIDTH + x) & 0xFF);
-	 }
-	 }*/
-	//draw_rect(20, 10, 200, 90, rgb888_to_rgb332(255, 0, 0));
-	draw_rect(20, 10, 200, 90, rgb888_to_rgb332(0, 200, 0));
-	//fill_rect(40, 80, 100, 75, rgb888_to_rgb332(0, 200, 0));
-	fill_rect(40, 80, 100, 75, rgb888_to_rgb332(255, 0, 0));
-	set_text_area(157, 5, 227, 11);
-	uint8_t assault_text_color = rgb888_to_rgb332(255, 255, 28);
-	set_text_color(assault_text_color, assault_text_color);
-	//set_text_color(rgb888_to_rgb332(200, 0, 0), rgb888_to_rgb332(200, 0, 0));
-	//set_text_wrap(1);
-
-	//const char *assault_text = "POLiS SALDIRISI  ///  @@@  ///  POLiS SALDIRISI";
-	const char *assault_text = "POL" "\x82" "S SALDIRISI   ///   @@@   ///   POL" "\x82" "S SALDIRISI";
-	//print_str("STM32F411CEU Handheld Gaming Console Print String And Text Area Test");
-
-	update_display();
-
-	int16_t x = 200;
-	int16_t text_x, text_y;
-	uint16_t text_w1, text_w2, text_w, text_h;
-
-	text_bounds(assault_text, 0, 0, &text_x, &text_y, &text_w1, &text_h);
-	text_bounds(assault_text + 36, 0, 0, &text_x, &text_y, &text_w2, &text_h);
-	text_w = text_w1 - text_w2;
-
-	uint32_t frames = 0, frames_to_draw_display = 0, ticks = 0;
-
-	update_inputs();
-	set_text_area(0, 0, 239, 159);
-
-	/*HAL_Delay(1000);
-
-	FATFS fat_fs = { 0 };
-	FRESULT fres = f_mount(&fat_fs, "", 1);
-	if(fres != FR_OK)
-	{
-		print_str("f_mount error no: ");
-		print_int(fres);
-		print_str("\n");
-		update_display();
-		while(1);
-	}
-
-	DWORD free_clusters, free_sectors, total_sectors;
-	FATFS *get_free_fs;
-
-	fres = f_getfree("", &free_clusters, &get_free_fs);
-	if(fres != FR_OK)
-	{
-		print_str("f_getfree error no: ");
-		print_int(fres);
-		print_str("\n");
-		update_display();
-		while(1);
-	}
-
-	print_str("SD Card initialised\n");
-
-	total_sectors = (get_free_fs->n_fatent - 2) * get_free_fs->csize;
-	free_sectors = free_clusters * get_free_fs->csize;
-
-	print_str("SD size: ");
-	print_int(total_sectors / 2);
-	print_str(" KiB\nFree space: ");
-	print_int(free_sectors / 2);
-	print_str(" KiB\n");
-	update_display();
-
-	f_mount(NULL, "", 0);
-
-	while(1);*/
-
-	Menu menu = { .x = 25, .y = 25, .w = 190, .rows = 5, .capacity = 10, .selection = 2, .item_shift = 0,
-				  .bg_color = rgb888_to_rgb332(50, 50, 255),
-				  .selected_text_color = 0xff,
-				  .non_selected_text_color = rgb888_to_rgb332(150, 150, 150),
-				  .selection_bg_color = rgb888_to_rgb332(200, 10, 10)};
-
-	for(uint8_t i = 0; i < menu.capacity; ++i)
-	{
-		snprintf(&menu.items[i].text, sizeof(menu.items[menu.selection].text), "Men"TR_u" se"TR_c"ene"TR_g"i %d", (i + 1));
-	}
-
+  system_main();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	while (1)
 	{
-		ticks = HAL_GetTick();
-		frames = HAL_GetTick();
-		clear_screen();
-		set_text_area(151, 0, 227, 20);
-		set_cursor(x, 14);
-		set_text_size(1, 1);
-		print_str(assault_text);
-		draw_v_line(151, 1, 3, assault_text_color);
-		draw_v_line(151, 13, 3, assault_text_color);
-		draw_v_line(227, 1, 3, assault_text_color);
-		draw_v_line(227, 13, 3, assault_text_color);
-		draw_h_line(151, 1, 3, assault_text_color);
-		draw_h_line(151, 15, 3, assault_text_color);
-		draw_h_line(225, 1, 3, assault_text_color);
-		draw_h_line(225, 15, 3, assault_text_color);
-		fill_rect(230, 1, 9, 9, assault_text_color);
-		draw_pixel(234, 3, 0);
-		draw_pixel(232, 6, 0);
-		draw_pixel(236, 6, 0);
-		draw_v_line(233, 4, 2, 0);
-		draw_v_line(235, 4, 2, 0);
-		draw_h_line(231, 7, 7, 0);
-
-		if (x < 151 - text_w)
-			x = 151;
-		x -= 1;
-
-		set_text_area(0, 0, 239, 159);
-		set_cursor(0, 21);
-		printf_str("DT: %d ms\n", frames_to_draw_display);
-
-		//show_error_window("HATA TEST" "\x82", "Bunu g" "\x87" "r" "\x8a" "yorsan hata penceresi " "\x86" "al" "\x88" "\x89" "\x88" "yor demektir.\n\n\nHata kodu: ERR_DEBUG");
-		//test_assertion(0 && "This assertion will always fail.");
-		menu_render(&menu);
-
-		update_inputs();
-		if(get_key_down(GAMEPAD_X)) menu_go_down(&menu);
-		if(get_key_down(GAMEPAD_Y)) menu_go_up(&menu);
-
-		set_text_area(0, 0, 239, 159);
-		set_cursor(0, 10);
-		set_text_color(assault_text_color, assault_text_color);
-		print_str("RT: ");
-		frames = HAL_GetTick() - frames;
-		print_int(frames);
-		print_str(" ms");
-
-		frames_to_draw_display = HAL_GetTick();
-
-		update_display();
-
-		frames_to_draw_display = HAL_GetTick() - frames_to_draw_display;
-
-		//while(HAL_GetTick() <= ticks + 33);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

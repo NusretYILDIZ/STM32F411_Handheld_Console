@@ -61,6 +61,13 @@ extern uint8_t wrap_text;
 extern uint8_t text_bg_color;
 extern uint8_t text_fg_color;
 
+extern GFXglyph *glyph;
+extern uint16_t glyph_bo;
+extern uint8_t glyph_w;
+extern uint8_t glyph_h;
+extern int8_t glyph_xo;
+extern int8_t glyph_yo;
+
 uint8_t init_display(void);
 void update_display(void);
 
@@ -74,8 +81,8 @@ void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color);
 void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color);
 void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
-void fill_screen(uint8_t color);
-void clear_screen(void);
+void fill_display(uint8_t color);
+void clear_display(void);
 void draw_image_from_file(int16_t x, int16_t y, const char *file_path, uint8_t tint);
 void draw_image_from_ram(int16_t x, int16_t y, const void *image, uint8_t tint);
 
