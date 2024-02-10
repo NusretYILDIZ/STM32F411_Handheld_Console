@@ -245,6 +245,10 @@
 						X(0xf1,     phs, imp) \
 						X(0xf2,     pls, imp)
 
+
+// Switch-case is faster than function table on embedded systems.
+// https://stackoverflow.com/a/35846099
+
 #define INST_SWITCHCASE(opc, ins, add)  case opc: cpu_inst_##ins(cpu_addr##add); break;
 static void cpu_execute_inst(unsigned char opcode)
 {
