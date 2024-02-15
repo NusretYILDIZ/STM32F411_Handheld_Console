@@ -52,6 +52,7 @@ void system_main()
 		print_str(GP_Y""TR_O"nceki  "GP_X"Sonraki  "GP_A"Se"TR_c);
 
 		menu_render(&system_menu);
+		vm_execute();
 		
 		update_display();
 		
