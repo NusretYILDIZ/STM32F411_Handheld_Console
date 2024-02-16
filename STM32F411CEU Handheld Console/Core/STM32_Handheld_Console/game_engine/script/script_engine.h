@@ -25,13 +25,15 @@ extern uint32_t stack[STACK_SIZE];
 extern ram_t prg_counter;
 extern stack_t stack_ptr;
 
-extern uint32_t a_int;
-extern float a_flt;
+//extern uint32_t a_int;
+//extern float a_flt;
 extern uint8_t logical_flag;
-extern ram_t abs_addr;
-extern ram_t ptr_addr;
+//extern ram_t abs_addr;
+//extern ram_t ptr_addr;
 
 void vm_execute(void);
+void vm_push(uint32_t data);
+uint32_t vm_pop(void);
 
 #define INST_DECLARE(opc, ins)  __attribute__((always_inline)) void vm_inst_##ins(void);
 INST_TABLE(INST_DECLARE)
