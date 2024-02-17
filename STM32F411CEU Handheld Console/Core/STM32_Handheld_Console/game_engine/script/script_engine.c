@@ -1,3 +1,4 @@
+#include <math.h>
 #include "./script_engine.h"
 
 uint8_t ram[RAM_SIZE] = { 0 };
@@ -206,13 +207,20 @@ __attribute__((always_inline)) void vm_inst_arith_calc()
 			break;
 		
 		case ARITH_MOD:
-			//if(float_flag)
-			//	tmp_flt %= *(float *) (&operand_data);
-			//else
+			if(float_flag)
+			{
+				tmp_int = ((uint32_t) tmp_flt) % operand_data;
+				float_flag = 0;
+			}
+			else
 				tmp_int %= operand_data;
 			break;
 		
 		case ARITH_POW:
+			if(float_flag)
+				tmp_flt = powf(tmp_flt, *(float *) (&operand_data));
+			else
+				tmp_int = (uint32_t) powf((float) tmp_int, (float) operand_data);
 			break;
 		}
 	}
