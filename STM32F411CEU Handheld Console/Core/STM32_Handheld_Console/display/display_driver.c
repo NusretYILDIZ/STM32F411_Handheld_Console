@@ -208,6 +208,31 @@ void clear_display()
 	memset(vram, 0, sizeof(vram));
 }
 
+void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image, uint8_t tint)
+{
+	int16_t tx = x, ty = y;
+	uint16_t tw = w, th = h;
+	
+	if(tx >= DISPLAY_WIDTH || ty >= DISPLAY_HEIGHT) return;
+	
+	if(ty < 0) { th += ty; ty = 0; }
+	if(ty + th > DISPLAY_HEIGHT) th = DISPLAY_HEIGHT - ty;
+	if(th < 1) return;
+	
+	if(tx < 0) { tw += tx; tx = 0; }
+	if(tx + tw > DISPLAY_WIDTH) tw = DISPLAY_WIDTH - tx;
+	if(tw < 1) return;
+	
+	while(tw)
+	{
+		--tw;
+		if(x < 0 || y < 0)
+			memcpy(&vram[(tx + tw)][ty], &image[(tw - x) * h + (ty - y)], th);
+		else
+			memcpy(&vram[(tx + tw)][ty], &image[tw * h], th);
+	}
+}
+
 void set_cursor(int16_t x, int16_t y)
 {
 	cursor_x = x;

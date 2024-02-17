@@ -1,16 +1,27 @@
 #ifndef __inst_table_h
 #define __inst_table_h
 
-#define INST_TABLE(X)   X(0x00,    syscall) \
-                        X(0x01,     assign) \
-                        X(0x02, arith_calc) \
-                        X(0x03,    bitwise) \
-                        X(0x04,    logical) \
-                        X(0x05,        jsr) \
-                        X(0x06,        rts) \
-                        X(0x07,    jump_if) \
-                        X(0x08,       jump) \
-                        X(0x09,       exit)
+#define INST_TABLE(X)   X(0x00,        syscall) \
+                        X(0x01,         assign) \
+                        X(0x02,     arith_calc) \
+                        X(0x03,        bitwise) \
+                        X(0x04,        logical) \
+                        X(0x05,            jsr) \
+                        X(0x06,            rts) \
+                        X(0x07,        jump_if) \
+                        X(0x08,           jump) \
+                        X(0x09,           exit) \
+                        X(0x0a,  set_text_area) \
+                        X(0x0b,     set_cursor) \
+                        X(0x0c, set_text_color) \
+                        X(0x0d,  set_text_size) \
+                        X(0x0e,  set_text_wrap) \
+                        X(0x0f,       set_font) \
+                        X(0x10,      print_chr) \
+                        X(0x11,      print_str) \
+                        X(0x12,      print_int) \
+                        X(0x13,     printf_str) \
+                        X(0x14,     draw_image)
 
 #define OPER_MASK        0xE0
 #define TYPE_MASK        0x1C

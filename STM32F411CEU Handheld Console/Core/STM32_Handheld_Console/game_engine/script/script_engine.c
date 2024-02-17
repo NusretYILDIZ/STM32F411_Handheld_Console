@@ -109,13 +109,13 @@ __attribute__((always_inline)) void vm_inst_arith_calc()
 {
 	++prg_counter;
 	
-	uint8_t addr_mode = ram[prg_counter] & ADDR_MASK;
-	uint8_t data_type = ram[prg_counter] & TYPE_MASK;
+	uint8_t dest_addr_mode = ram[prg_counter] & ADDR_MASK;
+	uint8_t dest_data_type = ram[prg_counter] & TYPE_MASK;
 	
 	++prg_counter;
 	
 	ram_t dest_addr = *(ram_t *) (&ram[prg_counter]);
-	if(addr_mode == ADDR_PTR)
+	if(dest_addr_mode == ADDR_PTR)
 		dest_addr = *(ram_t *) (&ram[dest_addr]);
 	
 	prg_counter += sizeof(ram_t);
@@ -151,10 +151,99 @@ __attribute__((always_inline)) void vm_inst_arith_calc()
 			prg_counter += sizeof(ram_t);
 		}
 		
-		if(operand_operation == ARITH_NOP)  // Should be used only for the first operand
+		uint32_t operand_data;
+		
+		if(operand_data_type == TYPE_FLOAT || operand_data_type == TYPE_INT32 || operand_data_type == TYPE_UINT32)
+			operand_data = *(uint32_t *) (&ram[operand_addr]);
+		
+		else if(operand_data_type == TYPE_INT16 || operand_data_type == TYPE_UINT16)
+			operand_data = (uint32_t) *(uint16_t *) (&ram[operand_addr]);
+		
+		else //if(operand_data_type == TYPE_INT8 || operand_data_type == TYPE_UINT8)
+			operand_data = (uint32_t) ram[operand_addr];
+		
+		if(operand_data_type == TYPE_FLOAT && !float_flag)
 		{
-			
+			tmp_flt = (float) tmp_int;
+			float_flag = 1;
 		}
+		
+		switch(operand_operation)
+		{
+		case ARITH_NOP:
+			if(float_flag)
+				tmp_flt = *(float *) (&operand_data);
+			else
+				tmp_int = operand_data;
+			break;
+		
+		case ARITH_ADD:
+			if(float_flag)
+				tmp_flt += *(float *) (&operand_data);
+			else
+				tmp_int += operand_data;
+			break;
+		
+		case ARITH_SUB:
+			if(float_flag)
+				tmp_flt -= *(float *) (&operand_data);
+			else
+				tmp_int -= operand_data;
+			break;
+		
+		case ARITH_MUL:
+			if(float_flag)
+				tmp_flt *= *(float *) (&operand_data);
+			else
+				tmp_int *= operand_data;
+			break;
+		
+		case ARITH_DIV:
+			if(float_flag)
+				tmp_flt /= *(float *) (&operand_data);
+			else
+				tmp_int /= operand_data;
+			break;
+		
+		case ARITH_MOD:
+			//if(float_flag)
+			//	tmp_flt %= *(float *) (&operand_data);
+			//else
+				tmp_int %= operand_data;
+			break;
+		
+		case ARITH_POW:
+			break;
+		}
+	}
+	
+	if(dest_data_type == TYPE_FLOAT)
+	{
+		if(float_flag)
+			*(float *) (&ram[dest_addr]) = tmp_flt;
+		else
+			*(float *) (&ram[dest_addr]) = (float) tmp_int;
+	}
+	else if(dest_data_type == TYPE_INT32 || dest_data_type == TYPE_UINT32)
+	{
+		if(float_flag)
+			*(uint32_t *) (&ram[dest_addr]) = (uint32_t) tmp_flt;
+		else
+			*(uint32_t *) (&ram[dest_addr]) = tmp_int;
+	}
+	else if(dest_data_type == TYPE_INT16 || dest_data_type == TYPE_UINT16)
+	{
+		if(float_flag)
+			*(uint16_t *) (&ram[dest_addr]) = (uint16_t) tmp_flt;
+		else
+			*(uint16_t *) (&ram[dest_addr]) = tmp_int & 0xffff;
+	}
+	else //if(dest_data_type == TYPE_INT8 || dest_data_type == TYPE_UINT8)
+	{
+		if(float_flag)
+			ram[dest_addr] = (uint8_t) tmp_flt;
+		else
+			ram[dest_addr] = tmp_int & 0xff;
 	}
 }
 
@@ -187,7 +276,11 @@ __attribute__((always_inline)) void vm_inst_rts()
 __attribute__((always_inline)) void vm_inst_jump_if()
 {
 	++prg_counter;
-	(logical_flag) ? prg_counter = *(ram_t *) (&ram[prg_counter]) : prg_counter += sizeof(ram_t);
+	
+	if(logical_flag)
+		prg_counter = *(ram_t *) (&ram[prg_counter]);
+	else
+		prg_counter += sizeof(ram_t);
 }
 
 __attribute__((always_inline)) void vm_inst_jump()
@@ -197,6 +290,61 @@ __attribute__((always_inline)) void vm_inst_jump()
 }
 
 __attribute__((always_inline)) void vm_inst_exit()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_text_area()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_cursor()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_text_color()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_text_size()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_text_wrap()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_set_font()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_print_chr()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_print_str()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_print_int()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_printf_str()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_draw_image()
 {
 	
 }

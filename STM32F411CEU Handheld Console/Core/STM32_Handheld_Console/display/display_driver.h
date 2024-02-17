@@ -83,8 +83,7 @@ void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void fill_display(uint8_t color);
 void clear_display(void);
-void draw_image_from_file(int16_t x, int16_t y, const char *file_path, uint8_t tint);
-void draw_image_from_ram(int16_t x, int16_t y, const void *image, uint8_t tint);
+void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image, uint8_t tint);
 
 void set_cursor(int16_t x, int16_t y);
 void set_text_size(uint8_t x, uint8_t y);
