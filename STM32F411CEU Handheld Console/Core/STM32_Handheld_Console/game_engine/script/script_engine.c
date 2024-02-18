@@ -1,6 +1,14 @@
 #include <math.h>
 #include "./script_engine.h"
 
+#define ram_ptr_float(addr)   (*(float    *)(&ram[addr]))
+#define ram_ptr_int8(addr)    (*(int8_t   *)(&ram[addr]))
+#define ram_ptr_int16(addr)   (*(int16_t  *)(&ram[addr]))
+#define ram_ptr_int32(addr)   (*(int32_t  *)(&ram[addr]))
+#define ram_ptr_uint8(addr)   (               ram[addr] )
+#define ram_ptr_uint16(addr)  (*(uint16_t *)(&ram[addr]))
+#define ram_ptr_uint32(addr)  (*(uint32_t *)(&ram[addr]))
+
 uint8_t ram[RAM_SIZE] = { 0 };
 uint32_t stack[STACK_SIZE] = { 0 };
 
@@ -15,7 +23,6 @@ uint8_t logical_flag = 0;
 
 // Switch-case is faster than function table on embedded systems.
 // https://stackoverflow.com/a/35846099
-
 #define INST_SWITCHCASE(opc, ins)  case opc: vm_inst_##ins(); break;
 void vm_execute()
 {
@@ -353,6 +360,16 @@ __attribute__((always_inline)) void vm_inst_printf_str()
 }
 
 __attribute__((always_inline)) void vm_inst_draw_image()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_load_prg()
+{
+	
+}
+
+__attribute__((always_inline)) void vm_inst_mem_set()
 {
 	
 }

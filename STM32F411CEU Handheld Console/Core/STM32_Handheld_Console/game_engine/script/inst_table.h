@@ -21,7 +21,9 @@
                         X(0x11,      print_str) \
                         X(0x12,      print_int) \
                         X(0x13,     printf_str) \
-                        X(0x14,     draw_image)
+                        X(0x14,     draw_image) \
+                        X(0x15,       load_prg) \
+                        X(0x16,        mem_set)
 
 #define OPER_MASK        0xE0
 #define TYPE_MASK        0x1C

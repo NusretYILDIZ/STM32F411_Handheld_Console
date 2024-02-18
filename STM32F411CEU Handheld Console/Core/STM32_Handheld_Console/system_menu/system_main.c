@@ -39,6 +39,18 @@ const unsigned char image[32][32] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+const unsigned char prg[] = {
+	0x01, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM, 36,
+	0x02, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM | ARITH_ADD, 4, TYPE_INT8 | ADDR_IMM | ARITH_DIV, 10, TYPE_TERMINATE
+};
+
+void vm_message(void)
+{
+	char msg[20];
+	snprintf(msg, sizeof(msg), "$0x00000009: %3d", ram[9]);
+	show_info_window("Virtual Machine", msg);
+}
+
 void system_main()
 {
 	init_display();
@@ -71,6 +83,9 @@ void system_main()
 		.attrib = CENTER_ALIGN
 	};
 	
+	memcpy(ram + 50, prg, sizeof(prg));
+	prg_counter = 50;
+	
 	while(1)
 	{
 		clear_display();
@@ -85,15 +100,28 @@ void system_main()
 				
 		set_cursor(0, DISPLAY_HEIGHT - 1);
 		print_str(GP_Y""TR_O"nceki  "GP_X"Sonraki  "GP_A"Se"TR_c);
+		
+		set_cursor(0, DISPLAY_HEIGHT - 3 * get_font_height());
+		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
+		char txt[50];
+		snprintf(txt, sizeof(txt), "Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
+		show_info_window("Virtual Machine", txt);
 
 		menu_render(&system_menu);
-		//vm_execute();
+		
 		draw_image(-10, -5, 32, 32, image, 0);
 		draw_image(220, 135, 32, 32, image, 0);
 
 		update_display();
 		
+		vm_execute();
+		
 		update_inputs();
+		/*if(get_key_down(GAMEPAD_SELECT))
+		{
+			vm_execute();
+			vm_message();
+		}*/
 		if(get_key_down(GAMEPAD_Y)) menu_prev_item(&system_menu);
 		if(get_key_down(GAMEPAD_X)) menu_next_item(&system_menu);
 		if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);

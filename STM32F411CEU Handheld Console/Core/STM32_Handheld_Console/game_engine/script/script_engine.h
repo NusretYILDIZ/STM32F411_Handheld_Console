@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "./inst_table.h"
 
-#define RAM_SIZE    (1024 * 85) // 85 KB (Max possible size is 88 KB but expect it to be lesser than that.)
+#define RAM_SIZE    (1024 * 80) // 85 KB (Max possible size is 88 KB but expect it to be lesser than that.)
 #define STACK_SIZE  (256)
 
 #if (RAM_SIZE > 65536)
