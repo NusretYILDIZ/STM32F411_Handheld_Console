@@ -139,6 +139,8 @@ __attribute__((always_inline)) void vm_inst_arith_calc()
 		ram_t operand_addr;
 		uint8_t operand_operation = ram[prg_counter] & OPER_MASK;
 		
+		++prg_counter;
+		
 		if(operand_data_type == TYPE_TERMINATE) break;
 		
 		if(operand_addr_mode == ADDR_IMM)
