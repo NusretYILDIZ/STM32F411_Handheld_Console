@@ -2,7 +2,6 @@
 #define __script_engine_h
 
 #include <stdint.h>
-#include "./inst_table.h"
 
 #define RAM_SIZE    (1024 * 80) // 85 KB (Max possible size is 88 KB but expect it to be lesser than that.)
 #define STACK_SIZE  (256)
@@ -34,9 +33,5 @@ extern uint8_t logical_flag;
 void vm_execute(void);
 void vm_push(uint32_t data);
 uint32_t vm_pop(void);
-
-#define INST_DECLARE(opc, ins)  __attribute__((always_inline)) void vm_inst_##ins(void);
-INST_TABLE(INST_DECLARE)
-#undef INST_DECLARE
 
 #endif //__script_engine_h

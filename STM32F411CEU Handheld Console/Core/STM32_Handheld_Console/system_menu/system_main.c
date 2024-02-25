@@ -51,7 +51,9 @@ void vm_message(void)
 	show_info_window("Virtual Machine", msg);
 }
 
-void system_main()
+#if defined(__arm__)
+
+uint8_t system_main()
 {
 	init_display();
 	clear_display();
@@ -126,7 +128,18 @@ void system_main()
 		if(get_key_down(GAMEPAD_X)) menu_next_item(&system_menu);
 		if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);
 	}
+	
+	return 0;
 }
+
+#elif defined(__WIN32__)
+
+uint8_t system_main()
+{
+	return init_display();
+}
+
+#endif
 
 void system_list_games(void)
 {

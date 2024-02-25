@@ -7,7 +7,7 @@
 #include "../input/input_driver.h"
 #include "../game_engine/game_engine.h"
 
-void system_main(void);
+uint8_t system_main(void);
 void system_list_games(void);
 void system_options(void);
 void system_about(void);

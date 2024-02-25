@@ -613,10 +613,36 @@ void update_display()
 
 #include <assert.h>
 
+SDL_Window *display_window = 0;
+SDL_Renderer *display_renderer = 0;
+SDL_Rect display_rect = 0;
+SDL_Texture *display_texture = 0;
+SDL_Surface *display_surface = 0;
+
 uint8_t init_display()
 {
-	assert(0 && "WIN32 support for init_display() has not been implemented yet.");
-	return (uint8_t)-1;
+	//assert(0 && "WIN32 support for init_display() has not been implemented yet.");
+	
+	display_window = SDL_CreateWindow("STM32F411CEU Handheld Console Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 240 * 6, 160 * 6, 0);
+	if(!display_window)
+	{
+		printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
+		return 1;
+	}
+	
+	display_renderer = SDL_CreateRenderer(display_window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
+	if(!display_renderer)
+	{
+		SDL_DestroyWindow(display_window);
+		printf("SDL_CreateRenderer failed: %s", SDL_GetError());
+		return 1;
+	}
+	
+	clear_display();
+	set_font(&YILDIZsoft_5x7);
+	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
+	
+	return 0;
 }
 
 void update_display()
