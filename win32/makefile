@@ -48,4 +48,4 @@ system_main.o: $(STM_INCLUDE)system_menu/system_main.c
 
 clean:
 	del /q *.o
-	copy .\sdl2\bin\SDL2.dll /y .\Release
+	@echo "Compilation successful!"

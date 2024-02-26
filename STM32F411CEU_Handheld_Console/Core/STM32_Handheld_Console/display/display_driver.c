@@ -41,7 +41,8 @@ const uint16_t rgb332_to_rgb565[256] = {
     0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xfff5
 };
 
-uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
+//uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
+uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH] = { 0 };
 GFXfont *gfx_font = NULL;
 
 int16_t cursor_x = 0;
@@ -65,7 +66,8 @@ int8_t glyph_yo = 0;
 
 void draw_raw_pixel(int16_t x, int16_t y, uint8_t color)
 {
-	vram[x][y] = color;
+	//vram[x][y] = color;
+	vram[y][x] = color;
 }
 
 void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
@@ -76,16 +78,24 @@ void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 		--h;
 	} */
 	
-	memset(&vram[x][y], color, h);
+	//memset(&vram[x][y], color, h);
+	
+	while(h)
+	{
+		--h;
+		vram[(y + h)][x] = color;
+	}
 }
 
 void draw_raw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 {
-	while(w)
+	/* while(w)
 	{
 		--w;
 		vram[(x + w)][y] = color;
-	}
+	} */
+	
+	memset(&vram[y][x], color, w);
 }
 
 void draw_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
@@ -111,10 +121,16 @@ void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 		--h;
 	} */
 	
-	while(w)
+	/*while(w)
 	{
 		--w;
 		memset(&vram[(x + w)][y], color, h);
+	}*/
+	
+	while(h)
+	{
+		--h;
+		memset(&vram[(y + h)][x], color, w);
 	}
 }
 
@@ -122,7 +138,8 @@ void draw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	if(x < 0 || x >= DISPLAY_WIDTH || y < 0 || y >= DISPLAY_HEIGHT) return;
 	
-	vram[x][y] = color;
+	//vram[x][y] = color;
+	vram[y][x] = color;
 }
 
 void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
@@ -139,7 +156,13 @@ void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 		--h;
 	} */
 	
-	memset(&vram[x][y], color, h);
+	//memset(&vram[x][y], color, h);
+	
+	while(h)
+	{
+		--h;
+		vram[(y + h)][x] = color;
+	}
 }
 
 void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
@@ -150,11 +173,13 @@ void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 	if(x + w > DISPLAY_WIDTH) w = DISPLAY_WIDTH - x;
 	if(w < 1) return;
 	
-	while(w)
+	/* while(w)
 	{
 		--w;
 		vram[(x + w)][y] = color;
-	}
+	} */
+	
+	memset(&vram[y][x], color, w);
 }
 
 void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
@@ -191,10 +216,16 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 		--h;
 	} */
 	
-	while(w)
+	/*while(w)
 	{
 		--w;
 		memset(&vram[(x + w)][y], color, h);
+	}*/
+	
+	while(h)
+	{
+		--h;
+		memset(&vram[(y + h)][x], color, w);
 	}
 }
 
@@ -223,13 +254,22 @@ void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *ima
 	if(tx + tw > DISPLAY_WIDTH) tw = DISPLAY_WIDTH - tx;
 	if(tw < 1) return;
 	
-	while(tw)
+	/*while(tw)
 	{
 		--tw;
 		if(x < 0 || y < 0)
 			memcpy(&vram[(tx + tw)][ty], &image[(tw - x) * h + (ty - y)], th);
 		else
 			memcpy(&vram[(tx + tw)][ty], &image[tw * h], th);
+	}*/
+	
+	while(th)
+	{
+		--th;
+		if(x < 0 || y < 0)
+			memcpy(&vram[(ty + th)][tx], &image[(tw - x) * h + (ty - y)], tw);
+		else
+			memcpy(&vram[(ty + th)][tx], &image[tw * h], tw);
 	}
 }
 
@@ -600,7 +640,8 @@ void update_display()
 	{
 		for(uint16_t x = 0; x < SCREEN_WIDTH / 2; ++x)
 		{
-			tft_set_data_16(rgb332_to_rgb565[(vram[(x)][(y / 2)])]);
+			//tft_set_data_16(rgb332_to_rgb565[(vram[(x)][(y / 2)])]);
+			tft_set_data_16(rgb332_to_rgb565[(vram[(y / 2)][(x)])]);
 			tft_write_pulse();
 			tft_write_pulse();
 		}
@@ -651,7 +692,8 @@ void update_display()
 	SDL_DestroyTexture(display_texture);
 	SDL_FreeSurface(display_surface);
 	
-	display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 160, 240, 8, 160, 0b11100000, 0b00011100, 0b00000011, 0);
+	//display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 160, 240, 8, 160, 0b11100000, 0b00011100, 0b00000011, 0);
+	display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 240, 160, 8, 240, 0b11100000, 0b00011100, 0b00000011, 0);
 	if(!display_surface)
 	{
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateRGBSurfaceFrom failed in update_display function.", 0);
@@ -659,8 +701,9 @@ void update_display()
 	}
 	
 	display_texture = SDL_CreateTextureFromSurface(display_renderer, display_surface);
-	SDL_RendererFlip flip = SDL_FLIP_VERTICAL;
-	SDL_RenderCopyEx(display_renderer, display_texture, 0, 0, 90.0, 0, flip);
+	//SDL_RendererFlip flip = SDL_FLIP_VERTICAL;
+	//SDL_RenderCopyEx(display_renderer, display_texture, 0, 0, 90.0, 0, flip);
+	SDL_RenderCopy(display_renderer, display_texture, 0, 0);
 	SDL_RenderPresent(display_renderer);
 }
 

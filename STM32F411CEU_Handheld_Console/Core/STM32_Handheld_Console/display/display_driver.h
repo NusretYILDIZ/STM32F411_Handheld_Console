@@ -38,7 +38,8 @@
 #define GP_R2        "\x9a"
 
 extern const uint16_t rgb332_to_rgb565[256];
-extern uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT];
+//extern uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT];
+extern uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 extern GFXfont *gfx_font;
 
 extern int16_t cursor_x;
