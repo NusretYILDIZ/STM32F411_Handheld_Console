@@ -615,7 +615,7 @@ void update_display()
 
 SDL_Window *display_window = 0;
 SDL_Renderer *display_renderer = 0;
-SDL_Rect display_rect = 0;
+SDL_Rect display_rect = { 0 };
 SDL_Texture *display_texture = 0;
 SDL_Surface *display_surface = 0;
 
@@ -649,6 +649,8 @@ void update_display()
 {
 	assert(0 && "WIN32 support for update_display() has not been implemented yet.");
 }
+
+#elif defined(__ANDROID__)
 
 #else
 	#error "Unsupported platform"

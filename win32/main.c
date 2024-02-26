@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "./sdl2/include/SDL2/SDL.h"
-#include "../STM32F411CEU Handheld Console/Core/STM32_Handheld_Console/STM32_Handheld_Console.h"
+#include "../STM32F411CEU_Handheld_Console/Core/STM32_Handheld_Console/STM32_Handheld_Console.h"
 
 int main(int argc, char **argv)
 {
@@ -13,7 +13,11 @@ int main(int argc, char **argv)
 	
 	uint8_t res = system_main();
 	
-	//SDL_Quit();
+	int a;
+	printf("Press any key to exit...");
+	a = fgetc(stdin);
+	
+	SDL_Quit();
 	
 	return res;
 }
