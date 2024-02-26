@@ -612,6 +612,7 @@ void update_display()
 #elif defined(__WIN32__)
 
 #include <assert.h>
+#include <stdlib.h>
 
 SDL_Window *display_window = 0;
 SDL_Renderer *display_renderer = 0;
@@ -626,16 +627,16 @@ uint8_t init_display()
 	display_window = SDL_CreateWindow("STM32F411CEU Handheld Console Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 240 * 6, 160 * 6, 0);
 	if(!display_window)
 	{
-		printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
-		return 1;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateWindow failed in init_display function.", 0);
+		exit(1);
 	}
 	
 	display_renderer = SDL_CreateRenderer(display_window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
 	if(!display_renderer)
 	{
 		SDL_DestroyWindow(display_window);
-		printf("SDL_CreateRenderer failed: %s", SDL_GetError());
-		return 1;
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateRenderer failed in init_display function.", 0);
+		exit(1);
 	}
 	
 	clear_display();
@@ -647,7 +648,20 @@ uint8_t init_display()
 
 void update_display()
 {
-	assert(0 && "WIN32 support for update_display() has not been implemented yet.");
+	SDL_DestroyTexture(display_texture);
+	SDL_FreeSurface(display_surface);
+	
+	display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 160, 240, 8, 160, 0b11100000, 0b00011100, 0b00000011, 0);
+	if(!display_surface)
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateRGBSurfaceFrom failed in update_display function.", 0);
+		exit(1);
+	}
+	
+	display_texture = SDL_CreateTextureFromSurface(display_renderer, display_surface);
+	SDL_RendererFlip flip = SDL_FLIP_VERTICAL;
+	SDL_RenderCopyEx(display_renderer, display_texture, 0, 0, 90.0, 0, flip);
+	SDL_RenderPresent(display_renderer);
 }
 
 #elif defined(__ANDROID__)

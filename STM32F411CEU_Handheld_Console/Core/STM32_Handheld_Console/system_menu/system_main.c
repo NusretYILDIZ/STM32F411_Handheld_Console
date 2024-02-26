@@ -51,7 +51,7 @@ void vm_message(void)
 	show_info_window("Virtual Machine", msg);
 }
 
-#if defined(__arm__)
+//#if defined(__arm__)
 
 uint8_t system_main()
 {
@@ -132,14 +132,14 @@ uint8_t system_main()
 	return 0;
 }
 
-#elif defined(__WIN32__)
+/*#elif defined(__WIN32__)
 
 uint8_t system_main()
 {
 	return init_display();
 }
 
-#endif
+#endif*/
 
 void system_list_games(void)
 {

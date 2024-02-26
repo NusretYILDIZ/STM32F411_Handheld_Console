@@ -59,7 +59,7 @@ void update_inputs()
 void update_inputs()
 {
 	previous_keys = current_keys;
-	assert(0 && "WIN32 support for update_inputs() has not been implemented yet.");
+	//assert(0 && "WIN32 support for update_inputs() has not been implemented yet.");
 }
 
 #elif defined(__ANDROID__)
