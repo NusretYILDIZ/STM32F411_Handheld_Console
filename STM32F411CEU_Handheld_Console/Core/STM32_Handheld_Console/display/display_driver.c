@@ -267,9 +267,9 @@ void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *ima
 	{
 		--th;
 		if(x < 0 || y < 0)
-			memcpy(&vram[(ty + th)][tx], &image[(tw - x) * h + (ty - y)], tw);
+			memcpy(&vram[(ty + th)][tx], &image[(th - y) * w + (tx - x)], tw);
 		else
-			memcpy(&vram[(ty + th)][tx], &image[tw * h], tw);
+			memcpy(&vram[(ty + th)][tx], &image[th * w], tw);
 	}
 }
 
