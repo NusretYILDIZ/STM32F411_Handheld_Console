@@ -101,7 +101,7 @@ uint8_t system_main()
 		print_str(system_ver);
 				
 		set_cursor(0, DISPLAY_HEIGHT - 1);
-		print_str(GP_Y""TR_O"nceki  "GP_X"Sonraki  "GP_A"Se"TR_c);
+		print_str(GP_UP""TR_O"nceki  "GP_DOWN"Sonraki  "GP_A"Se"TR_c);
 		
 		set_cursor(0, DISPLAY_HEIGHT - 3 * get_font_height());
 		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);

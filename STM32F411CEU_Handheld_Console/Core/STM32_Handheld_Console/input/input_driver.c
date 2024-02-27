@@ -74,67 +74,72 @@ void update_inputs()
 			break;
 		
 		case SDL_KEYDOWN:
-			switch(input_event.key.keysym.sym)
+		case SDL_KEYUP:
+			if(input_event.key.state == SDL_PRESSED)
 			{
-			case SDLK_w:
-				current_keys |= GAMEPAD_DPAD_UP;
-				break;
-			
-			case SDLK_d:
-				current_keys |= GAMEPAD_DPAD_RIGHT;
-				break;
-			
-			case SDLK_s:
-				current_keys |= GAMEPAD_DPAD_DOWN;
-				break;
-			
-			case SDLK_a:
-				current_keys |= GAMEPAD_DPAD_LEFT;
-				break;
-			
-			case SDLK_j:
-				current_keys |= GAMEPAD_X;
-				break;
-			
-			case SDLK_i:
-				current_keys |= GAMEPAD_Y;
-				break;
-			
-			case SDLK_k:
-				current_keys |= GAMEPAD_A;
-				break;
-			
-			case SDLK_l:
-				current_keys |= GAMEPAD_B;
-				break;
-			
-			case SDLK_b:
-				current_keys |= GAMEPAD_SELECT;
-				break;
-			
-			case SDLK_v:
-				current_keys |= GAMEPAD_HOME;
-				break;
-			
-			case SDLK_n:
-				current_keys |= GAMEPAD_START;
-				break;
-			
-			case SDLK_2:
-				current_keys |= GAMEPAD_L1;
-				break;
-			
-			case SDLK_8:
-				current_keys |= GAMEPAD_R1;
-				break;
-			
-			case SDLK_3:
-				current_keys |= GAMEPAD_L2;
-				break;
-			
-			case SDLK_9:
-				current_keys |= GAMEPAD_R2;
-				break;
+				//current_keys = 0;
+				switch(input_event.key.keysym.sym)
+				{
+				case SDLK_w:
+					current_keys |= GAMEPAD_DPAD_UP;
+					break;
+				
+				case SDLK_d:
+					current_keys |= GAMEPAD_DPAD_RIGHT;
+					break;
+				
+				case SDLK_s:
+					current_keys |= GAMEPAD_DPAD_DOWN;
+					break;
+				
+				case SDLK_a:
+					current_keys |= GAMEPAD_DPAD_LEFT;
+					break;
+				
+				case SDLK_j:
+					current_keys |= GAMEPAD_X;
+					break;
+				
+				case SDLK_i:
+					current_keys |= GAMEPAD_Y;
+					break;
+				
+				case SDLK_k:
+					current_keys |= GAMEPAD_A;
+					break;
+				
+				case SDLK_l:
+					current_keys |= GAMEPAD_B;
+					break;
+				
+				case SDLK_b:
+					current_keys |= GAMEPAD_SELECT;
+					break;
+				
+				case SDLK_v:
+					current_keys |= GAMEPAD_HOME;
+					break;
+				
+				case SDLK_n:
+					current_keys |= GAMEPAD_START;
+					break;
+				
+				case SDLK_2:
+					current_keys |= GAMEPAD_L1;
+					break;
+				
+				case SDLK_8:
+					current_keys |= GAMEPAD_R1;
+					break;
+				
+				case SDLK_3:
+					current_keys |= GAMEPAD_L2;
+					break;
+				
+				case SDLK_9:
+					current_keys |= GAMEPAD_R2;
+					break;
+				}
 			}
 			break;
 		}
