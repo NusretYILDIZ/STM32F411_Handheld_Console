@@ -654,6 +654,7 @@ void update_display()
 
 #include <assert.h>
 #include <stdlib.h>
+#include "./win32/win32_sdl2_include.h"
 
 SDL_Window *display_window = 0;
 SDL_Renderer *display_renderer = 0;

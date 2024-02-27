@@ -54,12 +54,91 @@ void update_inputs()
 
 #elif defined(__WIN32__)
 
-#include <assert.h>
+#include <stdlib.h>
+#include "./win32/win32_sdl2_include.h"
+
+SDL_Event input_event;
 
 void update_inputs()
 {
 	previous_keys = current_keys;
-	//assert(0 && "WIN32 support for update_inputs() has not been implemented yet.");
+	current_keys = 0;
+	
+	while(SDL_PollEvent(&input_event))
+	{
+		switch(input_event.type)
+		{
+		case SDL_QUIT:
+			SDL_Quit();
+			exit(0);
+			break;
+		
+		case SDL_KEYDOWN:
+			switch(input_event.key.keysym.sym)
+			{
+			case SDLK_w:
+				current_keys |= GAMEPAD_DPAD_UP;
+				break;
+			
+			case SDLK_d:
+				current_keys |= GAMEPAD_DPAD_RIGHT;
+				break;
+			
+			case SDLK_s:
+				current_keys |= GAMEPAD_DPAD_DOWN;
+				break;
+			
+			case SDLK_a:
+				current_keys |= GAMEPAD_DPAD_LEFT;
+				break;
+			
+			case SDLK_j:
+				current_keys |= GAMEPAD_X;
+				break;
+			
+			case SDLK_i:
+				current_keys |= GAMEPAD_Y;
+				break;
+			
+			case SDLK_k:
+				current_keys |= GAMEPAD_A;
+				break;
+			
+			case SDLK_l:
+				current_keys |= GAMEPAD_B;
+				break;
+			
+			case SDLK_b:
+				current_keys |= GAMEPAD_SELECT;
+				break;
+			
+			case SDLK_v:
+				current_keys |= GAMEPAD_HOME;
+				break;
+			
+			case SDLK_n:
+				current_keys |= GAMEPAD_START;
+				break;
+			
+			case SDLK_2:
+				current_keys |= GAMEPAD_L1;
+				break;
+			
+			case SDLK_8:
+				current_keys |= GAMEPAD_R1;
+				break;
+			
+			case SDLK_3:
+				current_keys |= GAMEPAD_L2;
+				break;
+			
+			case SDLK_9:
+				current_keys |= GAMEPAD_R2;
+				break;
+			}
+			break;
+		}
+	}
 }
 
 #elif defined(__ANDROID__)

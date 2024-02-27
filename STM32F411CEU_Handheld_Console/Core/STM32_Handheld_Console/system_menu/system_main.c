@@ -107,7 +107,7 @@ uint8_t system_main()
 		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
 		char txt[50];
 		snprintf(txt, sizeof(txt), "Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
-		show_info_window("Virtual Machine", txt);
+		//show_info_window("Virtual Machine", txt);
 
 		menu_render(&system_menu);
 		
@@ -116,7 +116,7 @@ uint8_t system_main()
 
 		update_display();
 		
-		vm_execute();
+		//vm_execute();
 		
 		update_inputs();
 		/*if(get_key_down(GAMEPAD_SELECT))
