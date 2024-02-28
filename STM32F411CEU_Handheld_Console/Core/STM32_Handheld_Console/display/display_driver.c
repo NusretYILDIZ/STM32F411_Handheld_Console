@@ -4,6 +4,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 
 // Taken from: https://blog.frankvh.com/2015/03/29/fast-rgb332-to-rgb565-colorspace-conversion/
 const uint16_t rgb332_to_rgb565[256] = {

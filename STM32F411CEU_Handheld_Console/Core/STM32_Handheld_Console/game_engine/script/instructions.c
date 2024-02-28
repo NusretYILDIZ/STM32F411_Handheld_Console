@@ -13,74 +13,64 @@ _INLINE_ void vm_inst_syscall()
 _INLINE_ void vm_inst_assign()
 {
     ++prg_counter;  // Get to the operand attribute byte location
-    
-    uint8_t addr_mode; // = ram[prg_counter] & ADDR_MASK;
-    uint8_t dest_data_type; // = ram[prg_counter] & TYPE_MASK;
-    uint8_t oper_mode;
 
-    //++prg_counter;  // Get to the destination address location
-    
-    read_attrib(addr_mode, dest_data_type, oper_mode);
-    
-    ram_t dest_addr;
-    read_addr(dest_addr, addr_mode);
-    
-    //ram_t dest_addr = *(ram_t *) (&ram[prg_counter]);
-    
-    //if(addr_mode == ADDR_PTR)
-    //  dest_addr = *(ram_t *) (&ram[dest_addr]);
-    
-    //prg_counter += sizeof(ram_t);  // Get to the operand attribute byte location
-    
-    //addr_mode = ram[prg_counter] & ADDR_MASK;
-    uint8_t src_data_type; // = ram[prg_counter] & TYPE_MASK;
-    read_attrib(addr_mode, src_data_type, oper_mode);
-    
-    ram_t src_addr;
-    uint32_t tmp;
-    
-    //++prg_counter;  // Get to the data to assign location
-	
-	set_read_addr(src_addr, addr_mode, src_data_type);
-    
-    /*if(addr_mode == ADDR_IMM) 
-    {
-        src_addr = prg_counter;
-        
-        prg_counter += (src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32) ? sizeof(uint32_t) :
-                       (src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16) ? sizeof(uint16_t) :
-                       sizeof(uint8_t);
-    }
-    else
-    {
-        src_addr = *(ram_t *)(&ram[prg_counter]);
-        
-        if(addr_mode == ADDR_PTR)
-            src_addr = *(ram_t *)(&ram[src_addr]);
-        
-        prg_counter += sizeof(ram_t);
-    }*/
-    
-    if(src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
-        tmp = *(uint32_t *) (&ram[src_addr]);
-    
-    else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
-        tmp = (uint32_t) *(uint16_t *) (&ram[src_addr]);
-    
-    else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
-        tmp = (uint32_t) *(uint8_t *) (&ram[src_addr]);
-    
-    else return;  // Illegal attribute, terminate the instruction
-    
-    
-    if(dest_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
-        *(uint32_t *) (&ram[dest_addr]) = tmp;
-    
-    else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
-        *(uint16_t *) (&ram[dest_addr]) = (uint16_t) tmp;
-    
-    else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
-        ram[dest_addr] = (uint8_t) tmp;
+	uint8_t addr_mode = ram[prg_counter] & ADDR_MASK;
+	uint8_t dest_data_type = ram[prg_counter] & TYPE_MASK;
+
+	++prg_counter;  // Get to the destination address location
+
+	ram_t dest_addr = *(ram_t *) (&ram[prg_counter]);
+
+	if(addr_mode == ADDR_PTR)
+		dest_addr = *(ram_t *) (&ram[dest_addr]);
+
+	prg_counter += sizeof(ram_t);  // Get to the operand attribute byte location
+
+	addr_mode = ram[prg_counter] & ADDR_MASK;
+	uint8_t src_data_type = ram[prg_counter] & TYPE_MASK;
+	ram_t src_addr;
+	uint32_t tmp;
+
+	++prg_counter;  // Get to the data to assign location
+
+	if(addr_mode == ADDR_IMM) 
+	{
+		src_addr = prg_counter;
+
+		prg_counter += (src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32) ? sizeof(uint32_t) :
+		               (src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16) ? sizeof(uint16_t) :
+					   sizeof(uint8_t);
+	}
+	else
+	{
+		src_addr = *(ram_t *)(&ram[prg_counter]);
+
+		if(addr_mode == ADDR_PTR)
+			src_addr = *(ram_t *)(&ram[src_addr]);
+
+		prg_counter += sizeof(ram_t);
+	}
+
+	if(src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
+		tmp = *(uint32_t *) (&ram[src_addr]);
+
+	else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
+		tmp = (uint32_t) *(uint16_t *) (&ram[src_addr]);
+
+	else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
+		tmp = (uint32_t) *(uint8_t *) (&ram[src_addr]);
+
+	else return;  // Illegal attribute, terminate the instruction
+
+
+	if(dest_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
+		*(uint32_t *) (&ram[dest_addr]) = tmp;
+
+	else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
+		*(uint16_t *) (&ram[dest_addr]) = (uint16_t) tmp;
+
+	else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
+		ram[dest_addr] = (uint8_t) tmp;
 }
 
 _INLINE_ void vm_inst_arith_calc()

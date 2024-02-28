@@ -4,7 +4,7 @@ SDL_LIB = -L./sdl2/lib -lSDL2main -lSDL2
 SDL_INCLUDE = -I./sdl2/include
 STM_INCLUDE := ../STM32F411CEU_Handheld_Console/Core/STM32_Handheld_Console/
 # If your compiler is a bit older you may need to change -std=c++11 to -std=c++0x
-CXXFLAGS = -Wall -c -std=c99 $(SDL_INCLUDE) $(STM_INCLUDE)
+CXXFLAGS = -Wall -c -std=c99 -Ofast $(SDL_INCLUDE) $(STM_INCLUDE)
 LDFLAGS = -lmingw32 -mwindows -mconsole $(SDL_LIB)
 EXE = ./Release/STM32F411CEU_Handheld_Console_Emulator.exe
 

@@ -40,6 +40,8 @@ const unsigned char image[32][32] = {
 };
 
 const unsigned char prg[] = {
+	// a = 36
+	// a = (a + 4) / 10
 	0x01, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM, 36,
 	0x02, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM | ARITH_ADD, 4, TYPE_INT8 | ADDR_IMM | ARITH_DIV, 10, TYPE_TERMINATE
 };
@@ -60,6 +62,16 @@ uint8_t system_main()
 	update_display();
 	
 	update_inputs();
+	
+	#if defined(__WIN32__)
+	typedef union {
+		uint32_t addr;
+		uint8_t bytes[4];
+	} mem_addr;
+	mem_addr memory = { .bytes = { 0x09, 0x00, 0x00, 0x00 } };
+	
+	printf("mem_addr: %d\n", memory.addr);
+	#endif
 	
 	Menu system_menu = {
 		.x = 10,
@@ -104,19 +116,30 @@ uint8_t system_main()
 		print_str(GP_UP""TR_O"nceki  "GP_DOWN"Sonraki  "GP_A"Se"TR_c);
 		
 		set_cursor(0, DISPLAY_HEIGHT - 3 * get_font_height());
-		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
 		char txt[50];
-		snprintf(txt, sizeof(txt), "Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
-		//show_info_window("Virtual Machine", txt);
+		#if defined(__WIN32__)
+		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[memory.addr]);
+		snprintf(txt, sizeof(txt), "Program counter: %d\n$0x00000009: %3d", prg_counter, ram[memory.addr]);
+		printf("ram[memory.addr] == %d\n", ram[memory.addr]);
+		
+		for(int i = 0; i < 256; i += 16)
+		{
+			printf("$%5d : %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n", i,
+					ram[i+0], ram[i+1], ram[i+2], ram[i+3], ram[i+4], ram[i+5], ram[i+6], ram[i+7], 
+					ram[i+8], ram[i+9], ram[i+10], ram[i+11], ram[i+12], ram[i+13], ram[i+14], ram[i+15]);
+		}
+		printf("\n");
+		#endif
 
 		menu_render(&system_menu);
 		
 		draw_image(-10, -5, 32, 32, image, 0);
 		draw_image(220, 135, 32, 32, image, 0);
+		show_info_window("Virtual Machine", txt);
 
 		update_display();
 		
-		//vm_execute();
+		vm_execute();
 		
 		update_inputs();
 		/*if(get_key_down(GAMEPAD_SELECT))
