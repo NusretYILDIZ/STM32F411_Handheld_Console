@@ -62,7 +62,7 @@ SDL_Event input_event;
 void update_inputs()
 {
 	previous_keys = current_keys;
-	current_keys = 0;
+	uint8_t first_handle = 1;
 	
 	while(SDL_PollEvent(&input_event))
 	{
@@ -75,9 +75,14 @@ void update_inputs()
 		
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
+			if(first_handle)
+			{
+				first_handle = 0;
+				current_keys = 0;
+			}
+		
 			if(input_event.key.state == SDL_PRESSED)
 			{
-				//current_keys = 0;
 				switch(input_event.key.keysym.sym)
 				{
 				case SDLK_w:
@@ -140,6 +145,8 @@ void update_inputs()
 					current_keys |= GAMEPAD_R2;
 					break;
 				}
+	
+			//printf("prev: %4x, curr: %4x\n", previous_keys, current_keys);
 			}
 			break;
 		}
