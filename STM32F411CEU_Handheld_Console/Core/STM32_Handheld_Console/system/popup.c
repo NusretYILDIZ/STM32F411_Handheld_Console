@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "./popup.h"
+#include "./timer.h"
 #include "../display/display_driver.h"
 #include "../input/input_driver.h"
 
@@ -47,10 +48,11 @@ void show_window_helper(const char *title, const char *msg, unsigned char color)
 	
 	update_display();
 	
-	while(1)
+	for(;;)
 	{
 		update_inputs();
 		if(get_key_down(GAMEPAD_A)) break;
+		system_sleep(33);
 	}
 	
 	set_text_wrap(temp_wrap);

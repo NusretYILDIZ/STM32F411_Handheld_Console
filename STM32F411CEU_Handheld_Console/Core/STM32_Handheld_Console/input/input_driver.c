@@ -146,7 +146,7 @@ void update_inputs()
 					break;
 				}
 	
-			//printf("prev: %4x, curr: %4x\n", previous_keys, current_keys);
+			printf("prev: %4x, curr: %4x\n", previous_keys, current_keys);
 			}
 			break;
 		}

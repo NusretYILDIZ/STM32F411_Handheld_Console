@@ -5,6 +5,6 @@
 // #include "./input/input_driver.h"
 // #include "./system_menu/popup.h"
 // #include "./system_menu/menu.h"
-#include "./system_menu/system_main.h"
+#include "./system/system_main.h"
 
 #endif //__stm32_handheld_console_h

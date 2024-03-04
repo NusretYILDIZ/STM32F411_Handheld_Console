@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "STM32_Handheld_Console.h"
+#include "../STM32_Handheld_Console/STM32_Handheld_Console.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

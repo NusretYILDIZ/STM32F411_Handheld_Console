@@ -1,6 +1,10 @@
 #include "./system_main.h"
 
-#define SYSTEM_VER    "Alpha 4"
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#define SYSTEM_VER    "Alpha 5"
 
 const char *system_ver = "Konsol Sistemi "SYSTEM_VER;
 
@@ -90,8 +94,12 @@ uint8_t system_main()
 	memcpy(ram + 50, prg, sizeof(prg));
 	prg_counter = 50;
 	
+	int32_t ticks;
+	
 	while(1)
 	{
+		ticks = get_tick();
+		
 		clear_display();
 		set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 		
@@ -118,10 +126,13 @@ uint8_t system_main()
 		update_display();
 		update_inputs();
 		
-		if(get_key_down(GAMEPAD_START)) vm_execute();
 		if(get_key_down(GAMEPAD_DPAD_UP)) menu_prev_item(&system_menu);
 		if(get_key_down(GAMEPAD_DPAD_DOWN)) menu_next_item(&system_menu);
 		if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);
+		if(get_key_down(GAMEPAD_START)) { vm_message(); vm_execute(); }
+		
+		int32_t tck = get_tick();
+		system_sleep(max(0, 33 - tck + ticks));
 	}
 	
 	return 0;

@@ -18,6 +18,6 @@ extern uint32_t gpioa_moder, input_en_pupdr;
                               /* Set input enable pin as input */  GPIOA->MODER  = gpioa_moder; \
                               /* Set Port B as output */           GPIOB->MODER  = 0x55555555
 
-#define get_input_status()    ((uint16_t)(GPIOB->IDR))
+#define get_input_status()    (GPIOB->IDR)
 
 #endif //__stm32f411_input_h

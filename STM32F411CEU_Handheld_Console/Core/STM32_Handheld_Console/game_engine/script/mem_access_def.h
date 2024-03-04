@@ -1,13 +1,13 @@
 #ifndef __mem_access_def_h
 #define __mem_access_def_h
 
-#define ram_ptr_float(addr)   (*(float    *)(&ram[addr]))
-#define ram_ptr_int8(addr)    (*(int8_t   *)(&ram[addr]))
-#define ram_ptr_int16(addr)   (*(int16_t  *)(&ram[addr]))
-#define ram_ptr_int32(addr)   (*(int32_t  *)(&ram[addr]))
-#define ram_ptr_uint8(addr)   (               ram[addr] )
-#define ram_ptr_uint16(addr)  (*(uint16_t *)(&ram[addr]))
-#define ram_ptr_uint32(addr)  (*(uint32_t *)(&ram[addr]))
+#define ram_ptr_float(addr)   (*(float    *)(&ram[(addr)]))
+#define ram_ptr_int8(addr)    (*(int8_t   *)(&ram[(addr)]))
+#define ram_ptr_int16(addr)   (*(int16_t  *)(&ram[(addr)]))
+#define ram_ptr_int32(addr)   (*(int32_t  *)(&ram[(addr)]))
+#define ram_ptr_uint8(addr)   (               ram[(addr)] )
+#define ram_ptr_uint16(addr)  (*(uint16_t *)(&ram[(addr)]))
+#define ram_ptr_uint32(addr)  (*(uint32_t *)(&ram[(addr)]))
 
 #define read_attrib(addr_mode, data_type, oper_type)    do { \
                                                             addr_mode = ram[prg_counter] & ADDR_MASK; \
@@ -17,7 +17,7 @@
                                                         } while(0)
 
 #define read_addr(dest_addr, addr_mode)   do { \
-                                              ram_t dest_addr = *(ram_t *) (&ram[prg_counter]); \   
+                                              dest_addr = *(ram_t *) (&ram[prg_counter]); \
                                               if(addr_mode == ADDR_PTR) dest_addr = *(ram_t *) (&ram[dest_addr]); \
                                               prg_counter += sizeof(ram_t); \
                                           } while(0)
@@ -25,8 +25,8 @@
 #define set_read_addr(addr, addr_mode, data_type)    do { \
                                                          if(addr_mode == ADDR_IMM) { \
                                                              addr = prg_counter; \
-                                                             prg_counter += (data_type == TYPE_FLOAT || data_type == TYPE_INT32 || data_type == TYPE_UINT32) ? sizeof(uint32_t) \
-                                                             : (data_type == TYPE_INT16 || data_type == TYPE_UINT16) ? sizeof(uint16_t) \
+                                                             prg_counter += ((data_type == TYPE_FLOAT) || (data_type == TYPE_INT32) || (data_type == TYPE_UINT32)) ? sizeof(uint32_t) \
+                                                             : ((data_type == TYPE_INT16) || (data_type == TYPE_UINT16)) ? sizeof(uint16_t) \
                                                              : sizeof(uint8_t); \
                                                          } \
 														 else { \
@@ -69,6 +69,34 @@
                                 ++prg_counter; \
                             } while(0)
 
+#define write_float(dat, addr)		do { \
+										*(float *) (&ram[(addr)]) = (float)(dat); \
+									} while(0)
+                            
+#define write_int32(dat, addr)		do { \
+										*(int32_t *) (&ram[(addr)]) = (int32_t)(dat); \
+									} while(0)
+                            
+#define write_int16(dat, addr)		do { \
+										*(int16_t *) (&ram[(addr)]) = (int16_t)(dat); \
+									} while(0)
+                            
+#define write_int8(dat, addr)		do { \
+										*(int8_t *) (&ram[(addr)]) = (int8_t)(dat); \
+									} while(0)
+
+#define write_uint32(dat, addr)		do { \
+										*(uint32_t *) (&ram[(addr)]) = (uint32_t)(dat); \
+									} while(0)
+
+#define write_uint16(dat, addr)		do { \
+										*(uint16_t *) (&ram[(addr)]) = (uint16_t)(dat); \
+									} while(0)
+
+#define write_uint8(dat, addr)		do { \
+										ram[(addr)] = (uint8_t)(dat); \
+									} while(0)
+
 #define OPER_MASK        0xE0
 #define TYPE_MASK        0x1C
 #define ADDR_MASK        0x03
@@ -109,5 +137,16 @@
 #define LOGICAL_GREAT    (5 << 5)
 #define LOGICAL_LESSEQ   (6 << 5)
 #define LOGICAL_GREATEQ  (7 << 5)
+
+typedef union
+{
+	float flt;
+	int32_t int32;
+	int16_t int16;
+	int8_t int8;
+	uint32_t uint32;
+	uint16_t uint16;
+	uint8_t uint8;
+} mem_buf;
 
 #endif //__mem_access_def_h

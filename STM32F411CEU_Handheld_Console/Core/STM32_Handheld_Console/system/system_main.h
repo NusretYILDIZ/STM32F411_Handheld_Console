@@ -3,6 +3,7 @@
 
 #include "./popup.h"
 #include "./menu.h"
+#include "./timer.h"
 #include "../display/display_driver.h"
 #include "../input/input_driver.h"
 #include "../game_engine/game_engine.h"

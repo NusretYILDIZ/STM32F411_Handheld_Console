@@ -4,13 +4,13 @@ SDL_LIB = -L./sdl2/lib -lSDL2main -lSDL2
 SDL_INCLUDE = -I./sdl2/include
 STM_INCLUDE := ../STM32F411CEU_Handheld_Console/Core/STM32_Handheld_Console/
 # If your compiler is a bit older you may need to change -std=c++11 to -std=c++0x
-CXXFLAGS = -Wall -c -std=c99 -Ofast $(SDL_INCLUDE) $(STM_INCLUDE)
+CXXFLAGS = -Wall -c -std=c99 -O3 $(SDL_INCLUDE) $(STM_INCLUDE)
 LDFLAGS = -lmingw32 -mwindows -mconsole $(SDL_LIB)
 EXE = ./Release/STM32F411CEU_Handheld_Console_Emulator.exe
 
 all: $(EXE) clean
 
-$(EXE): main.o display_driver.o glcdfont.o file_system.o instructions.o script_engine.o syscalls.o input_driver.o menu.o popup.o system_main.o
+$(EXE): main.o display_driver.o glcdfont.o file_system.o instructions.o script_engine.o syscalls.o input_driver.o menu.o popup.o timer.o system_main.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 main.o: main.c
@@ -37,13 +37,16 @@ syscalls.o: $(STM_INCLUDE)game_engine/script/syscalls.c
 input_driver.o: $(STM_INCLUDE)input/input_driver.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-menu.o: $(STM_INCLUDE)system_menu/menu.c
+menu.o: $(STM_INCLUDE)system/menu.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-popup.o: $(STM_INCLUDE)system_menu/popup.c
+popup.o: $(STM_INCLUDE)system/popup.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-system_main.o: $(STM_INCLUDE)system_menu/system_main.c
+timer.o: $(STM_INCLUDE)system/timer.c
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+system_main.o: $(STM_INCLUDE)system/system_main.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 clean:

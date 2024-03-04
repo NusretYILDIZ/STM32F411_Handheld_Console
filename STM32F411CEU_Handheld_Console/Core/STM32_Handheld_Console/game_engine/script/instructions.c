@@ -3,77 +3,300 @@
 #include "./mem_access_def.h"
 #include <math.h>
 
-#define _INLINE_  __attribute__((always_inline)) inline 
+#define __inline  __attribute__((always_inline)) inline 
 
-_INLINE_ void vm_inst_syscall()
+__inline void vm_inst_syscall()
 {
     
 }
 
-_INLINE_ void vm_inst_assign()
+__inline void vm_inst_assign()
 {
-    ++prg_counter;  // Get to the operand attribute byte location
-
-	uint8_t addr_mode = ram[prg_counter] & ADDR_MASK;
-	uint8_t dest_data_type = ram[prg_counter] & TYPE_MASK;
-
-	++prg_counter;  // Get to the destination address location
-
-	ram_t dest_addr = *(ram_t *) (&ram[prg_counter]);
-
-	if(addr_mode == ADDR_PTR)
-		dest_addr = *(ram_t *) (&ram[dest_addr]);
-
-	prg_counter += sizeof(ram_t);  // Get to the operand attribute byte location
-
-	addr_mode = ram[prg_counter] & ADDR_MASK;
-	uint8_t src_data_type = ram[prg_counter] & TYPE_MASK;
+	++prg_counter;
+	
+	uint8_t dest_addr_mode, dest_data_type, oper_mode;
+	read_attrib(dest_addr_mode, dest_data_type, oper_mode);
+	
+	ram_t dest_addr;
+	read_addr(dest_addr, dest_addr_mode);
+	
+	uint8_t src_addr_mode, src_data_type;
+	read_attrib(src_addr_mode, src_data_type, oper_mode);
+	
 	ram_t src_addr;
-	uint32_t tmp;
-
-	++prg_counter;  // Get to the data to assign location
-
-	if(addr_mode == ADDR_IMM) 
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	
+	mem_buf tmp;
+	
+	switch(src_data_type)
 	{
-		src_addr = prg_counter;
-
-		prg_counter += (src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32) ? sizeof(uint32_t) :
-		               (src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16) ? sizeof(uint16_t) :
-					   sizeof(uint8_t);
+	case TYPE_FLOAT:
+		tmp.flt = ram_ptr_float(src_addr);
+		break;
+	
+	case TYPE_INT32:
+		tmp.int32 = ram_ptr_int32(src_addr);
+		break;
+	
+	case TYPE_INT16:
+		tmp.int16 = ram_ptr_int16(src_addr);
+		break;
+	
+	case TYPE_INT8:
+		tmp.int8 = ram_ptr_int8(src_addr);
+		break;
+	
+	case TYPE_UINT32:
+		tmp.uint32 = ram_ptr_uint32(src_addr);
+		break;
+	
+	case TYPE_UINT16:
+		tmp.uint16 = ram_ptr_uint16(src_addr);
+		break;
+	
+	case TYPE_UINT8:
+		tmp.uint8 = ram_ptr_uint8(src_addr);
+		break;
 	}
-	else
+	
+	switch(dest_data_type)
 	{
-		src_addr = *(ram_t *)(&ram[prg_counter]);
-
-		if(addr_mode == ADDR_PTR)
-			src_addr = *(ram_t *)(&ram[src_addr]);
-
-		prg_counter += sizeof(ram_t);
+	case TYPE_FLOAT:
+		write_float(tmp.flt, dest_addr);
+		break;
+	
+	case TYPE_INT32:
+		write_int32(tmp.int32, dest_addr);
+		break;
+	
+	case TYPE_INT16:
+		write_int16(tmp.int16, dest_addr);
+		break;
+	
+	case TYPE_INT8:
+		write_int8(tmp.int8, dest_addr);
+		break;
+	
+	case TYPE_UINT32:
+		write_uint32(tmp.uint32, dest_addr);
+		break;
+	
+	case TYPE_UINT16:
+		write_uint16(tmp.uint16, dest_addr);
+		break;
+	
+	case TYPE_UINT8:
+		write_uint8(tmp.uint8, dest_addr);
+		break;
 	}
-
-	if(src_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
-		tmp = *(uint32_t *) (&ram[src_addr]);
-
-	else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
-		tmp = (uint32_t) *(uint16_t *) (&ram[src_addr]);
-
-	else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
-		tmp = (uint32_t) *(uint8_t *) (&ram[src_addr]);
-
-	else return;  // Illegal attribute, terminate the instruction
-
-
-	if(dest_data_type == TYPE_FLOAT || src_data_type == TYPE_INT32 || src_data_type == TYPE_UINT32)
-		*(uint32_t *) (&ram[dest_addr]) = tmp;
-
-	else if(src_data_type == TYPE_INT16 || src_data_type == TYPE_UINT16)
-		*(uint16_t *) (&ram[dest_addr]) = (uint16_t) tmp;
-
-	else if(src_data_type == TYPE_INT8 || src_data_type == TYPE_UINT8)
-		ram[dest_addr] = (uint8_t) tmp;
 }
 
-_INLINE_ void vm_inst_arith_calc()
+__inline void vm_inst_arith_calc()
+{
+	++prg_counter;
+	
+	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
+	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
+	
+	ram_t dest_addr;
+	read_addr(dest_addr, dest_addr_mode);
+	
+	mem_buf res;
+	uint8_t float_flag = 0, first_flag = 1;
+	
+	for(;;)
+	{
+		uint8_t opr_addr_mode, opr_data_type, opr_oper_mode;
+		read_attrib(opr_addr_mode, opr_data_type, opr_oper_mode);
+		
+		if(opr_data_type == TYPE_TERMINATE) break;
+		
+		ram_t opr_addr;
+		set_read_addr(opr_addr, opr_addr_mode, opr_data_type);
+		
+		mem_buf opr_data;
+		
+		if(opr_data_type == TYPE_FLOAT && !float_flag)
+		{
+			float_flag = 1;
+			res.flt = (float) res.int32;
+		}
+		
+		if(float_flag)
+		{
+			switch(opr_data_type)
+			{
+			case TYPE_FLOAT:
+				opr_data.flt = ram_ptr_float(opr_addr);
+				break;
+			
+			case TYPE_INT32:
+				opr_data.flt = (float) ram_ptr_int32(opr_addr);
+				break;
+			
+			case TYPE_INT16:
+				opr_data.flt = (float) ram_ptr_int16(opr_addr);
+				break;
+			
+			case TYPE_INT8:
+				opr_data.flt = (float) ram_ptr_int8(opr_addr);
+				break;
+			
+			case TYPE_UINT32:
+				opr_data.flt = (float) ram_ptr_uint32(opr_addr);
+				break;
+			
+			case TYPE_UINT16:
+				opr_data.flt = (float) ram_ptr_uint16(opr_addr);
+				break;
+			
+			case TYPE_UINT8:
+				opr_data.flt = (float) ram_ptr_uint8(opr_addr);
+				break;
+			}
+			
+			if(first_flag)
+			{
+				first_flag = 0;
+				res.flt = opr_data.flt;
+			}
+			else
+			{
+				switch(opr_oper_mode)
+				{
+				case ARITH_ADD:
+					res.flt += opr_data.flt;
+					break;
+				
+				case ARITH_SUB:
+					res.flt -= opr_data.flt;
+					break;
+				
+				case ARITH_MUL:
+					res.flt *= opr_data.flt;
+					break;
+				
+				case ARITH_DIV:
+					res.flt /= opr_data.flt;
+					break;
+				
+				case ARITH_MOD:
+					// Kernel panic. Cannot do modulo with floats.
+					break;
+				
+				case ARITH_POW:
+					res.flt = powf(res.flt, opr_data.flt);
+					break;
+				}
+			}
+		}
+		else
+		{
+			//printf("float_flag == 0\nopr_addr = %d\n\n", opr_addr);
+			switch(opr_data_type)
+			{
+			case TYPE_FLOAT: // I believe this case is impossible because if operand type is float then we set float_flag immediately.
+				opr_data.int32 = (int32_t) ram_ptr_float(opr_addr);
+				break;
+			
+			case TYPE_INT32:
+				opr_data.int32 = ram_ptr_int32(opr_addr);
+				break;
+			
+			case TYPE_INT16:
+				opr_data.int32 = (int32_t) ram_ptr_int16(opr_addr);
+				break;
+			
+			case TYPE_INT8:
+				opr_data.int32 = (int32_t) ram_ptr_int8(opr_addr);
+				break;
+			
+			case TYPE_UINT32:
+				opr_data.int32 = (int32_t) ram_ptr_uint32(opr_addr);
+				break;
+			
+			case TYPE_UINT16:
+				opr_data.int32 = (int32_t) ram_ptr_uint16(opr_addr);
+				break;
+			
+			case TYPE_UINT8:
+				opr_data.int32 = (int32_t) ram_ptr_uint8(opr_addr);
+				break;
+			}
+			
+			if(first_flag)
+			{
+				first_flag = 0;
+				res.int32 = opr_data.int32;
+			}
+			else
+			{
+				switch(opr_oper_mode)
+				{
+				case ARITH_ADD:
+					res.int32 += opr_data.int32;
+					break;
+
+				case ARITH_SUB:
+					res.int32 -= opr_data.int32;
+					break;
+
+				case ARITH_MUL:
+					res.int32 *= opr_data.int32;
+					break;
+
+				case ARITH_DIV:
+					res.int32 /= opr_data.int32;
+					break;
+
+				case ARITH_MOD:
+					res.int32 %= opr_data.int32;
+					break;
+
+				case ARITH_POW:
+					res.int32 = (int32_t) powf((float) res.int32, (float) opr_data.int32);
+					break;
+				}
+			}
+		}
+		
+		//printf("opr_data.flt = %f\nopr_data.int32 = %d\nopr_data.int16 = %d\nopr_data.int8 = %d\nopr_data.uint32 = %d\nopr_data.uint16 = %d\nopr_data.uint8 = %d\n\n",
+		//		opr_data.flt, opr_data.int32, opr_data.int16, opr_data.int8, opr_data.uint32, opr_data.uint16, opr_data.uint8);
+	}
+	
+	switch(dest_data_type)
+	{
+	case TYPE_FLOAT:
+		write_float(res.flt, dest_addr);
+		break;
+	
+	case TYPE_INT32:
+		write_int32(res.int32, dest_addr);
+		break;
+	
+	case TYPE_INT16:
+		write_int16(res.int16, dest_addr);
+		break;
+	
+	case TYPE_INT8:
+		write_int8(res.int8, dest_addr);
+		break;
+	
+	case TYPE_UINT32:
+		write_uint32(res.uint32, dest_addr);
+		break;
+	
+	case TYPE_UINT16:
+		write_uint16(res.uint16, dest_addr);
+		break;
+	
+	case TYPE_UINT8:
+		write_uint8(res.uint8, dest_addr);
+		break;
+	}
+}
+
+/*__inline void vm_inst_arith_calc()
 {
     ++prg_counter;
     
@@ -222,19 +445,19 @@ _INLINE_ void vm_inst_arith_calc()
         else
             ram[dest_addr] = tmp_int & 0xff;
     }
-}
+}*/
 
-_INLINE_ void vm_inst_bitwise()
+__inline void vm_inst_bitwise()
 {
     
 }
 
-_INLINE_ void vm_inst_logical()
+__inline void vm_inst_logical()
 {
     
 }
 
-_INLINE_ void vm_inst_jsr()
+__inline void vm_inst_jsr()
 {
     ++prg_counter;
     
@@ -245,12 +468,12 @@ _INLINE_ void vm_inst_jsr()
     prg_counter = jmp_addr;
 }
 
-_INLINE_ void vm_inst_rts()
+__inline void vm_inst_rts()
 {
     prg_counter = (ram_t) vm_pop();
 }
 
-_INLINE_ void vm_inst_jump_if()
+__inline void vm_inst_jump_if()
 {
     ++prg_counter;
     
@@ -260,78 +483,78 @@ _INLINE_ void vm_inst_jump_if()
         prg_counter += sizeof(ram_t);
 }
 
-_INLINE_ void vm_inst_jump()
+__inline void vm_inst_jump()
 {
     ++prg_counter;
     prg_counter = *(ram_t *) (&ram[prg_counter]);
 }
 
-_INLINE_ void vm_inst_exit()
+__inline void vm_inst_exit()
 {
     
 }
 
-_INLINE_ void vm_inst_set_text_area()
+__inline void vm_inst_set_text_area()
 {
     
 }
 
-_INLINE_ void vm_inst_set_cursor()
+__inline void vm_inst_set_cursor()
 {
     
 }
 
-_INLINE_ void vm_inst_set_text_color()
+__inline void vm_inst_set_text_color()
 {
     
 }
 
-_INLINE_ void vm_inst_set_text_size()
+__inline void vm_inst_set_text_size()
 {
     
 }
 
-_INLINE_ void vm_inst_set_text_wrap()
+__inline void vm_inst_set_text_wrap()
 {
     
 }
 
-_INLINE_ void vm_inst_set_font()
+__inline void vm_inst_set_font()
 {
     
 }
 
-_INLINE_ void vm_inst_print_chr()
+__inline void vm_inst_print_chr()
 {
     
 }
 
-_INLINE_ void vm_inst_print_str()
+__inline void vm_inst_print_str()
 {
     
 }
 
-_INLINE_ void vm_inst_print_int()
+__inline void vm_inst_print_int()
 {
     
 }
 
-_INLINE_ void vm_inst_printf_str()
+__inline void vm_inst_printf_str()
 {
     
 }
 
-_INLINE_ void vm_inst_draw_image()
+__inline void vm_inst_draw_image()
 {
     
 }
 
-_INLINE_ void vm_inst_load_prg()
+__inline void vm_inst_load_prg()
 {
     
 }
 
-_INLINE_ void vm_inst_mem_set()
+__inline void vm_inst_mem_set()
 {
     
 }
