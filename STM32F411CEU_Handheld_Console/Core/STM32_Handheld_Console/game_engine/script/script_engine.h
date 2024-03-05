@@ -2,6 +2,7 @@
 #define __script_engine_h
 
 #include <stdint.h>
+#include "../../display/display_driver.h"
 
 #define RAM_SIZE    (1024 * 80) // 85 KB (Max possible size is 88 KB but expect it to be lesser than that.)
 #define STACK_SIZE  (256)

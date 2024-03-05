@@ -23,7 +23,8 @@
                         X(0x13,     printf_str) \
                         X(0x14,     draw_image) \
                         X(0x15,       load_prg) \
-                        X(0x16,        mem_set)
+                        X(0x16,        mem_set) \
+                        X(0x17, update_display)
 
 #define INST_DECLARE(opc, ins)  void vm_inst_##ins(void);
 INST_TABLE(INST_DECLARE)

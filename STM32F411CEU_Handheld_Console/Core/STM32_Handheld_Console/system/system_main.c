@@ -47,7 +47,10 @@ const unsigned char prg[] = {
 	// a = 36
 	// a = (a + 4) / 10
 	0x01, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM, 36,
-	0x02, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM | ARITH_ADD, 4, TYPE_INT8 | ADDR_IMM | ARITH_DIV, 10, TYPE_TERMINATE
+	0x02, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM | ARITH_ADD, 4, TYPE_INT8 | ADDR_IMM | ARITH_DIV, 10, TYPE_TERMINATE,
+	0x0b, TYPE_INT16 | ADDR_IMM, 160, 0, TYPE_INT16 | ADDR_IMM, 50, 0,
+	0x11, ADDR_IMM, 'H', 'e', 'l', 'l', 'o', '!', '\0',
+	0x17
 };
 
 void vm_message(void)
@@ -100,7 +103,7 @@ uint8_t system_main()
 	{
 		ticks = get_tick();
 		
-		clear_display();
+		//clear_display();
 		set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 		
 		int16_t tx, ty;
@@ -116,7 +119,7 @@ uint8_t system_main()
 		set_cursor(0, DISPLAY_HEIGHT - 3 * get_font_height());
 		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
 
-		menu_render(&system_menu);
+		//menu_render(&system_menu);
 		
 		draw_image(-10, -5, 32, 32, image, 0);
 		draw_image(-10, 135, 32, 32, image, 0);
@@ -129,7 +132,7 @@ uint8_t system_main()
 		if(get_key_down(GAMEPAD_DPAD_UP)) menu_prev_item(&system_menu);
 		if(get_key_down(GAMEPAD_DPAD_DOWN)) menu_next_item(&system_menu);
 		if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);
-		if(get_key_down(GAMEPAD_START)) { vm_message(); vm_execute(); }
+		if(get_key_down(GAMEPAD_START)) { /*vm_message();*/ vm_execute(); }
 		
 		int32_t tck = get_tick();
 		system_sleep(max(0, 33 - tck + ticks));
