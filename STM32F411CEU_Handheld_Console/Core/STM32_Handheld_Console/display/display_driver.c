@@ -297,7 +297,7 @@ void set_text_wrap(uint8_t wrap)
 	wrap_text = wrap;
 }
 
-void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey)
+void set_text_area(int16_t sx, int16_t sy, int16_t ex, int16_t ey)
 {
 	text_area.start_x = (sx >= 0) ? sx : 0;
 	text_area.start_y = (sy >= 0) ? sy : 0;
@@ -308,7 +308,7 @@ void set_text_area(uint8_t sx, uint8_t sy, uint8_t ex, uint8_t ey)
 	//cursor_y = text_area.start_y;
 }
 
-void set_font(const GFXfont *new_font)
+void set_font_helper(const GFXfont *new_font)
 {
 	if(new_font)
 	{
@@ -320,6 +320,20 @@ void set_font(const GFXfont *new_font)
 	}
 	
 	gfx_font = (GFXfont *) new_font;
+}
+
+void set_font(const uint8_t font)
+{
+	switch(font)
+	{
+	case 1:
+		set_font_helper(&YILDIZsoft_5x7);
+		break;
+	
+	default:
+		set_font_helper(0);
+		break;
+	}
 }
 
 uint8_t get_font_height(void)
@@ -627,7 +641,7 @@ uint8_t init_display()
 	init_ili9486l();
 	clear_display();
 	tft_end_write();
-	set_font(&YILDIZsoft_5x7);
+	set_font(1);
 	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 	return 0;
 }
@@ -683,7 +697,7 @@ uint8_t init_display()
 	}
 	
 	clear_display();
-	set_font(&YILDIZsoft_5x7);
+	set_font(1);
 	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 	
 	return 0;

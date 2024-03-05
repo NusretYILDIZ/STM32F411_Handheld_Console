@@ -14,6 +14,8 @@ __inline void vm_inst_assign()
 {
 	++prg_counter;
 	
+	printf("Assign inst.\n\n");
+	
 	uint8_t dest_addr_mode, dest_data_type, oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, oper_mode);
 	
@@ -94,6 +96,8 @@ __inline void vm_inst_assign()
 __inline void vm_inst_arith_calc()
 {
 	++prg_counter;
+	
+	printf("Arithmetic calculation inst.\n\n");
 	
 	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
@@ -453,7 +457,7 @@ __inline void vm_inst_jump_if()
 __inline void vm_inst_jump()
 {
     ++prg_counter;
-    prg_counter = *(ram_t *) (&ram[prg_counter]);
+    prg_counter = ram_ptr_addr(prg_counter);
 }
 
 __inline void vm_inst_exit()
@@ -463,28 +467,56 @@ __inline void vm_inst_exit()
 
 __inline void vm_inst_set_text_area()
 {
-    
+    ++prg_counter;
+	
+	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	ram_t src_addr;
+	
+	int16_t sx, sy, ex, ey;
+	
+	// Read start X
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_int16(sx, src_addr);
+	
+	// Read start Y
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_int16(sy, src_addr);
+	
+	// Read end X
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_int16(ex, src_addr);
+	
+	// Read end Y
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_int16(ey, src_addr);
+	
+	printf("set_text_area(%d, %d, %d, %d)\n\n", sx, sy, ex, ey);
+	
+	set_text_area(sx, sy, ex, ey);
 }
 
 __inline void vm_inst_set_cursor()
 {
     ++prg_counter;
 	
-	// Read X position
 	uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
 	ram_t src_addr;
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
 	
-	int16_t x = ram_ptr_int16(src_addr);
+	int16_t x, y;
+
+	// Read X position
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);	
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_int16(x, src_addr);
 	
 	// Read Y position
 	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
 	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	
-	int16_t y = ram_ptr_int16(src_addr);
+	read_int16(y, src_addr);
 	
 	printf("set_cursor(%d, %d)\n\n", x, y);
 	
@@ -493,22 +525,85 @@ __inline void vm_inst_set_cursor()
 
 __inline void vm_inst_set_text_color()
 {
-    
+    ++prg_counter;
+	
+	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	ram_t src_addr;
+	
+	uint8_t fg, bg;
+
+	// Read foreground color
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);	
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_uint8(fg, src_addr);
+
+	// Read background color
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	
+	if(src_data_type == TYPE_TERMINATE)
+		bg = fg;
+	else
+	{
+		set_read_addr(src_addr, src_addr_mode, src_data_type);
+		read_uint8(bg, src_addr);
+	}
+	
+	printf("set_text_color(%d, %d)\n\n", fg, bg);
+	
+	set_text_color(fg, bg);
 }
 
 __inline void vm_inst_set_text_size()
 {
-    
+    ++prg_counter;
+	
+	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	ram_t src_addr;
+	
+	uint8_t x, y;
+	
+	// Read X size
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	set_read_addr(src_addr, src_addr_mode, src_data_type);
+	read_uint8(x, src_addr);
+	
+	// Read Y size
+	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
+	
+	if(src_data_type == TYPE_TERMINATE)
+		y = x;
+	else
+	{
+		set_read_addr(src_addr, src_addr_mode, src_data_type);
+		read_uint8(y, src_addr);
+	}
+	
+	printf("set_text_size(%d, %d)\n\n", x, y);
+	
+	set_text_size(x, y);
 }
 
 __inline void vm_inst_set_text_wrap()
 {
-    
+    ++prg_counter;
+	set_text_wrap(1);
+}
+
+__inline void vm_inst_clr_text_wrap()
+{
+    ++prg_counter;
+	set_text_wrap(0);
 }
 
 __inline void vm_inst_set_font()
 {
-    
+    ++prg_counter;
+	
+	uint8_t font;
+	read_uint8(font, prg_counter);
+	++prg_counter;
+	
+	set_font(font);
 }
 
 __inline void vm_inst_print_chr()
@@ -529,21 +624,22 @@ __inline void vm_inst_print_str()
     ++prg_counter;
 	
 	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	ram_t src_addr;
+	
 	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
 	
-	ram_t src_addr;
-	//read_addr(src_addr, src_addr_mode);
 	if(src_addr_mode == ADDR_IMM)
 	{
 		src_addr = prg_counter;
 		while(ram[prg_counter] != '\0') ++prg_counter;
+		++prg_counter;
 	}
 	else
 	{
 		read_addr(src_addr, src_addr_mode);
 	}
 	
-	printf("print_str\nsrc_addr = %d\n\n", src_addr);
+	printf("print_str(\"%s\")\n\n", &ram[src_addr]);
 	
 	print_str(&ram[src_addr]);
 }
@@ -558,7 +654,42 @@ __inline void vm_inst_print_int()
 	ram_t src_addr;
 	set_read_addr(src_addr, src_addr_mode, src_data_type);
 	
-	print_int(ram_ptr_int32(src_addr));
+	mem_buf tmp;
+	
+	switch(src_data_type)
+	{
+	case TYPE_FLOAT:
+		// Kernel panic. This instruction cannot print floats.
+		break;
+	
+	case TYPE_INT32:
+		tmp.int32 = ram_ptr_int32(src_addr);
+		break;
+	
+	case TYPE_INT16:
+		tmp.int32 = (int32_t) ram_ptr_int16(src_addr);
+		break;
+	
+	case TYPE_INT8:
+		tmp.int32 = (int32_t) ram_ptr_int8(src_addr);
+		break;
+	
+	case TYPE_UINT32:
+		tmp.int32 = (int32_t) ram_ptr_uint32(src_addr);
+		break;
+	
+	case TYPE_UINT16:
+		tmp.int32 = (int32_t) ram_ptr_uint16(src_addr);
+		break;
+	
+	case TYPE_UINT8:
+		tmp.int32 = (int32_t) ram_ptr_uint8(src_addr);
+		break;
+	}
+	
+	printf("print_int(%d)\n\n", tmp.int32);
+	
+	print_int(tmp.int32);
 }
 
 __inline void vm_inst_printf_str()
@@ -584,5 +715,6 @@ __inline void vm_inst_mem_set()
 __inline void vm_inst_update_display()
 {
     ++prg_counter;
+	printf("update_display()\n\n");
 	update_display();
 }

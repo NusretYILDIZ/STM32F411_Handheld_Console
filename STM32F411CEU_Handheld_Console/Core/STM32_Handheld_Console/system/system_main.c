@@ -44,13 +44,38 @@ const unsigned char image[32][32] = {
 };
 
 const unsigned char prg[] = {
-	// a = 36
-	// a = (a + 4) / 10
+/*
+	set_text_area(0, 0, 239, 159)
+	a = 36
+	set_cursor(0, 50)
+	print_str("a = ")
+	print_int(a)
+	update_display()
+	a = (a + 4) / 10
+	print_str("\na = (a+4)/10 -> a = ")
+	print_int(a)
+	update_display()
+	set_text_size(2, 3)
+	set_text_color(<red>, <blue>)
+	set_cursor(160, 50)
+	print_str("Hello!")
+	update_display()
+*/
+	0x0a, TYPE_INT16 | ADDR_IMM, 0, 0, TYPE_INT16 | ADDR_IMM, 0, 0, TYPE_INT16 | ADDR_IMM, 239, 0, TYPE_INT16 | ADDR_IMM, 159, 0,
 	0x01, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM, 36,
+	0x0b, TYPE_INT16 | ADDR_IMM, 0, 0, TYPE_INT16 | ADDR_IMM, 50, 0,
+	0x12, ADDR_IMM, 'a', ' ', '=', ' ', '\0',
+	0x13, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00,
+	0x16,
 	0x02, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM | ARITH_ADD, 4, TYPE_INT8 | ADDR_IMM | ARITH_DIV, 10, TYPE_TERMINATE,
+	0x12, ADDR_IMM, '\n', 'a', ' ', '=', ' ', '(', 'a', '+', '4', ')', '/', '1', '0', ' ', '-', '>', ' ', 'a', ' ', '=', ' ', '\0',
+	0x13, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00,
+	0x16,
+	0x0d, TYPE_UINT8 | ADDR_IMM, 2, TYPE_UINT8 | ADDR_IMM, 3,
+	0x0c, TYPE_UINT8 | ADDR_IMM, rgb888_to_rgb332(255, 0, 0), TYPE_UINT8 | ADDR_IMM, rgb888_to_rgb332(0, 0, 255),
 	0x0b, TYPE_INT16 | ADDR_IMM, 160, 0, TYPE_INT16 | ADDR_IMM, 50, 0,
-	0x11, ADDR_IMM, 'H', 'e', 'l', 'l', 'o', '!', '\0',
-	0x17
+	0x12, ADDR_IMM, 'H', 'e', 'l', 'l', 'o', '!', '\0',
+	0x16
 };
 
 void vm_message(void)
@@ -59,8 +84,6 @@ void vm_message(void)
 	snprintf(msg, sizeof(msg), "$0x00000009: %3d", ram[9]);
 	show_info_window("Virtual Machine", msg);
 }
-
-//#if defined(__arm__)
 
 uint8_t system_main()
 {
@@ -104,9 +127,9 @@ uint8_t system_main()
 		ticks = get_tick();
 		
 		//clear_display();
-		set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
+		//set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 		
-		int16_t tx, ty;
+		/*int16_t tx, ty;
 		uint16_t tw, th;
 		text_bounds(system_ver, 0, 0, &tx, &ty, &tw, &th);
 		set_cursor((DISPLAY_WIDTH - tw) / 2, get_font_height());
@@ -117,22 +140,27 @@ uint8_t system_main()
 		print_str(GP_UP""TR_O"nceki  "GP_DOWN"Sonraki  "GP_A"Se"TR_c);
 		
 		set_cursor(0, DISPLAY_HEIGHT - 3 * get_font_height());
-		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);
+		printf_str("Program counter: %d\n$0x00000009: %3d", prg_counter, ram[9]);*/
 
 		//menu_render(&system_menu);
 		
-		draw_image(-10, -5, 32, 32, image, 0);
-		draw_image(-10, 135, 32, 32, image, 0);
-		draw_image(220, 135, 32, 32, image, 0);
-		draw_image(220, -5, 32, 32, image, 0);
+		//draw_image(-10, -5, 32, 32, image, 0);
+		//draw_image(-10, 135, 32, 32, image, 0);
+		//draw_image(220, 135, 32, 32, image, 0);
+		//draw_image(220, -5, 32, 32, image, 0);
 
-		update_display();
+		//update_display();
 		update_inputs();
 		
-		if(get_key_down(GAMEPAD_DPAD_UP)) menu_prev_item(&system_menu);
-		if(get_key_down(GAMEPAD_DPAD_DOWN)) menu_next_item(&system_menu);
-		if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);
-		if(get_key_down(GAMEPAD_START)) { /*vm_message();*/ vm_execute(); }
+		//if(get_key_down(GAMEPAD_DPAD_UP)) menu_prev_item(&system_menu);
+		//if(get_key_down(GAMEPAD_DPAD_DOWN)) menu_next_item(&system_menu);
+		//if(get_key_down(GAMEPAD_A)) menu_select(&system_menu);
+		if(get_key_down(GAMEPAD_START)) 
+		{ 
+			/*vm_message();*/ 
+			printf("prg_counter = %d\n", prg_counter);
+			vm_execute();
+		}
 		
 		int32_t tck = get_tick();
 		system_sleep(max(0, 33 - tck + ticks));
@@ -140,15 +168,6 @@ uint8_t system_main()
 	
 	return 0;
 }
-
-/*#elif defined(__WIN32__)
-
-uint8_t system_main()
-{
-	return init_display();
-}
-
-#endif*/
 
 void system_list_games(void)
 {

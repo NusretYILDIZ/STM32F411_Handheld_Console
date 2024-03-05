@@ -16,15 +16,16 @@
                         X(0x0c, set_text_color) \
                         X(0x0d,  set_text_size) \
                         X(0x0e,  set_text_wrap) \
-                        X(0x0f,       set_font) \
-                        X(0x10,      print_chr) \
-                        X(0x11,      print_str) \
-                        X(0x12,      print_int) \
-                        X(0x13,     printf_str) \
-                        X(0x14,     draw_image) \
-                        X(0x15,       load_prg) \
-                        X(0x16,        mem_set) \
-                        X(0x17, update_display)
+                        X(0x0f,  clr_text_wrap) \
+                        X(0x10,       set_font) \
+                        X(0x11,      print_chr) \
+                        X(0x12,      print_str) \
+                        X(0x13,      print_int) \
+                        X(0x14,     printf_str) \
+                        X(0x15,     draw_image) \
+                        X(0x16, update_display) \
+                        X(0x17,       load_prg) \
+                        X(0x18,        mem_set)
 
 #define INST_DECLARE(opc, ins)  void vm_inst_##ins(void);
 INST_TABLE(INST_DECLARE)

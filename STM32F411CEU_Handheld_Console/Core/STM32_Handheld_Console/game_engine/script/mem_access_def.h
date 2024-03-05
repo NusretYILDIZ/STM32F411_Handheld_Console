@@ -8,6 +8,7 @@
 #define ram_ptr_uint8(addr)   (               ram[(addr)] )
 #define ram_ptr_uint16(addr)  (*(uint16_t *)(&ram[(addr)]))
 #define ram_ptr_uint32(addr)  (*(uint32_t *)(&ram[(addr)]))
+#define ram_ptr_addr(addr)    (*(ram_t    *)(&ram[(addr)]))
 
 #define read_attrib(addr_mode, data_type, oper_type)    do { \
                                                             addr_mode = ram[prg_counter] & ADDR_MASK; \
@@ -17,8 +18,8 @@
                                                         } while(0)
 
 #define read_addr(dest_addr, addr_mode)   do { \
-                                              dest_addr = *(ram_t *) (&ram[prg_counter]); \
-                                              if(addr_mode == ADDR_PTR) dest_addr = *(ram_t *) (&ram[dest_addr]); \
+                                              dest_addr = ram_ptr_addr(prg_counter); \
+                                              if(addr_mode == ADDR_PTR) dest_addr = ram_ptr_addr(dest_addr); \
                                               prg_counter += sizeof(ram_t); \
                                           } while(0)
 
@@ -34,7 +35,35 @@
 														 } \
                                                      } while(0)
 
-#define read_float(buf)     do { \
+#define read_float(buf, addr)		do { \
+										buf = ram_ptr_float(addr); \
+									} while(0)
+                            
+#define read_int32(buf, addr)		do { \
+										buf = ram_ptr_int32(addr); \
+									} while(0)
+                            
+#define read_int16(buf, addr)		do { \
+										buf = ram_ptr_int16(addr); \
+									} while(0)
+                            
+#define read_int8(buf, addr)		do { \
+										buf = ram_ptr_int8(addr); \
+									} while(0)
+
+#define read_uint32(buf, addr)		do { \
+										buf = ram_ptr_uint32(addr); \
+									} while(0)
+
+#define read_uint16(buf, addr)		do { \
+										buf = ram_ptr_uint16(addr); \
+									} while(0)
+
+#define read_uint8(buf, addr)		do { \
+										buf = ram_ptr_uint8(addr); \
+									} while(0)
+
+/*#define read_float(buf)     do { \
                                 buf = *(float *) (&ram[prg_counter]); \
                                 prg_counter += sizeof(float); \
                             } while(0)
@@ -67,34 +96,34 @@
 #define read_uint8(buf)     do { \
                                 buf = ram[prg_counter]; \
                                 ++prg_counter; \
-                            } while(0)
+                            } while(0)*/
 
 #define write_float(dat, addr)		do { \
-										*(float *) (&ram[(addr)]) = (float)(dat); \
+										ram_ptr_float(addr) = (float)(dat); \
 									} while(0)
                             
 #define write_int32(dat, addr)		do { \
-										*(int32_t *) (&ram[(addr)]) = (int32_t)(dat); \
+										ram_ptr_int32(addr) = (int32_t)(dat); \
 									} while(0)
                             
 #define write_int16(dat, addr)		do { \
-										*(int16_t *) (&ram[(addr)]) = (int16_t)(dat); \
+										ram_ptr_int16(addr) = (int16_t)(dat); \
 									} while(0)
                             
 #define write_int8(dat, addr)		do { \
-										*(int8_t *) (&ram[(addr)]) = (int8_t)(dat); \
+										ram_ptr_int8(addr) = (int8_t)(dat); \
 									} while(0)
 
 #define write_uint32(dat, addr)		do { \
-										*(uint32_t *) (&ram[(addr)]) = (uint32_t)(dat); \
+										ram_ptr_uint32(addr) = (uint32_t)(dat); \
 									} while(0)
 
 #define write_uint16(dat, addr)		do { \
-										*(uint16_t *) (&ram[(addr)]) = (uint16_t)(dat); \
+										ram_ptr_uint16(addr) = (uint16_t)(dat); \
 									} while(0)
 
 #define write_uint8(dat, addr)		do { \
-										ram[(addr)] = (uint8_t)(dat); \
+										ram_ptr_uint8(addr) = (uint8_t)(dat); \
 									} while(0)
 
 #define OPER_MASK        0xE0
