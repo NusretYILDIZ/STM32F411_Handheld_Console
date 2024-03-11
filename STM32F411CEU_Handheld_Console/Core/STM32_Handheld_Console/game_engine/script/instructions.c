@@ -65,30 +65,71 @@ __inline void vm_inst_assign()
 	{
 	case TYPE_FLOAT:
 		write_float(tmp.flt, dest_addr);
+		//printf("tmp.flt = %f\n", tmp.flt);
+		
+		if(tmp.flt == 0.0f) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
+		if(tmp.flt < 0.0f)  logical_flag |=  SIGN_FLAG;
+		else                logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT32:
 		write_int32(tmp.int32, dest_addr);
+		
+		if(tmp.int32 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
+		if(tmp.int32 < 0)  logical_flag |=  SIGN_FLAG;
+		else               logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT16:
 		write_int16(tmp.int16, dest_addr);
+		
+		if(tmp.int16 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
+		if(tmp.int16 < 0)  logical_flag |=  SIGN_FLAG;
+		else               logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT8:
 		write_int8(tmp.int8, dest_addr);
+		
+		if(tmp.int8 == 0) logical_flag |=  ZERO_FLAG;
+		else              logical_flag &= ~ZERO_FLAG;
+		
+		if(tmp.int8 < 0)  logical_flag |=  SIGN_FLAG;
+		else              logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_UINT32:
 		write_uint32(tmp.uint32, dest_addr);
+		
+		if(tmp.uint32 == 0) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	
 	case TYPE_UINT16:
 		write_uint16(tmp.uint16, dest_addr);
+		
+		if(tmp.uint16 == 0) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	
 	case TYPE_UINT8:
 		write_uint8(tmp.uint8, dest_addr);
+		
+		if(tmp.uint8 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	}
 }
@@ -268,30 +309,71 @@ __inline void vm_inst_arith_calc()
 	{
 	case TYPE_FLOAT:
 		write_float(res.flt, dest_addr);
+		//printf("res.flt = %f\n", res.flt);
+		
+		if(res.flt == 0.0f) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
+		if(res.flt < 0.0f)  logical_flag |=  SIGN_FLAG;
+		else                logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT32:
 		write_int32(res.int32, dest_addr);
+		
+		if(res.int32 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
+		if(res.int32 < 0)  logical_flag |=  SIGN_FLAG;
+		else               logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT16:
 		write_int16(res.int16, dest_addr);
+		
+		if(res.int16 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
+		if(res.int16 < 0)  logical_flag |=  SIGN_FLAG;
+		else               logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT8:
 		write_int8(res.int8, dest_addr);
+		
+		if(res.int8 == 0) logical_flag |=  ZERO_FLAG;
+		else              logical_flag &= ~ZERO_FLAG;
+		
+		if(res.int8 < 0)  logical_flag |=  SIGN_FLAG;
+		else              logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_UINT32:
 		write_uint32(res.uint32, dest_addr);
+		
+		if(res.uint32 == 0) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	
 	case TYPE_UINT16:
 		write_uint16(res.uint16, dest_addr);
+		
+		if(res.uint16 == 0) logical_flag |=  ZERO_FLAG;
+		else                logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	
 	case TYPE_UINT8:
 		write_uint8(res.uint8, dest_addr);
+		
+		if(res.uint8 == 0) logical_flag |=  ZERO_FLAG;
+		else               logical_flag &= ~ZERO_FLAG;
+		
 		break;
 	}
 }
@@ -399,33 +481,185 @@ __inline void vm_inst_bitwise()
 	
 	case TYPE_INT32:
 		write_int32(res.int32, dest_addr);
+		
+		if(res.int32) logical_flag &= ~ZERO_FLAG;
+		else          logical_flag |=  ZERO_FLAG;
+		
+		if(res.int32 < 0) logical_flag |=  SIGN_FLAG;
+		else              logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT16:
 		write_int16(res.int16, dest_addr);
+		
+		if(res.int16) logical_flag &= ~ZERO_FLAG;
+		else          logical_flag |=  ZERO_FLAG;
+		
+		if(res.int16 < 0) logical_flag |=  SIGN_FLAG;
+		else              logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_INT8:
 		write_int8(res.int8, dest_addr);
+		
+		if(res.int8) logical_flag &= ~ZERO_FLAG;
+		else         logical_flag |=  ZERO_FLAG;
+		
+		if(res.int8 < 0) logical_flag |=  SIGN_FLAG;
+		else             logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_UINT32:
 		write_uint32(res.uint32, dest_addr);
+		
+		if(res.uint32) logical_flag &= ~ZERO_FLAG;
+		else           logical_flag |=  ZERO_FLAG;
+		
 		break;
 	
 	case TYPE_UINT16:
 		write_uint16(res.uint16, dest_addr);
+		
+		if(res.uint16 < 0) logical_flag |=  SIGN_FLAG;
+		else               logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	
 	case TYPE_UINT8:
 		write_uint8(res.uint8, dest_addr);
+		
+		if(res.uint8 < 0) logical_flag |=  SIGN_FLAG;
+		else              logical_flag &= ~SIGN_FLAG;
+		
 		break;
 	}
 }
 
 __inline void vm_inst_logical()
 {
-    
+    ++prg_counter;
+	
+	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
+	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
+	
+	ram_t dest_addr;
+	read_addr(dest_addr, dest_addr_mode);
+	
+	mem_buf tmp;
+	uint8_t res, first_flag = 1;
+	
+	for(;;)
+	{
+		uint8_t opr_addr_mode, opr_data_type, opr_oper_mode;
+		read_attrib(opr_addr_mode, opr_data_type, opr_oper_mode);
+		
+		if(opr_data_type == TYPE_TERMINATE) break;
+		
+		ram_t opr_addr;
+		set_read_addr(opr_addr, opr_addr_mode, opr_data_type);
+		
+		mem_buf opr_data;
+		
+		if(opr_oper_mode != LOGICAL_NOT)
+		{
+			switch(opr_data_type)
+			{
+			case TYPE_FLOAT:
+				opr_data.flt = ram_ptr_float(opr_addr);
+				break;
+				
+			case TYPE_INT32:
+				opr_data.int32 = ram_ptr_int32(opr_addr);
+				break;
+				
+			case TYPE_INT16:
+				opr_data.int32 = ram_ptr_int16(opr_addr);
+				break;
+				
+			case TYPE_INT8:
+				opr_data.int32 = ram_ptr_int8(opr_addr);
+				break;
+				
+			case TYPE_UINT32:
+				opr_data.int32 = ram_ptr_uint32(opr_addr);
+				break;
+				
+			case TYPE_UINT16:
+				opr_data.int32 = ram_ptr_uint16(opr_addr);
+				break;
+				
+			case TYPE_UINT8:
+				opr_data.int32 = ram_ptr_uint8(opr_addr);
+				break;
+			}
+		}
+		
+		if(first_flag)
+		{
+			first_flag = 0;
+			res = (opr_data.flt) ? 1 : 0;
+			tmp.flt = opr_data.flt;
+		}
+		else
+		{
+			switch(opr_oper_mode)
+			{
+			case LOGICAL_AND:
+				//if(opr_data_type != TYPE_FLOAT) tmp.int32 &= opr_data.int32;
+				//res = (tmp.int32) ? 1 : 0;
+				if(opr_data_type == TYPE_FLOAT) res &= (tmp.flt) ? 1 : 0;
+				else res &= (tmp.int32) ? 1 : 0;
+				break;
+			
+			case LOGICAL_OR:
+				//if(opr_data_type != TYPE_FLOAT) tmp.int32 |= opr_data.int32;
+				//res = (tmp.int32) ? 1 : 0;
+				if(opr_data_type == TYPE_FLOAT) res |= (tmp.flt) ? 1 : 0;
+				else res |= (tmp.int32) ? 1 : 0;
+				break;
+			
+			case LOGICAL_NOT:
+				res = !res;
+				break;
+			
+			case LOGICAL_EQUAL:
+				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt == opr_data.flt);
+				else res = (tmp.int32 == opr_data.int32);
+				break;
+			
+			case LOGICAL_LESS:
+				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt < opr_data.flt);
+				else res = (tmp.int32 < opr_data.int32);
+				break;
+			
+			case LOGICAL_GREAT:
+				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt > opr_data.flt);
+				else res = (tmp.int32 > opr_data.int32);
+				break;
+			
+			case LOGICAL_LESSEQ:
+				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt <= opr_data.flt);
+				else res = (tmp.int32 <= opr_data.int32);
+				break;
+			
+			case LOGICAL_GREATEQ:
+				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt >= opr_data.flt);
+				else res = (tmp.int32 >= opr_data.int32);
+				break;
+			}
+		}
+	}
+	
+	if(dest_data_type == TYPE_UINT8)
+	{
+		write_uint8(res, dest_addr);
+	}
+	
+	if(res) logical_flag &= ~ZERO_FLAG;
+	else    logical_flag |=  ZERO_FLAG;
 }
 
 __inline void vm_inst_jsr()

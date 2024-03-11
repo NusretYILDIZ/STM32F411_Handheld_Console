@@ -99,39 +99,44 @@
                             } while(0)*/
 
 #define write_float(dat, addr)		do { \
-										ram_ptr_float(addr) = (float)(dat); \
+										ram_ptr_float(addr) = (dat); \
 									} while(0)
                             
 #define write_int32(dat, addr)		do { \
-										ram_ptr_int32(addr) = (int32_t)(dat); \
+										ram_ptr_int32(addr) = (dat); \
 									} while(0)
                             
 #define write_int16(dat, addr)		do { \
-										ram_ptr_int16(addr) = (int16_t)(dat); \
+										ram_ptr_int16(addr) = (dat); \
 									} while(0)
                             
 #define write_int8(dat, addr)		do { \
-										ram_ptr_int8(addr) = (int8_t)(dat); \
+										ram_ptr_int8(addr) = (dat); \
 									} while(0)
 
 #define write_uint32(dat, addr)		do { \
-										ram_ptr_uint32(addr) = (uint32_t)(dat); \
+										ram_ptr_uint32(addr) = (dat); \
 									} while(0)
 
 #define write_uint16(dat, addr)		do { \
-										ram_ptr_uint16(addr) = (uint16_t)(dat); \
+										ram_ptr_uint16(addr) = (dat); \
 									} while(0)
 
 #define write_uint8(dat, addr)		do { \
-										ram_ptr_uint8(addr) = (uint8_t)(dat); \
+										ram_ptr_uint8(addr) = (dat); \
 									} while(0)
+
+#define CARRY_FLAG       0x01
+#define ZERO_FLAG        0x02
+#define OVERFLOW_FLAG    0x04
+#define SIGN_FLAG        0x08
 
 #define OPER_MASK        0xE0
 #define TYPE_MASK        0x1C
 #define ADDR_MASK        0x03
 
 #define TYPE_TERMINATE   (0 << 2)
-#define TYPE_FLOAT       (1 << 2)
+#define TYPE_FLOAT       (1 << 2)  // Uses big-endian format
 #define TYPE_INT32       (2 << 2)
 #define TYPE_UINT32      (3 << 2)
 #define TYPE_INT16       (4 << 2)

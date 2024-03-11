@@ -20,7 +20,7 @@
 #endif
 
 extern uint8_t ram[RAM_SIZE];
-extern uint32_t stack[STACK_SIZE];
+//extern uint32_t stack[STACK_SIZE];
 
 extern ram_t prg_counter;
 extern stack_t stack_ptr;

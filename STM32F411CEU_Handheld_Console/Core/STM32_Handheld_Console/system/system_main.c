@@ -60,6 +60,8 @@ const unsigned char prg[] = {
 	set_cursor(160, 50)
 	print_str("Hello!")
 	update_display()
+	b = 9.86
+	b = (b - 2.3456) * 10.4 / 5.984
 */
 	0x0a, TYPE_INT16 | ADDR_IMM, 0, 0, TYPE_INT16 | ADDR_IMM, 0, 0, TYPE_INT16 | ADDR_IMM, 239, 0, TYPE_INT16 | ADDR_IMM, 159, 0,
 	0x01, TYPE_INT8 | ADDR_ABS, 0x09, 0x00, 0x00, 0x00, TYPE_INT8 | ADDR_IMM, 36,
@@ -75,7 +77,9 @@ const unsigned char prg[] = {
 	0x0c, TYPE_UINT8 | ADDR_IMM, rgb888_to_rgb332(255, 0, 0), TYPE_UINT8 | ADDR_IMM, rgb888_to_rgb332(0, 0, 255),
 	0x0b, TYPE_INT16 | ADDR_IMM, 160, 0, TYPE_INT16 | ADDR_IMM, 50, 0,
 	0x12, ADDR_IMM, 'H', 'e', 'l', 'l', 'o', '!', '\0',
-	0x16
+	0x16,
+	0x01, TYPE_FLOAT | ADDR_ABS, 0x0b, 0, 0, 0, TYPE_FLOAT | ADDR_IMM, 0x8f, 0xc2, 0x1d, 0x41,
+	0x02, TYPE_FLOAT | ADDR_ABS, 0x0b, 0, 0, 0, TYPE_FLOAT | ADDR_ABS, 0x0b, 0, 0, 0, TYPE_FLOAT | ADDR_IMM | ARITH_SUB, 0x4f, 0x1e, 0x16, 0x40, TYPE_FLOAT | ADDR_IMM | ARITH_MUL, 0x66, 0x66, 0x26, 0x41, TYPE_FLOAT | ADDR_IMM | ARITH_DIV, 0xee, 0x7c, 0xbf, 0x40,
 };
 
 void vm_message(void)
@@ -160,6 +164,7 @@ uint8_t system_main()
 			/*vm_message();*/ 
 			printf("prg_counter = %d\n", prg_counter);
 			vm_execute();
+			printf("b = %f\n\n", *(float *)(&ram[0x0b]));
 		}
 		
 		int32_t tck = get_tick();

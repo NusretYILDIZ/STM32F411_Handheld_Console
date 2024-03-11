@@ -1,9 +1,10 @@
 #include "./script_engine.h"
 #include "./instructions.h"
 #include "./syscalls.h"
+#include "./mem_access_def.h"
 
 uint8_t ram[RAM_SIZE] = { 0 };
-uint32_t stack[STACK_SIZE] = { 0 };
+//uint32_t stack[STACK_SIZE] = { 0 };
 
 ram_t prg_counter = 0;
 stack_t stack_ptr = 0;
@@ -28,13 +29,13 @@ void vm_execute()
 
 void vm_push(uint32_t data)
 {
-    stack[stack_ptr] = data;
+    write_uint32(data, stack_ptr * sizeof(uint32_t));
     ++stack_ptr;
 }
 
 uint32_t vm_pop(void)
 {
     --stack_ptr;
-    return stack[stack_ptr];
+    return ram_ptr_uint32(stack_ptr * sizeof(uint32_t));
 }
 
