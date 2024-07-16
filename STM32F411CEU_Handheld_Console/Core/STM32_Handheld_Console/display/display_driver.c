@@ -1,6 +1,5 @@
 #include "./display_driver.h"
 #include "./glcdfont.c"
-#include "./YILDIZsoft_5x7.h"
 
 #include <stdarg.h>
 #include <string.h>
@@ -53,7 +52,7 @@ uint8_t text_size_x = 1;
 uint8_t text_size_y = 1;
 
 TextArea text_area = { .start_x = 0, .start_y = 0, .end_x = DISPLAY_WIDTH - 1, .end_y = DISPLAY_HEIGHT - 1 };
-uint8_t wrap_text = 0;
+uint8_t wrap_text = 1;
 
 uint8_t text_fg_color = 0xff;
 uint8_t text_bg_color = 0x00;
@@ -324,7 +323,7 @@ void set_font_helper(const GFXfont *new_font)
 
 void set_font(const uint8_t font)
 {
-	switch(font)
+	/*switch(font)
 	{
 	case 1:
 		set_font_helper(&YILDIZsoft_5x7);
@@ -333,7 +332,12 @@ void set_font(const uint8_t font)
 	default:
 		set_font_helper(0);
 		break;
-	}
+	}*/
+}
+
+GFXfont *get_current_font(void)
+{
+	return gfx_font;
 }
 
 uint8_t get_font_height(void)
@@ -353,23 +357,23 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 			*x = text_area.start_x;
 			*y += text_size_y * gfx_font->yAdvance;
 		}
-		else if(c != '\r')
-		{
+		else /*if(c != '\r')
+		{*/
 			if((c >= gfx_font->first) && (c <= gfx_font->last))
 			{
-				c -= gfx_font->first;
-				glyph = gfx_font->glyph + c;
+				c     -= gfx_font->first;
+				glyph  = gfx_font->glyph + c;
 				
 				if(wrap_text && ((*x + ((glyph->xOffset + glyph->width) * text_size_x)) > text_area.end_x))
 				{
-					*x = text_area.start_x;
+					*x  = text_area.start_x;
 					*y += text_size_y * gfx_font->yAdvance;
 				}
 				
-				int16_t x1 = *x + glyph->xOffset * text_size_x,
-						y1 = *y + glyph->yOffset * text_size_y,
-						x2 = x1 + glyph->width * text_size_x - 1,
-						y2 = y1 + glyph->height * text_size_y - 1;
+				int16_t x1 = *x + glyph->xOffset * text_size_x    ,
+						y1 = *y + glyph->yOffset * text_size_y    ,
+						x2 = x1 + glyph->width   * text_size_x - 1,
+						y2 = y1 + glyph->height  * text_size_y - 1;
 				
 				if(x1 < *min_x) *min_x = x1;
 				if(y1 < *min_y) *min_y = y1;
@@ -378,20 +382,20 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 				
 				*x += glyph->xAdvance * text_size_x;
 			}
-		}
+		//}
 	}
 	else
 	{
 		if(c == '\n')
 		{
-			*x = text_area.start_x;
+			*x  = text_area.start_x;
 			*y += text_size_y * 8;
 		}
 		else if(c != '\r')
 		{
 			if(wrap_text && ((*x + text_size_x * 6) > text_area.end_x))
 			{
-				*x = text_area.start_x;
+				*x  = text_area.start_x;
 				*y += text_size_y * 8;
 			}
 			
@@ -533,7 +537,7 @@ void print_chr(uint8_t c)
 			cursor_x = text_area.start_x;
 			cursor_y += text_size_y * 8;
 		}
-		else if(c != '\r')
+		else //if(c != '\r')
 		{
 			if(wrap_text && (cursor_x + text_size_x * 6 > text_area.end_x))
 			{
@@ -551,7 +555,7 @@ void print_chr(uint8_t c)
 			cursor_x = text_area.start_x;
 			cursor_y += text_size_y * gfx_font->yAdvance;
 		}
-		else if(c != '\r')
+		else //if(c != '\r')
 		{
 			uint8_t first = gfx_font->first;
 			
@@ -620,7 +624,7 @@ void print_int(long num)
 
 void printf_str(const char *text, ...)
 {
-	static char str[150] = { '\0' };
+	static char str[128] = { '\0' };
 	va_list args;
 	
 	va_start(args, text);
@@ -724,7 +728,7 @@ void update_display()
 }
 
 #elif defined(__ANDROID__)
-
+	#error "Android version of display driver is not implemented yet."
 #else
 	#error "Unsupported platform"
 #endif // Platform Check

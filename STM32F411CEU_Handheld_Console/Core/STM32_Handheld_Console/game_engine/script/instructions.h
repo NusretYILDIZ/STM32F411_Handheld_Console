@@ -25,7 +25,15 @@
                         X(0x15,     draw_image) \
                         X(0x16, update_display) \
                         X(0x17,       load_prg) \
-                        X(0x18,        mem_set)
+                        X(0x18,        mem_set) \
+						X(0x19,    end_of_loop) \
+						X(0x1a,   save_to_file) \
+						X(0x1b,        get_key) \
+						X(0x1c,   get_key_down) \
+						X(0x1d,     get_key_up) \
+						X(0x1e,   get_key_held) \
+						X(0x1f,   array_assign) \
+						X(0x20,      array_get)
 
 #define INST_DECLARE(opc, ins)  void vm_inst_##ins(void);
 INST_TABLE(INST_DECLARE)

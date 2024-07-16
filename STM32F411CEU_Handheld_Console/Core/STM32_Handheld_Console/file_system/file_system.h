@@ -1,21 +1,43 @@
 #ifndef __file_system_h
 #define __file_system_h
 
-void init_fs(void);
-void open_file(const char *file_path, unsigned char mode);
-void close_file(void);
-void read_file(void *buffer, unsigned int count);
-void write_file(const void *buffer, unsigned int count);
-void lseek_file(unsigned long offset);
-void truncate_file(void);
-void sync_file(void);
-void open_dir(const char *path);
-void close_dir(void);
-void read_dir(void *file_info);
-void find_first(void *file_info, const char *path, const char *pattern);
+#include <stdint.h>
+#include <stddef.h>
+
+#include "../game_engine/script/script_engine.h"
+
+#define DIR_GAMES             "/GAMES/"
+#define DIR_PROJECTS          "/PROJECTS/"
+#define FILE_SYSTEM_SETTINGS  "/SYSSTTNG.BIN"
+#define FILE_ENGINE_SETTINGS  "/ENGSTTNG.BIN"
+#define FILE_GAME_MANIFEST    "MANIFEST.BIN"
+
+extern char current_dir[256];
+
+uint8_t fs_init(void);
+void fs_deinit(void);
+//void fs_init_error(void);
+void fs_use_relpath(uint8_t enable);
+
+uint8_t file_exists(const char *filename);
+uint8_t dir_exists(const char *path);
+
+uint8_t file_full_read(const char *filename, void *buffer);
+uint8_t file_read(const char *filename, void *buffer, size_t offset, size_t size);
+uint8_t file_append(const char *filename, void *data, size_t size);
+uint8_t file_write(const char *filename, void *data, size_t offset, size_t size);
+uint8_t file_rename(const char *old_name, const char *new_name);
+
+uint8_t create_dir(const char *path);
+uint8_t set_current_dir(const char *path);
+
+uint8_t delete_file(const char *filepath);
+uint8_t delete_dir(const char *path);
+
+uint8_t format_disk(void);
 
 
-void* fi_get_file_name(void *file_info);
-unsigned long fi_get_file_size(void *file_info);
+uint8_t get_games_list(RAM_PTR index);
+uint8_t get_projects_list(RAM_PTR index);
 
 #endif //__file_system_h

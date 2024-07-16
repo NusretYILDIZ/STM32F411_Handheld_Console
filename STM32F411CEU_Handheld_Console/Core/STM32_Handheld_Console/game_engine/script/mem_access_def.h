@@ -1,6 +1,8 @@
 #ifndef __mem_access_def_h
 #define __mem_access_def_h
 
+#include <stdint.h>
+
 #define ram_ptr_float(addr)   (*(float    *)(&ram[(addr)]))
 #define ram_ptr_int8(addr)    (*(int8_t   *)(&ram[(addr)]))
 #define ram_ptr_int16(addr)   (*(int16_t  *)(&ram[(addr)]))
@@ -8,7 +10,7 @@
 #define ram_ptr_uint8(addr)   (               ram[(addr)] )
 #define ram_ptr_uint16(addr)  (*(uint16_t *)(&ram[(addr)]))
 #define ram_ptr_uint32(addr)  (*(uint32_t *)(&ram[(addr)]))
-#define ram_ptr_addr(addr)    (*(ram_t    *)(&ram[(addr)]))
+#define ram_ptr_addr(addr)    (*(RAM_PTR    *)(&ram[(addr)]))
 
 #define read_attrib(addr_mode, data_type, oper_type)    do { \
                                                             addr_mode = ram[prg_counter] & ADDR_MASK; \
@@ -20,7 +22,7 @@
 #define read_addr(dest_addr, addr_mode)   do { \
                                               dest_addr = ram_ptr_addr(prg_counter); \
                                               if(addr_mode == ADDR_PTR) dest_addr = ram_ptr_addr(dest_addr); \
-                                              prg_counter += sizeof(ram_t); \
+                                              prg_counter += sizeof(RAM_PTR); \
                                           } while(0)
 
 #define set_read_addr(addr, addr_mode, data_type)    do { \
@@ -180,6 +182,6 @@ typedef union
 	uint32_t uint32;
 	uint16_t uint16;
 	uint8_t uint8;
-} mem_buf;
+} MEM_BUF;
 
 #endif //__mem_access_def_h
