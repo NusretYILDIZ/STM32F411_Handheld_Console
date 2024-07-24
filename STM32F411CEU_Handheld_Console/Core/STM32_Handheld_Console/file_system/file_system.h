@@ -5,12 +5,23 @@
 #include <stddef.h>
 
 #include "../game_engine/script/script_engine.h"
+#include "../system/system_main.h"
 
-#define DIR_GAMES             "/GAMES/"
-#define DIR_PROJECTS          "/PROJECTS/"
-#define FILE_SYSTEM_SETTINGS  "/SYSSTTNG.BIN"
-#define FILE_ENGINE_SETTINGS  "/ENGSTTNG.BIN"
+#define DIR_GAMES             "GAMES/"
+#define DIR_PROJECTS          "PROJECTS/"
+#define FILE_SYSTEM_SETTINGS  "SYSSTTNG.BIN"
+#define FILE_ENGINE_SETTINGS  "ENGSTTNG.BIN"
 #define FILE_GAME_MANIFEST    "MANIFEST.BIN"
+
+#if defined(__arm__)
+	#define DIR_ROOT  "/"
+#elif defined(__WIN32__)
+	#define DIR_ROOT  "./sdcard/"
+#elif defined(__ANDROID__)
+	#error "Android version for file system is not implemented yet."
+#else
+	#error "Unsupported platform"
+#endif
 
 extern char current_dir[256];
 

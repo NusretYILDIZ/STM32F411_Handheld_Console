@@ -42,9 +42,9 @@ void show_window_helper(const char *title, const char *msg, unsigned char color)
 	print_str(msg);
 	
 	fill_raw_rect(WINDOW_X + 45, WINDOW_Y + WINDOW_HEIGHT - 2 * get_font_height(), 100, get_font_height() + 2, color);
-	text_bounds(GP_A"Tamam", 0, 0, &text_x, &text_y, &text_w, &text_h);
+	text_bounds(get_str(STR_OK), 0, 0, &text_x, &text_y, &text_w, &text_h);
 	set_cursor(WINDOW_X + (WINDOW_WIDTH - text_w) / 2, WINDOW_Y + WINDOW_HEIGHT - get_font_height() + 1);
-	print_str(GP_A"Tamam");
+	print_str(get_str(STR_OK));
 	
 	update_display();
 	

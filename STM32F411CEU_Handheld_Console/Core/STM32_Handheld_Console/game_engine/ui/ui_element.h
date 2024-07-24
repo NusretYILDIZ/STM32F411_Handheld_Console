@@ -3,9 +3,9 @@
 
 typedef enum e_UIElementType
 {
-	TEXT,
-	IMAGE,
-	RECT
+	UI_TEXT,
+	UI_IMAGE,
+	UI_RECT
 } UIElementType;
 
 typedef struct s_UIElement

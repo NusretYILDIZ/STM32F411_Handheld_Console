@@ -30,7 +30,7 @@ void menu_render(Menu *menu)
 			uint16_t tw, th;
 			//text_bounds(menu->items[menu->item_offset + i].text, 0, 0, &tx, &ty, &tw, &th);
 			//text_bounds(current_item->text, 0, 0, &tx, &ty, &tw, &th);
-			text_bounds(get_str(current_item->text), 0, 0, &tx, &ty, &tw, &th);
+			text_bounds(current_item->text, 0, 0, &tx, &ty, &tw, &th);
 			set_cursor((menu->attrib & RIGHT_ALIGN) ? (menu->x + menu->w - tw - 3) : (menu->x + (menu->w - tw) / 2 - 3), 
 						menu->y + get_font_height() * (i + 1));
 		}
@@ -43,7 +43,7 @@ void menu_render(Menu *menu)
 		set_text_color(temp_color, temp_color);
 		//print_str(menu->items[menu->item_offset + i].text);
 		//print_str(current_item->text);
-		print_str(get_str(current_item->text));
+		print_str(current_item->text);
 	}
 	
 	set_font_helper(temp);

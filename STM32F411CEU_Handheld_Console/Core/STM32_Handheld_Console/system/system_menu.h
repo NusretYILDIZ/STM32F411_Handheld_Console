@@ -4,13 +4,14 @@
 #include "./locals/strings.h"
 
 void change_lang(void);
+void game_list(void);
 /*{
 	if(current_lang == strings_en) current_lang = strings_tr;
 	else current_lang = strings_en;
 }*/
 
 const Menu_Item system_menu_items[] = {
-	{ .text = STR_GAMES },
+	{ .text = STR_GAMES, .action = game_list },
 	{ .text = STR_EDITOR },
 	{ .text = STR_SETTINGS },
 	{ .text = STR_ABOUT },

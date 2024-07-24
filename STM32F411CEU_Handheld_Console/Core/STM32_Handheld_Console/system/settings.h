@@ -5,7 +5,7 @@
 
 typedef struct s_SYSTEM_SETTINGS
 {
-	const char **current_lang;
+	const char **current_lang;  // TODO: Don't make this an absolute pointer.
 	uint8_t screen_brightness;
 	uint8_t theme_color;
 	char username[32];

@@ -11,6 +11,7 @@
 #define CENTER_ALIGN    0x04
 
 #define MAX_MENU_ITEM_COUNT 256
+#define MAX_MENU_TEXT_LENGTH 64
 
 #if (MAX_MENU_ITEM_COUNT <= 256)
 	typedef uint8_t MENU_INDEX;
@@ -18,11 +19,18 @@
 	typedef uint16_t MENU_INDEX;
 #endif
 
+typedef union u_Menu_Text
+{
+	String string;
+	char text[MAX_MENU_TEXT_LENGTH];
+} Menu_Text;
+
 typedef struct s_Menu_Item
 {
 	void *bitmap;
-	//unsigned char text[32];
-	Strings text;
+	unsigned char text[MAX_MENU_TEXT_LENGTH];
+	//String text;
+	//Menu_Text menu_text;
 	void (*action)(void);
 } Menu_Item;
 

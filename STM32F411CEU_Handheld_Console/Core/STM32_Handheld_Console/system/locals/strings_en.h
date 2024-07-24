@@ -3,8 +3,13 @@
 
 const char *strings_en[] = {
 	"STM32 Handheld Gaming Console",
+	"OK",
 	"Back",
 	"An error occurred while initialiazing SD card.\nMake sure the SD card is formatted with FAT32.",
+	"<empty>",
+	"CORRUPTED",
+	"Corrupted Game",
+	"The game you want to play cannot be started.\n\nMake sure that the game is installed properly.",
 	
 	// System Menu
 	"Games",
@@ -14,6 +19,8 @@ const char *strings_en[] = {
 	"Language: English",
 	
 	// Games Menu
+	"Games",
+	"Searching for games...",
 	"Start",
 	"Delete",
 	

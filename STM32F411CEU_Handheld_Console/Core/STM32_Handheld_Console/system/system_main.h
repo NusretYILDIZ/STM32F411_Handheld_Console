@@ -9,8 +9,6 @@
 #include "../game_engine/game_engine.h"
 
 uint8_t system_main(void);
-void system_list_games(void);
-void system_options(void);
-void system_about(void);
+void corrupted_game_error(void);
 
 #endif //__system_main_h

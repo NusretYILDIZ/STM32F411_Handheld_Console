@@ -1,13 +1,18 @@
 #ifndef __strings_h
 #define __strings_h
 
-#include "../system_settings.h"
+#include "../settings.h"
 
 typedef enum e_STRINGS
 {
 	STR_CONSOLE_TITLE,
+	STR_OK,
 	STR_BACK,
 	STR_INIT_FS_ERROR,
+	STR_EMPTY,
+	STR_CORRUPTED,
+	STR_GAME_CORRUPTED_TITLE,
+	STR_GAME_CORRUPTED_MSG,
 	
 	// System Menu
 	STR_GAMES,
@@ -17,13 +22,15 @@ typedef enum e_STRINGS
 	STR_LANGUAGE,
 	
 	// Games Menu
+	STR_GAME_LIST_TITLE,
+	STR_SEARCHING_FOR_GAMES,
 	STR_START,
 	STR_DELETE,
 	
 	// Editor Menu
 	STR_CREATE_NEW_PROJECT,
 	STR_OPEN_PROJECT,
-} Strings;
+} String;
 
 //const char **current_lang;
 

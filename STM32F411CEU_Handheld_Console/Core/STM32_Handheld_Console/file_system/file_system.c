@@ -4,16 +4,14 @@
 	#error "STM32 version of file system is not implemented yet."
 #elif defined(__WIN32__)
 
-#define DIR_ROOT  "./sdcard"
-
 #include <stdio.h>
 #include <windows.h>
 
 uint8_t fs_init(void)
 {
-	//if(!dir_exists("sdcard")) return create_dir("sdcard");
+	if(!dir_exists("sdcard")) return create_dir("sdcard");
 	
-	return 0;  // There is nothing to initialize.
+	return 1;  // There is nothing to initialize.
 }
 
 void fs_deinit(void)
@@ -174,29 +172,71 @@ uint8_t format_disk()
 	return 1;
 }
 
+#define get_menu_item(addr, index)  ((Menu_Item *)(&ram[addr + sizeof(Menu_Item) * index]))
 
-uint8_t get_games_list(RAM_PTR index)
+uint8_t get_games_list(RAM_PTR list_addr)
 {
 	WIN32_FIND_DATA find_data_file;
-	HANDLE handle_file = 0;
-	uint16_t game_count = 0;
+	HANDLE file_handler = 0;
+	uint16_t item_count = 0;
 	
 	char path[256] = { '\0' };
-	strcat(path, DIR_ROOT DIR_GAMES);
+	sprintf(path, DIR_ROOT DIR_GAMES);
+	//strcpy(path, DIR_ROOT DIR_GAMES);
+	//strcat(path, "*");
 	
-	handle_file = FindFirstFileA(path, &find_data_file);
+	file_handler = FindFirstFileA(DIR_ROOT DIR_GAMES "*", &find_data_file);
 	
-	if(handle_file == INVALID_HANDLE_VALUE) return 0;
-	else
+	if(file_handler == INVALID_HANDLE_VALUE) return 0;
+	
+	do
 	{
-		do
+		if(strcmp(find_data_file.cFileName, ".") != 0 && strcmp(find_data_file.cFileName, "..") != 0 && find_data_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if(!strcmp(find_data_file.cAlternateFileName, FILE_GAME_MANIFEST))
-		} while();
+			WIN32_FIND_DATA game_files;
+			HANDLE game_files_handler = 0;
+			
+			sprintf(path, DIR_ROOT DIR_GAMES "%s/*.bin", find_data_file.cFileName);
+			
+			game_files_handler = FindFirstFileA(path, &game_files);
+			if(game_files_handler == INVALID_HANDLE_VALUE)
+			{
+				sprintf(get_menu_item(list_addr, item_count)->text, "[%s] %s", get_str(STR_CORRUPTED), find_data_file.cFileName);
+				get_menu_item(list_addr, item_count)->action = corrupted_game_error;
+				item_count++;
+				
+				printf("%d: %s", item_count, get_menu_item(list_addr, item_count)->text);
+				
+				continue;
+			}
+			
+			do
+			{
+				if(strcmp(game_files.cFileName, ".") != 0 && strcmp(game_files.cFileName, "..") != 0 && 
+					!(game_files.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+					strcmp(game_files.cFileName, FILE_GAME_MANIFEST) == 0)
+				{
+					sprintf(get_menu_item(list_addr, item_count)->text, "%s", find_data_file.cFileName);
+					//get_menu_item(list_addr, item_count)->action = corrupted_game_error;
+					item_count++;
+				
+					printf("%d: %s", item_count, get_menu_item(list_addr, item_count)->text);
+					break;
+				}
+			}
+			while(FindNextFileA(game_files_handler, &game_files) != 0);
+			
+			FindClose(game_files_handler);
+		}
 	}
+	while(FindNextFileA(file_handler, &find_data_file) != 0);
+	
+	FindClose(file_handler);
+	
+	return item_count;
 }
 
-uint8_t get_projects_list(RAM_PTR index)
+uint8_t get_projects_list(RAM_PTR list_addr)
 {
 	
 }

@@ -1,6 +1,8 @@
 #ifndef __popup_h
 #define __popup_h
 
+#include "./locals/strings.h"
+
 //#define assertion(e)       ((e) ? (void)0 : _test_assertion(#e       , __FILE__, __LINE__))
 //#define assertion(e, m)    ((e) ? (void)0 : _test_assertion(#e "\n" m, __FILE__, __LINE__))
 
