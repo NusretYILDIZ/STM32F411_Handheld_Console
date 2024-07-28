@@ -7,7 +7,7 @@ const char *strings_en[] = {
 	"Back",
 	"An error occurred while initialiazing SD card.\nMake sure the SD card is formatted with FAT32.",
 	"<empty>",
-	"CORRUPTED",
+	"Corrupted Data",
 	"Corrupted Game",
 	"The game you want to play cannot be started.\n\nMake sure that the game is installed properly.",
 	

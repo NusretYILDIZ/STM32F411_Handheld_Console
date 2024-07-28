@@ -23,6 +23,8 @@
 	#error "Unsupported platform"
 #endif
 
+#define path(p)  DIR_ROOT p
+
 extern char current_dir[256];
 
 uint8_t fs_init(void);
@@ -38,6 +40,7 @@ uint8_t file_read(const char *filename, void *buffer, size_t offset, size_t size
 uint8_t file_append(const char *filename, void *data, size_t size);
 uint8_t file_write(const char *filename, void *data, size_t offset, size_t size);
 uint8_t file_rename(const char *old_name, const char *new_name);
+uint32_t file_size(const char *filename);
 
 uint8_t create_dir(const char *path);
 uint8_t set_current_dir(const char *path);

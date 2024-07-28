@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <windows.h>
 
+#include "../system/settings.h"
+
 uint8_t fs_init(void)
 {
 	if(!dir_exists("sdcard")) return create_dir("sdcard");
@@ -138,6 +140,22 @@ uint8_t file_rename(const char *old_name, const char *new_name)
 	return !rename(old_name, new_name);  // Standard rename() function returns 0 on success, but our system should return non-zero value on success.
 }
 
+uint32_t file_size(const char *filename)
+{
+	size_t file_size;
+	FILE *file;
+	
+	file = fopen(filename, "rb");
+	if(!file) return 0;
+	
+	fseek(file, 0L, SEEK_END);
+	file_size = ftell(file);
+	rewind(file);
+	fclose(file);
+	
+	return file_size;
+}
+
 uint8_t create_dir(const char *path)
 {
 	//if(!path) return 0;
@@ -201,11 +219,9 @@ uint8_t get_games_list(RAM_PTR list_addr)
 			game_files_handler = FindFirstFileA(path, &game_files);
 			if(game_files_handler == INVALID_HANDLE_VALUE)
 			{
-				sprintf(get_menu_item(list_addr, item_count)->text, "[%s] %s", get_str(STR_CORRUPTED), find_data_file.cFileName);
+				sprintf(get_menu_item(list_addr, item_count)->text, get_str(STR_CORRUPTED_DATA));
 				get_menu_item(list_addr, item_count)->action = corrupted_game_error;
 				item_count++;
-				
-				printf("%d: %s", item_count, get_menu_item(list_addr, item_count)->text);
 				
 				continue;
 			}
@@ -216,11 +232,14 @@ uint8_t get_games_list(RAM_PTR list_addr)
 					!(game_files.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 					strcmp(game_files.cFileName, FILE_GAME_MANIFEST) == 0)
 				{
+					GAME_MANIFEST manifest;
+					sprintf(path, DIR_ROOT DIR_GAMES "%s/%s", find_data_file.cFileName, game_files.cFileName);
+					//if(file_size())
+					
 					sprintf(get_menu_item(list_addr, item_count)->text, "%s", find_data_file.cFileName);
 					//get_menu_item(list_addr, item_count)->action = corrupted_game_error;
 					item_count++;
-				
-					printf("%d: %s", item_count, get_menu_item(list_addr, item_count)->text);
+					
 					break;
 				}
 			}

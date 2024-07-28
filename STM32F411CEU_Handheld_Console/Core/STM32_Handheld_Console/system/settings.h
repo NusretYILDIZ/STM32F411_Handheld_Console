@@ -11,15 +11,10 @@ typedef struct s_SYSTEM_SETTINGS
 	char username[32];
 } SYSTEM_SETTINGS;
 
-/*typedef struct s_ENGINE_SETTINGS
-{
-	
-} ENGINE_SETTINGS;*/
-
 typedef struct s_GAME_MANIFEST
 {
-	uint8_t version;
 	char name[64];
+	uint8_t version;
 } GAME_MANIFEST;
 
 extern SYSTEM_SETTINGS system_settings;

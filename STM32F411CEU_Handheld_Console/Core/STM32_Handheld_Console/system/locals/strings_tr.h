@@ -7,7 +7,7 @@ const char *strings_tr[] = {
 	"Geri",
 	"SD kart ba"TR_s"lat"TR_i"l"TR_i"rken bir hata olu"TR_s"tu.\nSD kart"TR_i"n FAT32 ile bi"TR_c"imlendirildi"TR_g"inden emin olun.",
 	"<bo"TR_s">",
-	"BOZUK",
+	"Bozulmu"TR_s" Veri",
 	"Bozuk Oyun",
 	"Oynamak istedi"TR_g"iniz oyun ba"TR_s"lat"TR_i"lam"TR_i"yor.\n\nOyunu do"TR_g"ru bi"TR_c"imde kurdu"TR_g"unuzdan emin olun.",
 	

@@ -224,6 +224,11 @@ void init_ili9486l()
     // Memory Access Control
     tft_send_command(MADCTL);
     tft_send_data(0xE8);
+	
+	// Frame Rate: 30 Hz, Div Ratio: 1, Clock Per Line: 17 clocks
+	tft_send_command(FRMCTR1);
+	tft_send_data(0x10);
+	tft_send_data(0x11);
     
     // Display On
     tft_send_command(DISON);
