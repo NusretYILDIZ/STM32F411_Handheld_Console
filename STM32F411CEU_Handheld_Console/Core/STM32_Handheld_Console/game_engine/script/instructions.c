@@ -1031,17 +1031,3 @@ __inline void vm_inst_get_key_held()
     ++prg_counter;
 	
 }
-
-// Put a value in an array at specified index
-__inline void vm_inst_array_assign()
-{
-	++prg_counter;
-	
-}
-
-// Read the value from an array at specified index
-__inline void vm_inst_array_get()
-{
-	++prg_counter;
-	
-}
