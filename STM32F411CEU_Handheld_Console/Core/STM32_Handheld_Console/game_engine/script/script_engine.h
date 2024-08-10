@@ -4,8 +4,21 @@
 #include <stdint.h>
 #include "../../display/display_driver.h"
 
-#define RAM_SIZE    (1024 * 80) // 85 KB (Max possible size is 88 KB but expect it to be lesser than that.)
+#define RAM_SIZE    (1024 * 80) // 85 KB (Max possible size is 88 KB but expect it to be lower than that.)
 #define STACK_SIZE  (256)
+
+typedef enum
+{
+	PANIC_NONE,
+	PANIC_UNKNOWN_DATA_TYPE,
+	PANIC_UNKNOWN_ADDR_MODE,
+	PANIC_INVALID_INSTRUCTION,
+	PANIC_DATA_TYPE_DISCREPANCY,
+} PANIC_CODE;
+
+extern PANIC_CODE panic_code;
+
+#define KERNEL_PANIC(code)  status_flag |= KERNEL_PANIC_FLAG; panic_code = code
 
 typedef int8_t int8;
 typedef int16_t int16;
@@ -34,7 +47,7 @@ extern STACK_PTR stack_ptr;
 
 //extern uint32_t a_int;
 //extern float a_flt;
-extern uint8_t logical_flag;
+extern uint8_t status_flag;
 extern uint8_t end_of_loop_flag;
 //extern ram_t abs_addr;
 //extern ram_t ptr_addr;

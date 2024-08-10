@@ -2,6 +2,7 @@
 #define __mem_access_def_h
 
 #include <stdint.h>
+#include "./script_engine.h"
 
 #define ram_ptr_float(addr)   (*(float    *)(&ram[(addr)]))
 #define ram_ptr_int8(addr)    (*(int8_t   *)(&ram[(addr)]))
@@ -19,7 +20,7 @@
                                                             ++prg_counter; \
                                                         } while(0)
 
-#define read_addr(dest_addr, addr_mode)   do { \
+//#define read_addr(dest_addr, addr_mode)   do { \
                                               dest_addr = ram_ptr_addr(prg_counter); \
                                               if(addr_mode == ADDR_PTR) dest_addr = ram_ptr_addr(dest_addr); \
                                               prg_counter += sizeof(RAM_PTR); \
@@ -128,27 +129,43 @@
 										ram_ptr_uint8(addr) = (dat); \
 									} while(0)
 
-#define CARRY_FLAG       0x01
-#define ZERO_FLAG        0x02
-#define OVERFLOW_FLAG    0x04
-#define SIGN_FLAG        0x08
+#define CARRY_FLAG         0x01
+#define ZERO_FLAG          0x02
+#define OVERFLOW_FLAG      0x04
+#define SIGN_FLAG          0x08
+#define END_OF_LOOP_FLAG   0x10
+#define KERNEL_PANIC_FLAG  0x20
 
-#define OPER_MASK        0xE0
-#define TYPE_MASK        0x1C
-#define ADDR_MASK        0x03
+//#define OPER_MASK        0xE0
+#define TYPE_MASK        0x3F
+#define ADDR_MASK        0xC0
 
-#define TYPE_TERMINATE   (0 << 2)
-#define TYPE_FLOAT       (1 << 2)  // Uses big-endian format
-#define TYPE_INT32       (2 << 2)
-#define TYPE_UINT32      (3 << 2)
-#define TYPE_INT16       (4 << 2)
-#define TYPE_UINT16      (5 << 2)
-#define TYPE_INT8        (6 << 2)
-#define TYPE_UINT8       (7 << 2)
+//#define TYPE_TERMINATE   (0 << 2)
+//#define TYPE_FLOAT       (1 << 2)  // Uses big-endian format
+//#define TYPE_INT32       (2 << 2)
+//#define TYPE_UINT32      (3 << 2)
+//#define TYPE_INT16       (4 << 2)
+//#define TYPE_UINT16      (5 << 2)
+//#define TYPE_INT8        (6 << 2)
+//#define TYPE_UINT8       (7 << 2)
 
-#define ADDR_IMM         (0 << 0)
-#define ADDR_ABS         (1 << 0)
-#define ADDR_PTR         (2 << 0)
+typedef enum
+{
+	TYPE_TERMINATE,
+	TYPE_FLOAT,  // Uses big-endian format
+	TYPE_INT32,
+	TYPE_UINT32,
+	TYPE_INT16,
+	TYPE_UINT16,
+	TYPE_INT8,
+	TYPE_UINT8,
+	TYPE_RAM_PTR,
+	TYPE_STRING,
+} TYPE_FLAG;
+
+#define ADDR_IMM         (1 << 6)
+#define ADDR_ABS         (2 << 6)
+#define ADDR_PTR         (3 << 6)
 
 #define ARITH_ADD        (0 << 5)
 #define ARITH_SUB        (1 << 5)
@@ -182,6 +199,7 @@ typedef union
 	uint32_t uint32;
 	uint16_t uint16;
 	uint8_t uint8;
+	RAM_PTR ram_ptr;
 } MEM_BUF;
 
 #endif //__mem_access_def_h

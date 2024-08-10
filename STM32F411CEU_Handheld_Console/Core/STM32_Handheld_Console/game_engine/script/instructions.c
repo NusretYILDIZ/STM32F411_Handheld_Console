@@ -1,10 +1,187 @@
 #include "./instructions.h"
 #include "./script_engine.h"
 #include "./mem_access_def.h"
+#include "../game_engine.h"
+#include "../../input/input_driver.h"
 #include <math.h>
 #include <string.h>
 
-#define __inline  __attribute__((always_inline)) inline 
+#define __inline  __attribute__((always_inline)) inline
+
+__inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
+{
+	switch(var_type)
+	{
+	case TYPE_TERMINATE:
+		break;
+	
+	case TYPE_FLOAT:
+		if(dest) *(float *)dest = *(float *)(&ram[*addr]);
+		*addr += sizeof(float);
+		break;
+	
+	case TYPE_INT32:
+		if(dest) *(int32_t *)dest = *(int32_t *)(&ram[*addr]);
+		*addr += sizeof(int32_t);
+		break;
+	
+	case TYPE_UINT32:
+		if(dest) *(uint32_t *)dest = *(uint32_t *)(&ram[*addr]);
+		*addr += sizeof(uint32_t);
+		break;
+	
+	case TYPE_INT16:
+		if(dest) *(int16_t *)dest = *(int16_t *)(&ram[*addr]);
+		*addr += sizeof(int16_t);
+		break;
+	
+	case TYPE_UINT16:
+		if(dest) *(uint16_t *)dest = *(uint16_t *)(&ram[*addr]);
+		*addr += sizeof(uint16_t);
+		break;
+	
+	case TYPE_INT8:
+		if(dest) *(int8_t *)dest = *(int8_t *)(&ram[*addr]);
+		*addr += sizeof(int8_t);
+		break;
+	
+	case TYPE_UINT8:
+		if(dest) *(uint8_t *)dest = *(uint8_t *)(&ram[*addr]);
+		*addr += sizeof(uint8_t);
+		break;
+	
+	case TYPE_RAM_PTR:
+		if(dest) *(RAM_PTR *)dest = *(RAM_PTR *)(&ram[*addr]);
+		*addr += sizeof(RAM_PTR);
+		break;
+	
+	case TYPE_STRING:
+		if(dest) *(RAM_PTR *)dest = *addr;
+		while(ram[*addr] != '\0') *addr++;
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
+}
+
+__inline TYPE_FLAG read_param(void *dest)
+{
+	uint8_t var_attr = ram[prg_counter];
+	prg_counter++;
+	
+	TYPE_FLAG type_flag = var_attr & TYPE_MASK;
+	
+	if(var_attr & ADDR_IMM)
+	{
+		read_memory(&prg_counter, dest, type_flag);
+	}
+	else if(var_attr & ADDR_ABS)
+	{
+		RAM_PTR var_addr = *(RAM_PTR *)(&ram[prg_counter]);
+		prg_counter += sizeof(RAM_PTR);
+		
+		read_memory(&var_addr, dest, type_flag);
+	}
+	else if(var_attr & ADDR_PTR)
+	{
+		RAM_PTR var_addr = *(RAM_PTR *)(&ram[prg_counter]);
+		prg_counter += sizeof(RAM_PTR);
+		
+		var_addr = *(RAM_PTR *)(&ram[var_addr]);
+		
+		read_memory(&var_addr, dest, type_flag);
+	}
+	else 
+	{
+		//printf("addr_mode = %d\n", var_attr & ADDR_MASK);
+		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
+	}
+	
+	return type_flag;
+}
+
+__inline TYPE_FLAG read_addr(RAM_PTR *dest)
+{
+	uint8_t var_attr = ram[prg_counter];
+	prg_counter++;
+	
+	TYPE_FLAG type_flag = var_attr & TYPE_MASK;
+	
+	if(var_attr & ADDR_IMM) 
+	{
+		if(dest) *dest = prg_counter;
+		prg_counter += sizeof(RAM_PTR);
+	}
+	else if(var_attr & ADDR_ABS)
+	{
+		if(dest) *dest = *(RAM_PTR *)(&ram[prg_counter]);
+		prg_counter += sizeof(RAM_PTR);
+	}
+	else if(var_attr & ADDR_PTR)
+	{
+		if(dest) *dest = *(RAM_PTR *)(&ram[prg_counter]);
+		prg_counter += sizeof(RAM_PTR);
+		
+		*dest = *(RAM_PTR *)(&ram[*dest]);
+	}
+	else 
+	{
+		//printf("addr_mode = %d\n", var_attr & ADDR_MASK);
+		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
+	}
+	
+	return type_flag;
+}
+
+__inline void copy_data(TYPE_FLAG data_type, RAM_PTR dest, MEM_BUF src)
+{
+	switch(data_type)
+	{
+	case TYPE_FLOAT:
+		*(float *)(&ram[dest]) = src.flt;
+		break;
+	
+	case TYPE_INT32:
+		*(int32_t *)(&ram[dest]) = src.int32;
+		break;
+	
+	case TYPE_UINT32:
+		*(uint32_t *)(&ram[dest]) = src.uint32;
+		break;
+	
+	case TYPE_INT16:
+		*(int16_t *)(&ram[dest]) = src.int16;
+		break;
+	
+	case TYPE_UINT16:
+		*(uint16_t *)(&ram[dest]) = src.uint16;
+		break;
+	
+	case TYPE_INT8:
+		*(int8_t *)(&ram[dest]) = src.int8;
+		break;
+	
+	case TYPE_UINT8:
+		*(uint8_t *)(&ram[dest]) = src.uint8;
+		break;
+	
+	case TYPE_RAM_PTR:
+		*(RAM_PTR *)(&ram[dest]) = src.ram_ptr;
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
+}
+
+
+__inline void vm_inst_invalid()
+{
+	KERNEL_PANIC(PANIC_INVALID_INSTRUCTION);
+}
 
 __inline void vm_inst_syscall()
 {
@@ -13,11 +190,21 @@ __inline void vm_inst_syscall()
 
 __inline void vm_inst_assign()
 {
-	++prg_counter;
+	RAM_PTR dest_addr;
+	TYPE_FLAG dest_type = read_addr(&dest_addr);
 	
-	//printf("Assign inst.\n\n");
+	MEM_BUF data;
+	TYPE_FLAG data_type = read_param(&data);
 	
-	uint8_t dest_addr_mode, dest_data_type, oper_mode;
+	if(dest_type == data_type)
+		copy_data(data_type, dest_addr, data);
+	
+	else
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	/*uint8_t dest_addr_mode, dest_data_type, oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, oper_mode);
 	
 	RAM_PTR dest_addr;
@@ -132,16 +319,88 @@ __inline void vm_inst_assign()
 		else               logical_flag &= ~ZERO_FLAG;
 		
 		break;
+	}*/
+}
+
+__inline void vm_inst_increase()
+{
+	RAM_PTR var_addr;
+	TYPE_FLAG data_type = read_addr(&var_addr);
+	
+	switch(data_type)
+	{
+	case TYPE_INT32:
+		(*(int32_t *)(&ram[var_addr]))++;
+		break;
+		
+	case TYPE_UINT32:
+		(*(uint32_t *)(&ram[var_addr]))++;
+		break;
+		
+	case TYPE_INT16:
+		(*(int16_t *)(&ram[var_addr]))++;
+		break;
+		
+	case TYPE_UINT16:
+		(*(uint16_t *)(&ram[var_addr]))++;
+		break;
+		
+	case TYPE_INT8:
+		(*(int8_t *)(&ram[var_addr]))++;
+		break;
+		
+	case TYPE_UINT8:
+		(*(uint8_t *)(&ram[var_addr]))++;
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
+}
+
+__inline void vm_inst_decrease()
+{
+	RAM_PTR var_addr;
+	TYPE_FLAG data_type = read_addr(&var_addr);
+	
+	switch(data_type)
+	{
+	case TYPE_INT32:
+		(*(int32_t *)(&ram[var_addr]))--;
+		break;
+		
+	case TYPE_UINT32:
+		(*(uint32_t *)(&ram[var_addr]))--;
+		break;
+		
+	case TYPE_INT16:
+		(*(int16_t *)(&ram[var_addr]))--;
+		break;
+		
+	case TYPE_UINT16:
+		(*(uint16_t *)(&ram[var_addr]))--;
+		break;
+		
+	case TYPE_INT8:
+		(*(int8_t *)(&ram[var_addr]))--;
+		break;
+		
+	case TYPE_UINT8:
+		(*(uint8_t *)(&ram[var_addr]))--;
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
 	}
 }
 
 __inline void vm_inst_arith_calc()
 {
-	++prg_counter;
-	
 	//printf("Arithmetic calculation inst.\n\n");
 	
-	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
+	/*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
 	
 	RAM_PTR dest_addr;
@@ -376,14 +635,12 @@ __inline void vm_inst_arith_calc()
 		else               logical_flag &= ~ZERO_FLAG;
 		
 		break;
-	}
+	}*/
 }
 
 __inline void vm_inst_bitwise()
 {
-    ++prg_counter;
-	
-	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
+    /*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
 	
 	RAM_PTR dest_addr;
@@ -536,14 +793,12 @@ __inline void vm_inst_bitwise()
 		else              logical_flag &= ~SIGN_FLAG;
 		
 		break;
-	}
+	}*/
 }
 
 __inline void vm_inst_logical()
 {
-    ++prg_counter;
-	
-	uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
+    /*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
 	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
 	
 	RAM_PTR dest_addr;
@@ -660,13 +915,11 @@ __inline void vm_inst_logical()
 	}
 	
 	if(res) logical_flag &= ~ZERO_FLAG;
-	else    logical_flag |=  ZERO_FLAG;
+	else    logical_flag |=  ZERO_FLAG;*/
 }
 
 __inline void vm_inst_jsr()
 {
-    ++prg_counter;
-    
     RAM_PTR jmp_addr = *(RAM_PTR *) (&ram[prg_counter]);
     prg_counter += sizeof(RAM_PTR);
     
@@ -679,20 +932,46 @@ __inline void vm_inst_rts()
     prg_counter = (RAM_PTR) vm_pop();
 }
 
+__inline void vm_inst_jump_if_carry()
+{
+	RAM_PTR jump_addr;
+	read_addr(&jump_addr);
+		
+	if(status_flag & CARRY_FLAG)
+	{
+		jump_addr += engine_settings.game_code_addr;
+		prg_counter = jump_addr;
+	}
+}
+
+__inline void vm_inst_jump_if_zero()
+{
+	RAM_PTR jump_addr;
+	read_addr(&jump_addr);
+		
+	if(status_flag & ZERO_FLAG)
+	{
+		jump_addr += engine_settings.game_code_addr;
+		prg_counter = jump_addr;
+	}
+}
+
 __inline void vm_inst_jump_if()
 {
-    ++prg_counter;
-    
-    if(logical_flag)
+    /*if(logical_flag)
         prg_counter = *(RAM_PTR *) (&ram[prg_counter]);
     else
-        prg_counter += sizeof(RAM_PTR);
+        prg_counter += sizeof(RAM_PTR);*/
 }
 
 __inline void vm_inst_jump()
 {
-    ++prg_counter;
-    prg_counter = ram_ptr_addr(prg_counter);
+	RAM_PTR jump_addr;
+	read_addr(&jump_addr);
+	jump_addr += engine_settings.game_code_addr;
+	
+	prg_counter = jump_addr;
+    //prg_counter = ram_ptr_addr(prg_counter);
 }
 
 // Exit from program and return to system menu.
@@ -703,9 +982,35 @@ __inline void vm_inst_exit()
 
 __inline void vm_inst_set_text_area()
 {
-    ++prg_counter;
+	int16_t sx, sy, ex, ey;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&sx);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&sy);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&ex);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&ey);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	set_text_area(sx, sy, ex, ey);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	RAM_PTR src_addr;
 	
 	int16_t sx, sy, ex, ey;
@@ -732,14 +1037,28 @@ __inline void vm_inst_set_text_area()
 	
 	//printf("set_text_area(%d, %d, %d, %d)\n\n", sx, sy, ex, ey);
 	
-	set_text_area(sx, sy, ex, ey);
+	set_text_area(sx, sy, ex, ey);*/
 }
 
 __inline void vm_inst_set_cursor()
 {
-    ++prg_counter;
+	int16_t x, y;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&x);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&y);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	set_cursor(x, y);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	RAM_PTR src_addr;
 	
 	int16_t x, y;
@@ -756,14 +1075,29 @@ __inline void vm_inst_set_cursor()
 	
 	//printf("set_cursor(%d, %d)\n\n", x, y);
 	
-	set_cursor(x, y);
+	set_cursor(x, y);*/
 }
 
 __inline void vm_inst_set_text_color()
 {
-    ++prg_counter;
+	uint8_t fg, bg;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&fg);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&bg);
+	if(data_type == TYPE_TERMINATE) bg = fg;
+	else if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	set_text_color(fg, bg);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	RAM_PTR src_addr;
 	
 	uint8_t fg, bg;
@@ -786,14 +1120,29 @@ __inline void vm_inst_set_text_color()
 	
 	//printf("set_text_color(%d, %d)\n\n", fg, bg);
 	
-	set_text_color(fg, bg);
+	set_text_color(fg, bg);*/
 }
 
 __inline void vm_inst_set_text_size()
 {
-    ++prg_counter;
+	uint8_t x, y;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&x);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&y);
+	if(data_type == TYPE_TERMINATE) y = x;
+	else if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	set_text_size(x, y);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	RAM_PTR src_addr;
 	
 	uint8_t x, y;
@@ -816,55 +1165,77 @@ __inline void vm_inst_set_text_size()
 	
 	//printf("set_text_size(%d, %d)\n\n", x, y);
 	
-	set_text_size(x, y);
+	set_text_size(x, y);*/
 }
 
 // The text that doesn't fit in text area now pushed into next line.
 __inline void vm_inst_set_text_wrap()
 {
-    ++prg_counter;
-	set_text_wrap(1);
+    set_text_wrap(1);
 }
 
 // The text that doesn't fit in text area is now clipped.
 __inline void vm_inst_clr_text_wrap()
 {
-    ++prg_counter;
-	set_text_wrap(0);
+    set_text_wrap(0);
 }
 
 // Set font of text for printing into VRAM.
 __inline void vm_inst_set_font()
 {
-    ++prg_counter;
-	
 	uint8_t font;
+	
+	TYPE_FLAG data_type = read_param(&font);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	set_font(font);
+	
+    /*uint8_t font;
 	read_uint8(font, prg_counter);
 	++prg_counter;
 	
-	set_font(font);
+	set_font(font);*/
 }
 
 // Print a single character into VRAM.
 __inline void vm_inst_print_chr()
 {
-    ++prg_counter;
+	uint8_t chr;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&chr);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	print_chr(chr);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
 	
 	RAM_PTR src_addr;
 	read_addr(src_addr, src_addr_mode);
 	
-	print_chr(ram_ptr_uint8(src_addr));
+	print_chr(ram_ptr_uint8(src_addr));*/
 }
 
 // Print a string into VRAM.
 __inline void vm_inst_print_str()
 {
-    ++prg_counter;
+	RAM_PTR str_addr;
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	TYPE_FLAG data_type = read_param(&str_addr);
+	if(data_type != TYPE_STRING) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	print_str(&ram[str_addr]);
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	RAM_PTR src_addr;
 	
 	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
@@ -882,15 +1253,47 @@ __inline void vm_inst_print_str()
 	
 	//printf("print_str(\"%s\")\n\n", &ram[src_addr]);
 	
-	print_str(&ram[src_addr]);
+	print_str(&ram[src_addr]);*/
 }
 
 // Print a integer into VRAM.
 __inline void vm_inst_print_int()
 {
-    ++prg_counter;
+	MEM_BUF number;
+	TYPE_FLAG data_type = read_param(&number);
 	
-	uint8_t src_addr_mode, src_data_type, src_oper_mode;
+	switch(data_type)
+	{
+	case TYPE_INT32:
+		print_int(number.int32);
+		break;
+		
+	case TYPE_UINT32:
+		print_int(number.uint32);
+		break;
+		
+	case TYPE_INT16:
+		print_int(number.int16);
+		break;
+		
+	case TYPE_UINT16:
+		print_int(number.uint16);
+		break;
+		
+	case TYPE_INT8:
+		print_int(number.int8);
+		break;
+		
+	case TYPE_UINT8:
+		print_int(number.uint8);
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
+	
+    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
 	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
 	
 	RAM_PTR src_addr;
@@ -931,35 +1334,88 @@ __inline void vm_inst_print_int()
 	
 	//printf("print_int(%d)\n\n", tmp.int32);
 	
-	print_int(tmp.int32);
+	print_int(tmp.int32);*/
 }
 
 // Print a formatted text into VRAM.
 __inline void vm_inst_printf_str()
 {
-    ++prg_counter;
+    
 }
 
 // Copy a pixel sequence into specified VRAM coordinates.
 __inline void vm_inst_draw_image()
 {
-    ++prg_counter;
-    
+    int16_t x, y;
+	uint16_t w, h;
+	RAM_PTR image;
+	
+	TYPE_FLAG data_type = read_param(&x);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&y);
+	if(data_type != TYPE_INT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&w);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&h);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_addr(&image);
+	if(data_type != TYPE_RAM_PTR) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	draw_image(x, y, w, h, &ram[image], 0xff);
 }
 
 // Load a script file from SD card to RAM to execute.
 __inline void vm_inst_load_prg()
 {
-    ++prg_counter;
     
 }
 
 // Set the value of specified RAM area.
 __inline void vm_inst_mem_set()
 {
-    ++prg_counter;
+	RAM_PTR dest, len;
+	uint8_t data;
 	
-    uint8_t addr_mode, data_type, oper_mode;
+	TYPE_FLAG data_type = read_param(&dest);
+	if(data_type != TYPE_RAM_PTR) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&data);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	data_type = read_param(&len);
+	if(data_type != TYPE_RAM_PTR) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	memset(&ram[dest], data, len);
+	
+    /*uint8_t addr_mode, data_type, oper_mode;
 	read_attrib(addr_mode, data_type, oper_mode);
 	
 	RAM_PTR dest_addr;
@@ -978,14 +1434,26 @@ __inline void vm_inst_mem_set()
 	RAM_PTR length = ram_ptr_addr(len_addr);
 	
 	//printf("mem_set(%d, %d, %d)\n\n", dest_addr, val, length);
-	memset(&ram[dest_addr], val, length);
+	memset(&ram[dest_addr], val, length);*/
+}
+
+__inline void vm_inst_fill_display()
+{
+	uint8_t color;
+	
+	TYPE_FLAG data_type = read_param(&color);
+	if(data_type != TYPE_UINT8) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	fill_display(color);
 }
 
 // Update the display with VRAM content.
 __inline void vm_inst_update_display()
 {
-    ++prg_counter;
-	//printf("update_display()\n\n");
+    //printf("update_display()\n\n");
 	update_display();
 }
 
@@ -994,40 +1462,168 @@ __inline void vm_inst_end_of_loop()
 {
 	// TODO: Set program counter to start of the game logic loop.
 	// Second thought: Maybe we can handle it by adding a jump instruction after this, so we won't have to store address of start of loop in RAM.
-	end_of_loop_flag = 1;
+	status_flag |= END_OF_LOOP_FLAG;
 }
 
 // Save specified area of RAM to specified file.
 __inline void vm_inst_save_to_file()
 {
-    ++prg_counter;
-	
+    
 }
 
 // Check if a key is currently pressed.
 __inline void vm_inst_get_key()
 {
-    ++prg_counter;
+    uint16_t key;
 	
+	TYPE_FLAG data_type = read_param(&key);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	if(get_key(key))
+	{
+		status_flag |= CARRY_FLAG;
+		status_flag &= ~ZERO_FLAG;
+	}
+	else
+	{
+		status_flag &= ~CARRY_FLAG;
+		status_flag |= ZERO_FLAG;
+	}
 }
 
 // Check if a key is just pressed.
 __inline void vm_inst_get_key_down()
 {
-    ++prg_counter;
+    uint16_t key;
 	
+	TYPE_FLAG data_type = read_param(&key);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	if(get_key_down(key))
+	{
+		status_flag |= CARRY_FLAG;
+		status_flag &= ~ZERO_FLAG;
+	}
+	else
+	{
+		status_flag &= ~CARRY_FLAG;
+		status_flag |= ZERO_FLAG;
+	}
 }
 
 // Check if a key is just released.
 __inline void vm_inst_get_key_up()
 {
-    ++prg_counter;
+    uint16_t key;
 	
+	TYPE_FLAG data_type = read_param(&key);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	if(get_key_up(key))
+	{
+		status_flag |= CARRY_FLAG;
+		status_flag &= ~ZERO_FLAG;
+	}
+	else
+	{
+		status_flag &= ~CARRY_FLAG;
+		status_flag |= ZERO_FLAG;
+	}
 }
 
 // Check if a key is currently held.
 __inline void vm_inst_get_key_held()
 {
-    ++prg_counter;
+    uint16_t key;
+	
+	TYPE_FLAG data_type = read_param(&key);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	if(get_key_held(key))
+	{
+		status_flag |= CARRY_FLAG;
+		status_flag &= ~ZERO_FLAG;
+	}
+	else
+	{
+		status_flag &= ~CARRY_FLAG;
+		status_flag |= ZERO_FLAG;
+	}
+}
+
+__inline void vm_inst_sdcard_init()
+{
+	
+}
+
+__inline void vm_inst_sdcard_deinit()
+{
+	
+}
+
+__inline void vm_inst_file_exists()
+{
+	
+}
+
+__inline void vm_inst_dir_exists()
+{
+	
+}
+
+__inline void vm_inst_file_full_read()
+{
+	
+}
+
+__inline void vm_inst_file_read()
+{
+	
+}
+
+__inline void vm_inst_file_append()
+{
+	
+}
+
+__inline void vm_inst_file_write()
+{
+	
+}
+
+__inline void vm_inst_file_rename()
+{
+	
+}
+
+__inline void vm_inst_file_size()
+{
+	
+}
+
+__inline void vm_inst_create_dir()
+{
+	
+}
+
+__inline void vm_inst_delete_file()
+{
+	
+}
+
+__inline void vm_inst_delete_dir()
+{
 	
 }

@@ -1,7 +1,98 @@
 #include "./file_system.h"
 
 #if defined(__arm__)
-	#error "STM32 version of file system is not implemented yet."
+
+uint8_t fs_init(void)
+{
+	
+}
+
+void fs_deinit(void)
+{
+	
+}
+
+void fs_use_relpath(uint8_t enable)
+{
+	
+}
+
+uint8_t file_exists(const char *filename)
+{
+	
+}
+
+uint8_t dir_exists(const char *path)
+{
+	
+}
+
+uint8_t file_full_read(const char *filename, void *buffer)
+{
+	
+}
+
+uint8_t file_read(const char *filename, void *buffer, size_t offset, size_t size)
+{
+	
+}
+
+uint8_t file_append(const char *filename, void *data, size_t size)
+{
+	
+}
+
+uint8_t file_write(const char *filename, void *data, size_t offset, size_t size)
+{
+	
+}
+
+uint8_t file_rename(const char *old_name, const char *new_name)
+{
+	
+}
+
+uint32_t file_size(const char *filename)
+{
+	
+}
+
+uint8_t create_dir(const char *path)
+{
+	
+}
+
+uint8_t set_current_dir(const char *path)
+{
+	
+}
+
+uint8_t delete_file(const char *filepath)
+{
+	
+}
+
+uint8_t delete_dir(const char *path)
+{
+	
+}
+
+uint8_t format_disk(void)
+{
+	
+}
+
+uint8_t get_games_list(RAM_PTR index)
+{
+	
+}
+
+uint8_t get_projects_list(RAM_PTR index)
+{
+	
+}
+
+
 #elif defined(__WIN32__)
 
 #include <stdio.h>
@@ -190,7 +281,7 @@ uint8_t format_disk()
 	return 1;
 }
 
-#define get_menu_item(addr, index)  ((Menu_Item *)(&ram[addr + sizeof(Menu_Item) * index]))
+#define get_menu_item(addr, index)  ((MENU_ITEM *)(&ram[addr + sizeof(MENU_ITEM) * index]))
 
 uint8_t get_games_list(RAM_PTR list_addr)
 {
@@ -219,7 +310,7 @@ uint8_t get_games_list(RAM_PTR list_addr)
 			game_files_handler = FindFirstFileA(path, &game_files);
 			if(game_files_handler == INVALID_HANDLE_VALUE)
 			{
-				sprintf(get_menu_item(list_addr, item_count)->text, get_str(STR_CORRUPTED_DATA));
+				sprintf(get_menu_item(list_addr, item_count)->menu_text.text, get_str(STR_CORRUPTED_DATA));
 				get_menu_item(list_addr, item_count)->action = corrupted_game_error;
 				item_count++;
 				
@@ -236,7 +327,7 @@ uint8_t get_games_list(RAM_PTR list_addr)
 					sprintf(path, DIR_ROOT DIR_GAMES "%s/%s", find_data_file.cFileName, game_files.cFileName);
 					//if(file_size())
 					
-					sprintf(get_menu_item(list_addr, item_count)->text, "%s", find_data_file.cFileName);
+					sprintf(get_menu_item(list_addr, item_count)->menu_text.text, "%s", find_data_file.cFileName);
 					//get_menu_item(list_addr, item_count)->action = corrupted_game_error;
 					item_count++;
 					

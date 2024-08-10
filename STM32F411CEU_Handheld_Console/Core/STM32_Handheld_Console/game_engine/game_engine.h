@@ -31,7 +31,8 @@
 	typedef uint8_t QUAD_INDEX;
 #endif
 
-#define ATTR_3D_GAME  0x01
+#define ATTR_USE_ENGINE  0x01
+#define ATTR_3D_GAME     0x02
 
 typedef struct s_GAME_2D_SETTINGS
 {
@@ -66,7 +67,7 @@ typedef struct s_ENGINE_SETTINGS
 
 extern ENGINE_SETTINGS engine_settings;
 
-uint32_t elapsed_time;
+extern uint32_t elapsed_time;
 
 void wait_frame_time(void);
 void load_game(void *game);

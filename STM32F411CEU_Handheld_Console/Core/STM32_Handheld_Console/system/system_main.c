@@ -3,14 +3,17 @@
 #include "./images/images.h"
 #include "./system_menu.h"
 #include "./settings.h"
+#include "./internal_programs.h"
 
 #include "./locals/locals.h"
 #include "../display/YILDIZsoft_5x7.h"
 #include "../file_system/file_system.h"
 
+#include <string.h>
+
 #define SYSTEM_VER    "Alpha 5"
 
-#define GAME_LIST_ADDR  sizeof(Menu) * 2
+#define GAME_LIST_ADDR  (sizeof(MENU) * 2 + sizeof(MENU_DATA))
 
 const char *system_ver = "Konsol Sistemi "SYSTEM_VER;
 
@@ -44,21 +47,23 @@ void game_list()
 	}
 	else
 	{
-		Menu *game_list_menu = (Menu *)(&ram[sizeof(Menu)]);
-		game_list_menu->x = 10;
-		game_list_menu->y = 60;
-		game_list_menu->w = 220;
-		game_list_menu->visible_rows = 8;
-		game_list_menu->non_selected_text_color = rgb888_to_rgb332(23, 139, 180);
-		game_list_menu->non_selected_bg_color = system_settings.theme_color;
-		game_list_menu->selected_text_color = rgb888_to_rgb332(105, 253, 255);
-		game_list_menu->selected_bg_color = rgb888_to_rgb332(21, 72, 92);
-		game_list_menu->attrib = 0;
-		game_list_menu->font = &YILDIZsoft_5x7;
-		game_list_menu->capacity = games_count;
+		MENU *game_list_menu = (MENU *)(&ram[sizeof(MENU)]);
+		MENU_DATA *game_list_menu_data = (MENU_DATA *)(&ram[sizeof(MENU) * 2]);
+		game_list_menu_data->x = 10;
+		game_list_menu_data->y = 60;
+		game_list_menu_data->w = 220;
+		game_list_menu_data->visible_rows = 8;
+		game_list_menu_data->non_selected_text_color = rgb888_to_rgb332(23, 139, 180);
+		game_list_menu_data->non_selected_bg_color = system_settings.theme_color;
+		game_list_menu_data->selected_text_color = rgb888_to_rgb332(105, 253, 255);
+		game_list_menu_data->selected_bg_color = rgb888_to_rgb332(21, 72, 92);
+		game_list_menu_data->attrib = 0;
+		game_list_menu_data->font = &YILDIZsoft_5x7;
+		game_list_menu_data->capacity = games_count;
+		game_list_menu_data->items = (MENU_ITEM *)(&ram[GAME_LIST_ADDR]);
 		game_list_menu->selection = 0;
 		game_list_menu->item_offset = 0;
-		game_list_menu->items = (Menu_Item *)(&ram[GAME_LIST_ADDR]);
+		game_list_menu->data = game_list_menu_data;
 		
 		for(;;)
 		{
@@ -136,21 +141,28 @@ uint8_t system_main()
 	
 	vm_init();
 	
-	Menu *system_menu = (Menu *)ram;
-	system_menu->x = 10;
-	system_menu->y = 60;
-	system_menu->w = 220;
-	system_menu->visible_rows = 5;
-	system_menu->non_selected_text_color = rgb888_to_rgb332(23, 139, 180);
-	system_menu->non_selected_bg_color = system_settings.theme_color;
-	system_menu->selected_text_color = rgb888_to_rgb332(105, 253, 255);
-	system_menu->selected_bg_color = rgb888_to_rgb332(21, 72, 92);
-	system_menu->attrib = CENTER_ALIGN;
-	system_menu->font = &YILDIZsoft_5x7;
-	system_menu->capacity = 5;
+	prg_counter = sizeof(ram) - sizeof(test_code);
+	memcpy(&ram[prg_counter], test_code, sizeof(test_code));
+	engine_settings.game_code_addr = prg_counter;
+	
+	game_engine_loop();
+	
+	MENU *system_menu = (MENU *)ram;
+	//system_menu->x = 10;
+	//system_menu->y = 60;
+	//system_menu->w = 220;
+	//system_menu->visible_rows = 5;
+	//system_menu->non_selected_text_color = rgb888_to_rgb332(23, 139, 180);
+	//system_menu->non_selected_bg_color = system_settings.theme_color;
+	//system_menu->selected_text_color = rgb888_to_rgb332(105, 253, 255);
+	//system_menu->selected_bg_color = rgb888_to_rgb332(21, 72, 92);
+	//system_menu->attrib = CENTER_ALIGN;
+	//system_menu->font = &YILDIZsoft_5x7;
+	//system_menu->capacity = 5;
 	system_menu->selection = 0;
 	system_menu->item_offset = 0;
-	system_menu->items = system_menu_items;
+	//system_menu->items = system_menu_items;
+	system_menu->data = &system_menu_data;
 	
 	for(;;)
 	{

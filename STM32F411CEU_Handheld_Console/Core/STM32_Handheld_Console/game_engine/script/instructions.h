@@ -3,11 +3,15 @@
 
 #define INST_TABLE(X)   X(invalid) \
                         X(assign) \
+						X(increase) \
+						X(decrease) \
                         X(arith_calc) \
                         X(bitwise) \
                         X(logical) \
                         X(jsr) \
                         X(rts) \
+						X(jump_if_carry) \
+						X(jump_if_zero) \
                         X(jump_if) \
                         X(jump) \
                         X(exit) \
@@ -23,6 +27,7 @@
                         X(print_int) \
                         X(printf_str) \
                         X(draw_image) \
+						X(fill_display) \
                         X(update_display) \
                         X(load_prg) \
                         X(mem_set) \
@@ -52,6 +57,8 @@ typedef enum e_OPCODE
 	INST_TABLE(ENUM_OPCODE)
 } OPCODE;
 #undef ENUM_OPCODE
+
+#define get_opcode(ins)  enum_inst_##ins
 
 #define INST_DECLARE(ins)  void vm_inst_##ins(void);
 INST_TABLE(INST_DECLARE)
