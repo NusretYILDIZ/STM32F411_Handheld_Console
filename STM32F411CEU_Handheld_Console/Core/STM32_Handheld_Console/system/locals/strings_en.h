@@ -1,7 +1,7 @@
 #ifndef __strings_en_h
 #define __strings_en_h
 
-const char *strings_en[] = {
+/*const char *strings_en[] = {
 	"STM32 Handheld Gaming Console",
 	"OK",
 	"Back",
@@ -27,6 +27,6 @@ const char *strings_en[] = {
 	// Editor Menu
 	"Create New Project",
 	"Open Project",
-};
+};*/
 
 #endif //__strings_en_h

@@ -16,18 +16,32 @@
 #define GAME_LIST_ADDR  (sizeof(MENU) * 2 + sizeof(MENU_DATA))
 
 const char *system_ver = "Konsol Sistemi "SYSTEM_VER;
+//char **current_lang = strings_en;
 
 SYSTEM_SETTINGS system_settings = {
-	.current_lang = strings_en,
+	.current_lang = LANG_EN,
 	.screen_brightness = 255,
 	.theme_color = rgb888_to_rgb332(50, 50, 255),
 	.username = "NusretY_Official"
 };
 
+void apply_lang(LANG lang)
+{
+	current_lang = langs[lang];
+}
+
 void change_lang(void)
 {
-	if(system_settings.current_lang == strings_en) system_settings.current_lang = strings_tr;
-	else system_settings.current_lang = strings_en;
+	if(system_settings.current_lang == LANG_EN)
+	{
+		system_settings.current_lang = LANG_TR;
+	}
+	else
+	{
+		system_settings.current_lang = LANG_EN;
+	}
+	
+	apply_lang(system_settings.current_lang);
 }
 
 void game_list()

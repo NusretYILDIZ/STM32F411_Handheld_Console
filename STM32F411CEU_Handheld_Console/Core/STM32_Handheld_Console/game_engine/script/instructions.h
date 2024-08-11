@@ -14,7 +14,7 @@
 						X(jump_if_zero) \
                         X(jump_if) \
                         X(jump) \
-                        X(exit) \
+                        X(exit_game) \
                         X(set_text_area) \
                         X(set_cursor) \
                         X(set_text_color) \

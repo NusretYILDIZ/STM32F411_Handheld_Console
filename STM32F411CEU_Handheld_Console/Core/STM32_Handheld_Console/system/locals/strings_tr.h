@@ -1,6 +1,8 @@
 #ifndef __strings_tr_h
 #define __strings_tr_h
 
+/*#include "./special_chars.h"
+
 const char *strings_tr[] = {
 	"STM32 Ta"TR_s TR_i"nabilir Oyun Konsolu",
 	"Tamam",
@@ -27,6 +29,6 @@ const char *strings_tr[] = {
 	// Editor Menu
 	"Yeni Proje Olu"TR_s"tur",
 	"Proje A"TR_c,
-};
+};*/
 
 #endif //__strings_tr_h

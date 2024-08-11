@@ -57,7 +57,7 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 	
 	case TYPE_STRING:
 		if(dest) *(RAM_PTR *)dest = *addr;
-		while(ram[*addr] != '\0') *addr++;
+		while(ram[(*addr) - 1] != '\0') (*addr)++;
 		break;
 	
 	default:
@@ -974,10 +974,10 @@ __inline void vm_inst_jump()
     //prg_counter = ram_ptr_addr(prg_counter);
 }
 
-// Exit from program and return to system menu.
-__inline void vm_inst_exit()
+// Exit from game and return to system menu.
+__inline void vm_inst_exit_game()
 {
-    
+    status_flag |= EXIT_GAME_FLAG;
 }
 
 __inline void vm_inst_set_text_area()

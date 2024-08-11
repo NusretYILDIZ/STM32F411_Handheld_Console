@@ -1,47 +1,6 @@
-#ifndef __strings_h
-#define __strings_h
+#include "./strings.h"
 
-//#include "./strings_en.h"
-//#include "./strings_tr.h"
-
-#include "./special_chars.h"
-
-typedef enum e_STRINGS
-{
-	STR_CONSOLE_TITLE,
-	STR_OK,
-	STR_BACK,
-	STR_INIT_FS_ERROR,
-	STR_EMPTY,
-	STR_CORRUPTED_DATA,
-	STR_GAME_CORRUPTED_TITLE,
-	STR_GAME_CORRUPTED_MSG,
-	
-	// System Menu
-	STR_GAMES,
-	STR_EDITOR,
-	STR_SETTINGS,
-	STR_ABOUT,
-	STR_LANGUAGE,
-	
-	// Games Menu
-	STR_GAME_LIST_TITLE,
-	STR_SEARCHING_FOR_GAMES,
-	STR_START,
-	STR_DELETE,
-	
-	// Editor Menu
-	STR_CREATE_NEW_PROJECT,
-	STR_OPEN_PROJECT,
-} String;
-
-typedef enum
-{
-	LANG_EN,
-	LANG_TR,
-} LANG;
-
-extern const char *strings_en[]; /* = {
+const char *strings_en[] = {
 	"STM32 Handheld Gaming Console",
 	"OK",
 	"Back",
@@ -67,9 +26,9 @@ extern const char *strings_en[]; /* = {
 	// Editor Menu
 	"Create New Project",
 	"Open Project",
-};*/
+};
 
-extern const char *strings_tr[]; /* = {
+const char *strings_tr[] = {
 	"STM32 Ta"TR_s TR_i"nabilir Oyun Konsolu",
 	"Tamam",
 	"Geri",
@@ -95,18 +54,11 @@ extern const char *strings_tr[]; /* = {
 	// Editor Menu
 	"Yeni Proje Olu"TR_s"tur",
 	"Proje A"TR_c,
-};*/
+};
 
-extern const char *langs[]; /* = {
+const char *langs[] = {
 	strings_en,
 	strings_tr,
-};*/
+};
 
-extern char **current_lang;
-#define get_str(str) (current_lang[str])
-
-//const char **current_lang;
-
-//#define get_str(str) (system_settings.current_lang[str])
-
-#endif //__strings_h
+char **current_lang = strings_en;

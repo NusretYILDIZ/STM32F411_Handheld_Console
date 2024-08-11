@@ -135,6 +135,7 @@
 #define SIGN_FLAG          0x08
 #define END_OF_LOOP_FLAG   0x10
 #define KERNEL_PANIC_FLAG  0x20
+#define EXIT_GAME_FLAG     0x40
 
 //#define OPER_MASK        0xE0
 #define TYPE_MASK        0x3F

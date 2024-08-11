@@ -2,10 +2,11 @@
 #define __settings_h
 
 #include <stdint.h>
+#include "./locals/strings.h"
 
 typedef struct s_SYSTEM_SETTINGS
 {
-	const char **current_lang;  // TODO: Don't make this an absolute pointer.
+	LANG current_lang;
 	uint8_t screen_brightness;
 	uint8_t theme_color;
 	char username[32];

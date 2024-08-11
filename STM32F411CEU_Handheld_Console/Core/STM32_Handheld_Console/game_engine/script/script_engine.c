@@ -30,8 +30,8 @@ void vm_init()
 // Switch-case is faster than function table on embedded systems.
 // https://stackoverflow.com/a/35846099
 
-#define INST_SWITCHCASE(ins)  case enum_inst_##ins: prg_counter++; vm_inst_##ins(); break;
-//#define INST_SWITCHCASE(ins)  case enum_inst_##ins: printf("%s\n", #ins); prg_counter++; vm_inst_##ins(); break;
+//#define INST_SWITCHCASE(ins)  case enum_inst_##ins: prg_counter++; vm_inst_##ins(); break;
+#define INST_SWITCHCASE(ins)  case enum_inst_##ins: printf("%s\n", #ins); prg_counter++; vm_inst_##ins(); break;
 void vm_execute()    // Executes a single instruction.
 {
     switch(ram[prg_counter])

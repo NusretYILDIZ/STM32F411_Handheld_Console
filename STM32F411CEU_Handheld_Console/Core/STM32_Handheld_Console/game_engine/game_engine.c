@@ -18,7 +18,7 @@ void load_game(void *game)
 
 uint8_t game_engine_loop(void)
 {
-	while(1)
+	while(!(status_flag & EXIT_GAME_FLAG))
 	{
 		update_inputs();
 		vm_run();
