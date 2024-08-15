@@ -12,6 +12,7 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 {
 	switch(var_type)
 	{
+	case TYPE_NONE:
 	case TYPE_TERMINATE:
 		break;
 	
@@ -60,6 +61,10 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 		while(ram[(*addr) - 1] != '\0') (*addr)++;
 		break;
 	
+	case TYPE_STACK_PTR:
+		if(dest) *(STACK_PTR *)dest = stack_ptr;
+		break;
+	
 	default:
 		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
 		break;
@@ -72,6 +77,8 @@ __inline TYPE_FLAG read_param(void *dest)
 	prg_counter++;
 	
 	TYPE_FLAG type_flag = var_attr & TYPE_MASK;
+	
+	if(type_flag == TYPE_TERMINATE || type_flag == TYPE_NONE) return type_flag;
 	
 	if(var_attr & ADDR_IMM)
 	{
@@ -139,6 +146,9 @@ __inline void copy_data(TYPE_FLAG data_type, RAM_PTR dest, MEM_BUF src)
 {
 	switch(data_type)
 	{
+	case TYPE_NONE:
+		break;
+		
 	case TYPE_FLOAT:
 		*(float *)(&ram[dest]) = src.flt;
 		break;
@@ -171,6 +181,19 @@ __inline void copy_data(TYPE_FLAG data_type, RAM_PTR dest, MEM_BUF src)
 		*(RAM_PTR *)(&ram[dest]) = src.ram_ptr;
 		break;
 	
+	case TYPE_STACK_PTR:
+		stack_ptr = src.stack_ptr;
+		break;
+	
+	case TYPE_STRING:
+		while(ram[src.ram_ptr - 1] != '\0')
+		{
+			*(uint8_t *)(&ram[dest]) = *(uint8_t *)(&ram[src.ram_ptr]);
+			dest++;
+			src.ram_ptr++;
+		}
+		break;
+	
 	default:
 		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
 		break;
@@ -198,128 +221,10 @@ __inline void vm_inst_assign()
 	
 	if(dest_type == data_type)
 		copy_data(data_type, dest_addr, data);
-	
 	else
 	{
 		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
 	}
-	
-	/*uint8_t dest_addr_mode, dest_data_type, oper_mode;
-	read_attrib(dest_addr_mode, dest_data_type, oper_mode);
-	
-	RAM_PTR dest_addr;
-	read_addr(dest_addr, dest_addr_mode);
-	
-	uint8_t src_addr_mode, src_data_type;
-	read_attrib(src_addr_mode, src_data_type, oper_mode);
-	
-	RAM_PTR src_addr;
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	
-	MEM_BUF tmp;
-	
-	switch(src_data_type)
-	{
-	case TYPE_FLOAT:
-		tmp.flt = ram_ptr_float(src_addr);
-		break;
-	
-	case TYPE_INT32:
-		tmp.int32 = ram_ptr_int32(src_addr);
-		break;
-	
-	case TYPE_INT16:
-		tmp.int16 = ram_ptr_int16(src_addr);
-		break;
-	
-	case TYPE_INT8:
-		tmp.int8 = ram_ptr_int8(src_addr);
-		break;
-	
-	case TYPE_UINT32:
-		tmp.uint32 = ram_ptr_uint32(src_addr);
-		break;
-	
-	case TYPE_UINT16:
-		tmp.uint16 = ram_ptr_uint16(src_addr);
-		break;
-	
-	case TYPE_UINT8:
-		tmp.uint8 = ram_ptr_uint8(src_addr);
-		break;
-	}
-	
-	switch(dest_data_type)
-	{
-	case TYPE_FLOAT:
-		write_float(tmp.flt, dest_addr);
-		////printf("tmp.flt = %f\n", tmp.flt);
-		
-		if(tmp.flt == 0.0f) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
-		
-		if(tmp.flt < 0.0f)  logical_flag |=  SIGN_FLAG;
-		else                logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_INT32:
-		write_int32(tmp.int32, dest_addr);
-		
-		if(tmp.int32 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
-		
-		if(tmp.int32 < 0)  logical_flag |=  SIGN_FLAG;
-		else               logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_INT16:
-		write_int16(tmp.int16, dest_addr);
-		
-		if(tmp.int16 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
-		
-		if(tmp.int16 < 0)  logical_flag |=  SIGN_FLAG;
-		else               logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_INT8:
-		write_int8(tmp.int8, dest_addr);
-		
-		if(tmp.int8 == 0) logical_flag |=  ZERO_FLAG;
-		else              logical_flag &= ~ZERO_FLAG;
-		
-		if(tmp.int8 < 0)  logical_flag |=  SIGN_FLAG;
-		else              logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_UINT32:
-		write_uint32(tmp.uint32, dest_addr);
-		
-		if(tmp.uint32 == 0) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
-		
-		break;
-	
-	case TYPE_UINT16:
-		write_uint16(tmp.uint16, dest_addr);
-		
-		if(tmp.uint16 == 0) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
-		
-		break;
-	
-	case TYPE_UINT8:
-		write_uint8(tmp.uint8, dest_addr);
-		
-		if(tmp.uint8 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
-		
-		break;
-	}*/
 }
 
 __inline void vm_inst_increase()
@@ -396,526 +301,1052 @@ __inline void vm_inst_decrease()
 	}
 }
 
-__inline void vm_inst_arith_calc()
+__inline MEM_BUF convert_data_type(TYPE_FLAG dest_type, MEM_BUF src_data, TYPE_FLAG src_type)
 {
-	//printf("Arithmetic calculation inst.\n\n");
+	MEM_BUF mem_buf;
 	
-	/*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
-	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
-	
-	RAM_PTR dest_addr;
-	read_addr(dest_addr, dest_addr_mode);
-	
-	MEM_BUF res;
-	uint8_t float_flag = 0, first_flag = 1;
-	
-	for(;;)
-	{
-		uint8_t opr_addr_mode, opr_data_type, opr_oper_mode;
-		read_attrib(opr_addr_mode, opr_data_type, opr_oper_mode);
-		
-		if(opr_data_type == TYPE_TERMINATE) break;
-		
-		RAM_PTR opr_addr;
-		set_read_addr(opr_addr, opr_addr_mode, opr_data_type);
-		
-		MEM_BUF opr_data;
-		
-		if(opr_data_type == TYPE_FLOAT && !float_flag)
-		{
-			float_flag = 1;
-			res.flt = (float) res.int32;
-		}
-		
-		if(float_flag)
-		{
-			switch(opr_data_type)
-			{
-			case TYPE_FLOAT:
-				opr_data.flt = ram_ptr_float(opr_addr);
-				break;
-			
-			case TYPE_INT32:
-				opr_data.flt = (float) ram_ptr_int32(opr_addr);
-				break;
-			
-			case TYPE_INT16:
-				opr_data.flt = (float) ram_ptr_int16(opr_addr);
-				break;
-			
-			case TYPE_INT8:
-				opr_data.flt = (float) ram_ptr_int8(opr_addr);
-				break;
-			
-			case TYPE_UINT32:
-				opr_data.flt = (float) ram_ptr_uint32(opr_addr);
-				break;
-			
-			case TYPE_UINT16:
-				opr_data.flt = (float) ram_ptr_uint16(opr_addr);
-				break;
-			
-			case TYPE_UINT8:
-				opr_data.flt = (float) ram_ptr_uint8(opr_addr);
-				break;
-			}
-			
-			if(first_flag)
-			{
-				first_flag = 0;
-				res.flt = opr_data.flt;
-			}
-			else
-			{
-				switch(opr_oper_mode)
-				{
-				case ARITH_ADD:
-					res.flt += opr_data.flt;
-					break;
-				
-				case ARITH_SUB:
-					res.flt -= opr_data.flt;
-					break;
-				
-				case ARITH_MUL:
-					res.flt *= opr_data.flt;
-					break;
-				
-				case ARITH_DIV:
-					res.flt /= opr_data.flt;
-					break;
-				
-				case ARITH_MOD:
-					// Kernel panic. Cannot do modulo with floats.
-					break;
-				
-				case ARITH_POW:
-					res.flt = powf(res.flt, opr_data.flt);
-					break;
-				}
-			}
-		}
-		else
-		{
-			switch(opr_data_type)
-			{
-			case TYPE_FLOAT: // I believe this case is impossible because if operand type is float then we set float_flag immediately.
-				opr_data.int32 = (int32_t) ram_ptr_float(opr_addr);
-				break;
-			
-			case TYPE_INT32:
-				opr_data.int32 = ram_ptr_int32(opr_addr);
-				break;
-			
-			case TYPE_INT16:
-				opr_data.int32 = (int32_t) ram_ptr_int16(opr_addr);
-				break;
-			
-			case TYPE_INT8:
-				opr_data.int32 = (int32_t) ram_ptr_int8(opr_addr);
-				break;
-			
-			case TYPE_UINT32:
-				opr_data.int32 = (int32_t) ram_ptr_uint32(opr_addr);
-				break;
-			
-			case TYPE_UINT16:
-				opr_data.int32 = (int32_t) ram_ptr_uint16(opr_addr);
-				break;
-			
-			case TYPE_UINT8:
-				opr_data.int32 = (int32_t) ram_ptr_uint8(opr_addr);
-				break;
-			}
-			
-			if(first_flag)
-			{
-				first_flag = 0;
-				res.int32 = opr_data.int32;
-			}
-			else
-			{
-				switch(opr_oper_mode)
-				{
-				case ARITH_ADD:
-					res.int32 += opr_data.int32;
-					break;
-
-				case ARITH_SUB:
-					res.int32 -= opr_data.int32;
-					break;
-
-				case ARITH_MUL:
-					res.int32 *= opr_data.int32;
-					break;
-
-				case ARITH_DIV:
-					res.int32 /= opr_data.int32;
-					break;
-
-				case ARITH_MOD:
-					res.int32 %= opr_data.int32;
-					break;
-
-				case ARITH_POW:
-					res.int32 = (int32_t) powf((float) res.int32, (float) opr_data.int32);
-					break;
-				}
-			}
-		}
-	}
-	
-	switch(dest_data_type)
+	switch(dest_type)  // There it is, a horrible solution for an average problem.
 	{
 	case TYPE_FLOAT:
-		write_float(res.flt, dest_addr);
-		////printf("res.flt = %f\n", res.flt);
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.flt = (float)(src_data.flt);
+			break;
 		
-		if(res.flt == 0.0f) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
+		case TYPE_INT32:
+			mem_buf.flt = (float)(src_data.int32);
+			break;
 		
-		if(res.flt < 0.0f)  logical_flag |=  SIGN_FLAG;
-		else                logical_flag &= ~SIGN_FLAG;
+		case TYPE_UINT32:
+			mem_buf.flt = (float)(src_data.uint32);
+			break;
 		
+		case TYPE_INT16:
+			mem_buf.flt = (float)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.flt = (float)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.flt = (float)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.flt = (float)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
 		break;
 	
 	case TYPE_INT32:
-		write_int32(res.int32, dest_addr);
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.int32 = (int32_t)(src_data.flt);
+			break;
 		
-		if(res.int32 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
+		case TYPE_INT32:
+			mem_buf.int32 = (int32_t)(src_data.int32);
+			break;
 		
-		if(res.int32 < 0)  logical_flag |=  SIGN_FLAG;
-		else               logical_flag &= ~SIGN_FLAG;
+		case TYPE_UINT32:
+			mem_buf.int32 = (int32_t)(src_data.uint32);
+			break;
 		
-		break;
-	
-	case TYPE_INT16:
-		write_int16(res.int16, dest_addr);
+		case TYPE_INT16:
+			mem_buf.int32 = (int32_t)(src_data.int16);
+			break;
 		
-		if(res.int16 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
+		case TYPE_UINT16:
+			mem_buf.int32 = (int32_t)(src_data.uint16);
+			break;
 		
-		if(res.int16 < 0)  logical_flag |=  SIGN_FLAG;
-		else               logical_flag &= ~SIGN_FLAG;
+		case TYPE_INT8:
+			mem_buf.int32 = (int32_t)(src_data.int8);
+			break;
 		
-		break;
-	
-	case TYPE_INT8:
-		write_int8(res.int8, dest_addr);
+		case TYPE_UINT8:
+			mem_buf.int32 = (int32_t)(src_data.uint8);
+			break;
 		
-		if(res.int8 == 0) logical_flag |=  ZERO_FLAG;
-		else              logical_flag &= ~ZERO_FLAG;
-		
-		if(res.int8 < 0)  logical_flag |=  SIGN_FLAG;
-		else              logical_flag &= ~SIGN_FLAG;
-		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
 		break;
 	
 	case TYPE_UINT32:
-		write_uint32(res.uint32, dest_addr);
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.uint32 = (uint32_t)(src_data.flt);
+			break;
 		
-		if(res.uint32 == 0) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
+		case TYPE_INT32:
+			mem_buf.uint32 = (uint32_t)(src_data.int32);
+			break;
 		
+		case TYPE_UINT32:
+			mem_buf.uint32 = (uint32_t)(src_data.uint32);
+			break;
+		
+		case TYPE_INT16:
+			mem_buf.uint32 = (uint32_t)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.uint32 = (uint32_t)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.uint32 = (uint32_t)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.uint32 = (uint32_t)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
+		break;
+	
+	case TYPE_INT16:
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.int16 = (int16_t)(src_data.flt);
+			break;
+		
+		case TYPE_INT32:
+			mem_buf.int16 = (int16_t)(src_data.int32);
+			break;
+		
+		case TYPE_UINT32:
+			mem_buf.int16 = (int16_t)(src_data.uint32);
+			break;
+		
+		case TYPE_INT16:
+			mem_buf.int16 = (int16_t)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.int16 = (int16_t)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.int16 = (int16_t)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.int16 = (int16_t)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
 		break;
 	
 	case TYPE_UINT16:
-		write_uint16(res.uint16, dest_addr);
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.uint16 = (uint16_t)(src_data.flt);
+			break;
 		
-		if(res.uint16 == 0) logical_flag |=  ZERO_FLAG;
-		else                logical_flag &= ~ZERO_FLAG;
+		case TYPE_INT32:
+			mem_buf.uint16 = (uint16_t)(src_data.int32);
+			break;
 		
+		case TYPE_UINT32:
+			mem_buf.uint16 = (uint16_t)(src_data.uint32);
+			break;
+		
+		case TYPE_INT16:
+			mem_buf.uint16 = (uint16_t)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.uint16 = (uint16_t)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.uint16 = (uint16_t)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.uint16 = (uint16_t)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
+		break;
+	
+	case TYPE_INT8:
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.int8 = (int8_t)(src_data.flt);
+			break;
+		
+		case TYPE_INT32:
+			mem_buf.int8 = (int8_t)(src_data.int32);
+			break;
+		
+		case TYPE_UINT32:
+			mem_buf.int8 = (int8_t)(src_data.uint32);
+			break;
+		
+		case TYPE_INT16:
+			mem_buf.int8 = (int8_t)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.int8 = (int8_t)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.int8 = (int8_t)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.int8 = (int8_t)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
 		break;
 	
 	case TYPE_UINT8:
-		write_uint8(res.uint8, dest_addr);
+		switch(src_type)
+		{
+		case TYPE_FLOAT:
+			mem_buf.uint8 = (uint8_t)(src_data.flt);
+			break;
 		
-		if(res.uint8 == 0) logical_flag |=  ZERO_FLAG;
-		else               logical_flag &= ~ZERO_FLAG;
+		case TYPE_INT32:
+			mem_buf.uint8 = (uint8_t)(src_data.int32);
+			break;
 		
+		case TYPE_UINT32:
+			mem_buf.uint8 = (uint8_t)(src_data.uint32);
+			break;
+		
+		case TYPE_INT16:
+			mem_buf.uint8 = (uint8_t)(src_data.int16);
+			break;
+		
+		case TYPE_UINT16:
+			mem_buf.uint8 = (uint8_t)(src_data.uint16);
+			break;
+		
+		case TYPE_INT8:
+			mem_buf.uint8 = (uint8_t)(src_data.int8);
+			break;
+		
+		case TYPE_UINT8:
+			mem_buf.uint8 = (uint8_t)(src_data.uint8);
+			break;
+		
+		default:
+			KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+			break;
+		}
 		break;
-	}*/
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
+	
+	return mem_buf;
 }
 
-__inline void vm_inst_bitwise()
+__inline RPN_DATA read_rpn_data()
 {
-    /*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
-	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
+	RPN_DATA rpn_data = *(RPN_DATA *)(&ram[prg_counter]);
+	prg_counter += sizeof(RPN_DATA);
 	
-	RAM_PTR dest_addr;
-	read_addr(dest_addr, dest_addr_mode);
-	
-	MEM_BUF res;
-	uint8_t first_flag = 1;
-	
-	for(;;)
+	if(rpn_data.type == RPN_TYPE_NUMERAL)  // Get the absolute values so we won't have to deal with addresses.
 	{
-		uint8_t opr_addr_mode, opr_data_type, opr_oper_mode;
-		read_attrib(opr_addr_mode, opr_data_type, opr_oper_mode);
-		
-		if(opr_data_type == TYPE_TERMINATE) break;
-		
-		RAM_PTR opr_addr;
-		set_read_addr(opr_addr, opr_addr_mode, opr_data_type);
-		
-		MEM_BUF opr_data;
-		
-		if(opr_oper_mode != BITWISE_NOT)
+		if((rpn_data.attr & ADDR_MASK) == ADDR_ABS)
 		{
-			switch(opr_data_type)
-			{
-			case TYPE_FLOAT:
-				// Kernel panic. Cannot do bitwise operations with floats.
-				break;
-			
-			case TYPE_INT32:
-				opr_data.int32 = ram_ptr_int32(opr_addr);
-				break;
-			
-			case TYPE_INT16:
-				opr_data.int32 = ram_ptr_int16(opr_addr);
-				break;
-			
-			case TYPE_INT8:
-				opr_data.int32 = ram_ptr_int8(opr_addr);
-				break;
-			
-			case TYPE_UINT32:
-				opr_data.int32 = ram_ptr_uint32(opr_addr);
-				break;
-			
-			case TYPE_UINT16:
-				opr_data.int32 = ram_ptr_uint16(opr_addr);
-				break;
-			
-			case TYPE_UINT8:
-				opr_data.int32 = ram_ptr_uint8(opr_addr);
-				break;
-			}
+			RAM_PTR var_addr = rpn_data.value.ram_ptr;
+			read_memory(&var_addr, (void *)(&rpn_data.value), rpn_data.attr & TYPE_MASK);
 		}
-		
-		if(first_flag)
+		else if((rpn_data.attr & ADDR_MASK) == ADDR_PTR)
 		{
-			first_flag = 0;
-			res.int32 = opr_data.int32;
+			RAM_PTR var_addr = rpn_data.value.ram_ptr;
+			var_addr = *(RAM_PTR *)(&ram[var_addr]);
+			
+			read_memory(&var_addr, (void *)(&rpn_data.value), rpn_data.attr & TYPE_MASK);
 		}
-		else
+		else if((rpn_data.attr & ADDR_MASK) != ADDR_IMM)
 		{
-			switch(opr_oper_mode)
-			{
-			case BITWISE_AND:
-				res.int32 &= opr_data.int32;
-				break;
-			
-			case BITWISE_OR:
-				res.int32 |= opr_data.int32;
-				break;
-			
-			case BITWISE_XOR:
-				res.int32 ^= opr_data.int32;
-				break;
-			
-			case BITWISE_NOT:
-				res.int32 = ~res.int32;
-				break;
-			
-			case BITWISE_SHL:
-				res.int32 <<= opr_data.int32;
-				break;
-			
-			case BITWISE_SHR:
-				res.int32 >>= opr_data.int32;
-				break;
-			}
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_ADDR_MODE);
+			rpn_data.type = RPN_TYPE_ERROR;
 		}
 	}
 	
-	switch(dest_data_type)
+	return rpn_data;
+}
+
+__inline RPN_STACK_DATA get_rpn_solver_data(RPN_DATA rpn_data)
+{
+	if(rpn_data.type != RPN_TYPE_NUMERAL) 
+	{
+		RPN_STACK_DATA error = {
+			.type = RPNS_TYPE_ERROR,
+			0
+		};
+		return error;
+	}
+	
+	RPN_STACK_DATA solver_data;
+	
+	switch(rpn_data.attr & TYPE_MASK)
 	{
 	case TYPE_FLOAT:
-		// Kernel panic. Cannot do bitwise operations with floats.
+		solver_data.type = RPNS_TYPE_FLOAT;
+		solver_data.value.float32 = rpn_data.value.flt;
 		break;
 	
 	case TYPE_INT32:
-		write_int32(res.int32, dest_addr);
-		
-		if(res.int32) logical_flag &= ~ZERO_FLAG;
-		else          logical_flag |=  ZERO_FLAG;
-		
-		if(res.int32 < 0) logical_flag |=  SIGN_FLAG;
-		else              logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_INT16:
-		write_int16(res.int16, dest_addr);
-		
-		if(res.int16) logical_flag &= ~ZERO_FLAG;
-		else          logical_flag |=  ZERO_FLAG;
-		
-		if(res.int16 < 0) logical_flag |=  SIGN_FLAG;
-		else              logical_flag &= ~SIGN_FLAG;
-		
-		break;
-	
-	case TYPE_INT8:
-		write_int8(res.int8, dest_addr);
-		
-		if(res.int8) logical_flag &= ~ZERO_FLAG;
-		else         logical_flag |=  ZERO_FLAG;
-		
-		if(res.int8 < 0) logical_flag |=  SIGN_FLAG;
-		else             logical_flag &= ~SIGN_FLAG;
-		
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.int32);
 		break;
 	
 	case TYPE_UINT32:
-		write_uint32(res.uint32, dest_addr);
-		
-		if(res.uint32) logical_flag &= ~ZERO_FLAG;
-		else           logical_flag |=  ZERO_FLAG;
-		
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.uint32);
+		break;
+	
+	case TYPE_INT16:
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.int16);
 		break;
 	
 	case TYPE_UINT16:
-		write_uint16(res.uint16, dest_addr);
-		
-		if(res.uint16 < 0) logical_flag |=  SIGN_FLAG;
-		else               logical_flag &= ~SIGN_FLAG;
-		
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.uint16);
+		break;
+	
+	case TYPE_INT8:
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.int8);
 		break;
 	
 	case TYPE_UINT8:
-		write_uint8(res.uint8, dest_addr);
-		
-		if(res.uint8 < 0) logical_flag |=  SIGN_FLAG;
-		else              logical_flag &= ~SIGN_FLAG;
-		
+		solver_data.type = RPNS_TYPE_INT64;
+		solver_data.value.int64 = (int64_t)(rpn_data.value.uint8);
 		break;
-	}*/
+	
+	default:
+		solver_data.type = RPNS_TYPE_ERROR;
+		break;
+	}
+	
+	return solver_data;
 }
 
-__inline void vm_inst_logical()
+__inline void push_rpn_stack(RPN_STACK_DATA rpn_data)
 {
-    /*uint8_t dest_addr_mode, dest_data_type, dest_oper_mode;
-	read_attrib(dest_addr_mode, dest_data_type, dest_oper_mode);
+	rpn_stack[rpn_stack_ptr] = rpn_data;
 	
-	RAM_PTR dest_addr;
-	read_addr(dest_addr, dest_addr_mode);
-	
-	MEM_BUF tmp;
-	uint8_t res, first_flag = 1;
-	
-	for(;;)
+	if(rpn_stack_ptr + 1 >= RPN_STACK_SIZE)
 	{
-		uint8_t opr_addr_mode, opr_data_type, opr_oper_mode;
-		read_attrib(opr_addr_mode, opr_data_type, opr_oper_mode);
+		KERNEL_PANIC(PANIC_RPN_STACK_OVERFLOW);
+		return;
+	}
+	
+	rpn_stack_ptr++;
+}
+
+__inline RPN_STACK_DATA pop_rpn_stack()
+{
+	if(rpn_stack_ptr <= 0)
+	{
+		KERNEL_PANIC(PANIC_RPN_STACK_UNDERFLOW);
 		
-		if(opr_data_type == TYPE_TERMINATE) break;
-		
-		RAM_PTR opr_addr;
-		set_read_addr(opr_addr, opr_addr_mode, opr_data_type);
-		
-		MEM_BUF opr_data;
-		
-		if(opr_oper_mode != LOGICAL_NOT)
+		RPN_STACK_DATA error = {
+			.type = RPN_TYPE_ERROR,
+			0,
+		};
+		return error;
+	}
+	
+	rpn_stack_ptr--;
+	return rpn_stack[rpn_stack_ptr];
+}
+
+#define is_zero_float(num)          ((num) < 0.00001f && (num) > -0.00001f)
+#define is_equal_float(num1, num2)  (((num1) - (num2)) < 0.00001f && ((num1) - (num2)) > -0.00001f)
+
+__inline void calculate_rpn(RPN_STACK_DATA num1, RPN_STACK_DATA num2, RPN_TYPE operator)
+{
+	RPN_STACK_DATA result = { 0 };
+	
+	switch(operator)
+	{
+	// Operators that have one argument
+	case RPN_TYPE_MINUS:
+		if(num1.type == RPNS_TYPE_INT64) 
 		{
-			switch(opr_data_type)
-			{
-			case TYPE_FLOAT:
-				opr_data.flt = ram_ptr_float(opr_addr);
-				break;
-				
-			case TYPE_INT32:
-				opr_data.int32 = ram_ptr_int32(opr_addr);
-				break;
-				
-			case TYPE_INT16:
-				opr_data.int32 = ram_ptr_int16(opr_addr);
-				break;
-				
-			case TYPE_INT8:
-				opr_data.int32 = ram_ptr_int8(opr_addr);
-				break;
-				
-			case TYPE_UINT32:
-				opr_data.int32 = ram_ptr_uint32(opr_addr);
-				break;
-				
-			case TYPE_UINT16:
-				opr_data.int32 = ram_ptr_uint16(opr_addr);
-				break;
-				
-			case TYPE_UINT8:
-				opr_data.int32 = ram_ptr_uint8(opr_addr);
-				break;
-			}
+			result.value.int64 = -num1.value.int64;
+			result.type = RPNS_TYPE_INT64;
 		}
-		
-		if(first_flag)
+		else if(num1.type == RPNS_TYPE_FLOAT) 
 		{
-			first_flag = 0;
-			res = (opr_data.flt) ? 1 : 0;
-			tmp.flt = opr_data.flt;
+			result.value.float32 = -num1.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
 		}
 		else
 		{
-			switch(opr_oper_mode)
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_BITWISE_NOT:
+		if(num1.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = ~num1.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_LOGICAL_NOT:
+		if(num1.type == RPNS_TYPE_INT64 || num1.type == RPNS_TYPE_FLOAT) 
+		{
+			result.value.int64 = !num1.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	// Operator that have two arguments
+	// Arithmetic operators
+	case RPN_TYPE_ADD:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 + num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = num1.value.float32 + num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.float32 = num1.value.float32 + (float)(num2.value.int64);
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = (float)(num1.value.int64) + num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_SUB:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 - num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = num1.value.float32 - num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.float32 = num1.value.float32 - (float)(num2.value.int64);
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = (float)(num1.value.int64) - num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_MUL:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 * num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = num1.value.float32 * num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.float32 = num1.value.float32 * (float)(num2.value.int64);
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.float32 = (float)(num1.value.int64) * num2.value.float32;
+			result.type = RPNS_TYPE_FLOAT;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_DIV:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			if(num2.value.int64 == 0)
 			{
-			case LOGICAL_AND:
-				//if(opr_data_type != TYPE_FLOAT) tmp.int32 &= opr_data.int32;
-				//res = (tmp.int32) ? 1 : 0;
-				if(opr_data_type == TYPE_FLOAT) res &= (tmp.flt) ? 1 : 0;
-				else res &= (tmp.int32) ? 1 : 0;
-				break;
-			
-			case LOGICAL_OR:
-				//if(opr_data_type != TYPE_FLOAT) tmp.int32 |= opr_data.int32;
-				//res = (tmp.int32) ? 1 : 0;
-				if(opr_data_type == TYPE_FLOAT) res |= (tmp.flt) ? 1 : 0;
-				else res |= (tmp.int32) ? 1 : 0;
-				break;
-			
-			case LOGICAL_NOT:
-				res = !res;
-				break;
-			
-			case LOGICAL_EQUAL:
-				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt == opr_data.flt);
-				else res = (tmp.int32 == opr_data.int32);
-				break;
-			
-			case LOGICAL_LESS:
-				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt < opr_data.flt);
-				else res = (tmp.int32 < opr_data.int32);
-				break;
-			
-			case LOGICAL_GREAT:
-				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt > opr_data.flt);
-				else res = (tmp.int32 > opr_data.int32);
-				break;
-			
-			case LOGICAL_LESSEQ:
-				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt <= opr_data.flt);
-				else res = (tmp.int32 <= opr_data.int32);
-				break;
-			
-			case LOGICAL_GREATEQ:
-				if(opr_data_type == TYPE_FLOAT) res = (tmp.flt >= opr_data.flt);
-				else res = (tmp.int32 >= opr_data.int32);
-				break;
+				KERNEL_PANIC(PANIC_RPN_SOLVER_DIVIDE_BY_ZERO);
+				return;
+			}
+			else
+			{
+				result.value.int64 = num1.value.int64 / num2.value.int64;
+				result.type = RPNS_TYPE_INT64;
+			}
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			if(is_zero_float(num2.value.float32))
+			{
+				KERNEL_PANIC(PANIC_RPN_SOLVER_DIVIDE_BY_ZERO);
+				return;
+			}
+			else
+			{
+				result.value.float32 = num1.value.float32 / num2.value.float32;
+				result.type = RPNS_TYPE_FLOAT;
+			}
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			if(num2.value.int64 == 0)
+			{
+				KERNEL_PANIC(PANIC_RPN_SOLVER_DIVIDE_BY_ZERO);
+				return;
+			}
+			else
+			{
+				result.value.float32 = num1.value.float32 / (float)(num2.value.int64);
+				result.type = RPNS_TYPE_FLOAT;
+			}
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			if(is_zero_float(num2.value.float32))
+			{
+				KERNEL_PANIC(PANIC_RPN_SOLVER_DIVIDE_BY_ZERO);
+				return;
+			}
+			else
+			{
+				result.value.float32 = (float)(num1.value.int64) / num2.value.float32;
+				result.type = RPNS_TYPE_FLOAT;
+			}
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_MOD:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 % num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	// Bitwise operators
+	case RPN_TYPE_BITWISE_AND:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 & num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_BITWISE_OR:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 | num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_BITWISE_XOR:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 ^ num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_BITSHIFT_LEFT:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 << num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_BITSHIFT_RIGHT:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 >> num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	// Comparison operators
+	case RPN_TYPE_EQUAL:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 == num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = is_equal_float(num1.value.float32, num2.value.float32);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = is_equal_float(num1.value.float32, (float)(num2.value.int64));
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = is_equal_float((float)(num1.value.int64), num2.value.float32);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_NOT_EQUAL:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 != num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = !is_equal_float(num1.value.float32, num2.value.float32);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = !is_equal_float(num1.value.float32, (float)(num2.value.int64));
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = !is_equal_float((float)(num1.value.int64), num2.value.float32);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_LESS:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 < num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = num1.value.float32 < num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.float32 < (float)(num2.value.int64);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = (float)(num1.value.int64) < num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_GREATER:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 > num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = num1.value.float32 > num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.float32 > (float)(num2.value.int64);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = (float)(num1.value.int64) > num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_LESS_EQUAL:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 <= num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = num1.value.float32 <= num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.float32 <= (float)(num2.value.int64);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = (float)(num1.value.int64) <= num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_GREATER_EQUAL:
+		if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.int64 >= num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = num1.value.float32 >= num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_FLOAT && num2.type == RPNS_TYPE_INT64)
+		{
+			result.value.int64 = num1.value.float32 >= (float)(num2.value.int64);
+			result.type = RPNS_TYPE_INT64;
+		}
+		else if(num1.type == RPNS_TYPE_INT64 && num2.type == RPNS_TYPE_FLOAT)
+		{
+			result.value.int64 = (float)(num1.value.int64) >= num2.value.float32;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	// Logical operators
+	case RPN_TYPE_LOGICAL_AND:
+		if((num1.type == RPNS_TYPE_INT64 || num1.type == RPNS_TYPE_FLOAT) && (num2.type == RPNS_TYPE_INT64 || num2.type == RPNS_TYPE_FLOAT))
+		{
+			result.value.int64 = num1.value.int64 && num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	case RPN_TYPE_LOGICAL_OR:
+		if((num1.type == RPNS_TYPE_INT64 || num1.type == RPNS_TYPE_FLOAT) && (num2.type == RPNS_TYPE_INT64 || num2.type == RPNS_TYPE_FLOAT))
+		{
+			result.value.int64 = num1.value.int64 || num2.value.int64;
+			result.type = RPNS_TYPE_INT64;
+		}
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+			return;
+		}
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_OPERATOR);
+		return;
+	}
+	
+	push_rpn_stack(result);
+}
+
+#define is_rpn_stack_empty()  (rpn_stack_ptr == 0)
+
+__inline RPN_STACK_DATA solve_rpn()
+{
+	RPN_DATA rpn_data = { 0 };
+	
+	while(rpn_data.type != RPN_TYPE_TERMINATE)
+	{
+		rpn_data = read_rpn_data();
+		
+		if(rpn_data.type == RPN_TYPE_NONE) continue;
+		if(rpn_data.type == RPN_TYPE_ERROR || rpn_data.type == RPN_TYPE_TERMINATE) break;
+		
+		if(rpn_data.type == RPN_TYPE_NUMERAL) push_rpn_stack(get_rpn_solver_data(rpn_data));
+		else
+		{
+			if(rpn_data.type == RPN_TYPE_MINUS || 
+			   rpn_data.type == RPN_TYPE_BITWISE_NOT || 
+			   rpn_data.type == RPN_TYPE_LOGICAL_NOT)
+			{
+				RPN_STACK_DATA num2 = { 0 };
+				RPN_STACK_DATA num1 = pop_rpn_stack();
+				
+				calculate_rpn(num1, num2, rpn_data.type);
+			}
+			else
+			{
+				RPN_STACK_DATA num2 = pop_rpn_stack();
+				RPN_STACK_DATA num1 = pop_rpn_stack();
+				
+				calculate_rpn(num1, num2, rpn_data.type);
 			}
 		}
 	}
 	
-	if(dest_data_type == TYPE_UINT8)
+	RPN_STACK_DATA result = pop_rpn_stack();
+
+	if(!is_rpn_stack_empty())
 	{
-		write_uint8(res, dest_addr);
+		KERNEL_PANIC(PANIC_RPN_SOLVER_TOO_MANY_RESULTS);
+		result.type = RPNS_TYPE_ERROR;
 	}
 	
-	if(res) logical_flag &= ~ZERO_FLAG;
-	else    logical_flag |=  ZERO_FLAG;*/
+	return result;
+}
+
+__inline void vm_inst_evaluate_rpn()
+{
+	rpn_stack_ptr = 0;
+	
+	RAM_PTR dest_addr;
+	TYPE_FLAG dest_type = read_addr(&dest_addr);
+	
+	RPN_STACK_DATA result = solve_rpn();
+	
+	if(status_flag & KERNEL_PANIC_FLAG || result.type == RPNS_TYPE_ERROR) return;
+	
+	if(result.type == RPNS_TYPE_INT64)
+	{
+		if(result.value.int64 == 0)
+		{
+			status_flag |= ZERO_FLAG;
+			status_flag &= ~SIGN_FLAG;
+		}
+		else status_flag &= ~ZERO_FLAG;
+		
+		if(result.value.int64 < 0)
+		{
+			status_flag |= SIGN_FLAG;
+			status_flag &= ~ZERO_FLAG;
+		}
+		else status_flag &= ~SIGN_FLAG;
+	}
+	else if(result_type == RPNS_TYPE_FLOAT)
+	{
+		if(is_zero_float(result.value.float32))
+		{
+			status_flag |= ZERO_FLAG;
+			status_flag &= ~SIGN_FLAG;
+		}
+		else status_flag &= ~ZERO_FLAG;
+		
+		if(result.value.float32 < 0.0f && !is_zero_float(result.value.float32))
+		{
+			status_flag |= SIGN_FLAG;
+			status_flag &= ~ZERO_FLAG;
+		}
+		else status_flag &= ~SIGN_FLAG;
+	}
+	
+	switch(dest_type)  // Write the result to destination
+	{
+	case TYPE_FLOAT:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(float *)(&ram[dest_addr]) = (float)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(float *)(&ram[dest_addr]) = result.value.float32;
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_INT32:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(int32_t *)(&ram[dest_addr]) = (int32_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(int32_t *)(&ram[dest_addr]) = (int32_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_UINT32:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(uint32_t *)(&ram[dest_addr]) = (uint32_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(uint32_t *)(&ram[dest_addr]) = (uint32_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_INT16:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(int16_t *)(&ram[dest_addr]) = (int16_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(int16_t *)(&ram[dest_addr]) = (int16_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_UINT16:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(uint16_t *)(&ram[dest_addr]) = (uint16_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(uint16_t *)(&ram[dest_addr]) = (uint16_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_INT8:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(int8_t *)(&ram[dest_addr]) = (int8_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(int8_t *)(&ram[dest_addr]) = (int8_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	case TYPE_UINT8:
+		if(result.type == RPNS_TYPE_INT64) 
+			*(uint8_t *)(&ram[dest_addr]) = (uint8_t)(result.value.int64);
+		else if(result.type == RPNS_TYPE_FLOAT) 
+			*(uint8_t *)(&ram[dest_addr]) = (uint8_t)(result.value.float32);
+		else
+		{
+			KERNEL_PANIC(PANIC_RPN_SOLVER_UNKNOWN_TYPE);
+		}
+		break;
+	
+	default:
+		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
+		break;
+	}
 }
 
 __inline void vm_inst_jsr()

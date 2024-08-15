@@ -7,24 +7,23 @@
 // TODO: Implement flags properly using bitwise.
 PANIC_CODE panic_code = PANIC_NONE;
 
-uint8_t ram[RAM_SIZE] = { 0 };
+uint8_t ram[RAM_SIZE];
+RPN_STACK_DATA rpn_stack[RPN_STACK_SIZE];
 //uint32_t stack[STACK_SIZE] = { 0 };
 
 RAM_PTR prg_counter = 0;
 STACK_PTR stack_ptr = 0;
+uint8_t rpn_stack_ptr = 0;
 
-//uint32_t a_int = 0;
-//float a_flt = 0;
 uint8_t status_flag = 0;
-uint8_t end_of_loop_flag = 0;  // TODO: Store every flag in a single variable.
-//ram_t abs_addr = 0;
-//ram_t ptr_addr = 0;
 
 void vm_init()
 {
 	memset(ram, 0, sizeof(ram));
+	memset(rpn_stack, 0, sizeof(rpn_stack));
 	prg_counter = 0;
 	stack_ptr = 0;
+	rpn_stack_ptr = 0;
 }
 
 // Switch-case is faster than function table on embedded systems.

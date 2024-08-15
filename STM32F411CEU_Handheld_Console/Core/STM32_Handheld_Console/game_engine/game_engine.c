@@ -26,6 +26,7 @@ uint8_t game_engine_loop(void)
 		if(status_flag & KERNEL_PANIC_FLAG)
 		{
 			// Panic here.
+			// TODO: Implement a panic screen.
 			printf("KERNEL_PANIC: ");
 			
 			switch(panic_code)

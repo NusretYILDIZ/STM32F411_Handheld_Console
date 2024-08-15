@@ -152,6 +152,7 @@
 
 typedef enum
 {
+	TYPE_NONE,
 	TYPE_TERMINATE,
 	TYPE_FLOAT,  // Uses big-endian format
 	TYPE_INT32,
@@ -162,6 +163,7 @@ typedef enum
 	TYPE_UINT8,
 	TYPE_RAM_PTR,
 	TYPE_STRING,
+	TYPE_STACK_PTR,
 } TYPE_FLAG;
 
 #define ADDR_IMM         (1 << 6)
@@ -190,17 +192,5 @@ typedef enum
 #define LOGICAL_GREAT    (5 << 5)
 #define LOGICAL_LESSEQ   (6 << 5)
 #define LOGICAL_GREATEQ  (7 << 5)
-
-typedef union
-{
-	float flt;
-	int32_t int32;
-	int16_t int16;
-	int8_t int8;
-	uint32_t uint32;
-	uint16_t uint16;
-	uint8_t uint8;
-	RAM_PTR ram_ptr;
-} MEM_BUF;
 
 #endif //__mem_access_def_h

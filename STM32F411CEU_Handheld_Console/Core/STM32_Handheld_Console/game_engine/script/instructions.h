@@ -5,9 +5,7 @@
                         X(assign) \
 						X(increase) \
 						X(decrease) \
-                        X(arith_calc) \
-                        X(bitwise) \
-                        X(logical) \
+                        X(evaluate_rpn) \
                         X(jsr) \
                         X(rts) \
 						X(jump_if_carry) \

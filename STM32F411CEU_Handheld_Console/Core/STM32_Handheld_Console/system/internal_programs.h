@@ -20,6 +20,18 @@ const uint8_t test_code[] = {
 	get_opcode(get_key_down  ), ADDR_IMM | TYPE_UINT16 , 0  , 2 ,
 	get_opcode(jump_if_zero  ), ADDR_ABS | TYPE_RAM_PTR, 92 , 0 , 0, 0,
 	get_opcode(exit_game     ),
+	get_opcode(set_cursor    ), ADDR_IMM | TYPE_INT16  , 10 , 0 , ADDR_IMM | TYPE_INT16, 40, 0,
+	get_opcode(print_str     ), ADDR_IMM | TYPE_STRING , '(', '3', '+', 'x', ')', '*', '(', '4', '-', 'x', ')', '=', '\0',
+	get_opcode(evaluate_rpn  ), ADDR_ABS | TYPE_INT32   , 255, 5 , 0, 0,                     // destination
+	                            RPN_TYPE_NUMERAL, ADDR_IMM | TYPE_INT8, 0, 0, 3, 0, 0, 0,    // 3
+								RPN_TYPE_NUMERAL, ADDR_ABS | TYPE_INT8, 0, 0, 255, 4, 0, 0,  // x
+								RPN_TYPE_ADD, 0, 0, 0, 0, 0, 0, 0,                           // +
+								RPN_TYPE_NUMERAL, ADDR_IMM | TYPE_INT8, 0, 0, 4, 0, 0, 0,    // 4
+								RPN_TYPE_NUMERAL, ADDR_ABS | TYPE_INT8, 0, 0, 255, 4, 0, 0,  // x
+								RPN_TYPE_SUB, 0, 0, 0, 0, 0, 0, 0,                           // -
+								RPN_TYPE_MUL, 0, 0, 0, 0, 0, 0, 0,                           // *
+	                            RPN_TYPE_TERMINATE, 0, 0, 0, 0, 0, 0, 0, 
+	get_opcode(print_int     ), ADDR_ABS | TYPE_INT32   , 255, 5 , 0, 0, 
 	get_opcode(end_of_loop   ),
 	get_opcode(jump          ), ADDR_ABS | TYPE_RAM_PTR, 8  , 0 , 0, 0,
 };
