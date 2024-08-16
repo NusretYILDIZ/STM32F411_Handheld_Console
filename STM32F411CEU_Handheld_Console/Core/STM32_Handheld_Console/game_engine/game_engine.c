@@ -1,9 +1,32 @@
 #include "./game_engine.h"
 
 #include "../input/input_driver.h"
+#include "../system/locals/strings.h"
+
+const char *panic_code_names[] = {
+	PANIC_CODES(PANIC_NAMES)
+};
 
 ENGINE_SETTINGS engine_settings;
 uint32_t elapsed_time;
+
+void kernel_panic_screen()
+{
+	fill_display(0xE0);
+	set_text_area(10, 10 + get_font_height(), 229, 159);
+	set_cursor(10, 50);
+	printf_str("%s%s", get_str(STR_KERNEL_PANIC_MSG), panic_code_names[panic_code]);
+	
+	set_cursor(10, 156);
+	printf_str(GP_HOME "%s", get_str(STR_BACK));
+	update_display();
+	
+	for(;;)
+	{
+		update_inputs();
+		if(get_key_down(GAMEPAD_HOME)) return;
+	}
+}
 
 void wait_frame_time()
 {
@@ -27,37 +50,10 @@ uint8_t game_engine_loop(void)
 		{
 			// Panic here.
 			// TODO: Implement a panic screen.
-			printf("KERNEL_PANIC: ");
-			
-			switch(panic_code)
-			{
-			case PANIC_NONE:
-				printf("PANIC_NONE");
-				break;
-			
-			case PANIC_UNKNOWN_DATA_TYPE:
-				printf("PANIC_UNKNOWN_DATA_TYPE");
-				break;
-			
-			case PANIC_UNKNOWN_ADDR_MODE:
-				printf("PANIC_UNKNOWN_ADDR_MODE");
-				break;
-			
-			case PANIC_INVALID_INSTRUCTION:
-				printf("PANIC_INVALID_INSTRUCTION");
-				break;
-			
-			case PANIC_DATA_TYPE_DISCREPANCY:
-				printf("PANIC_DATA_TYPE_DISCREPANCY");
-				break;
-			
-			default:
-				printf("UNKNOWN");
-				break;
-			}
+			printf("KERNEL_PANIC: %s", panic_code_names[panic_code]);
 			printf("\nProgram counter: %d\n", prg_counter - engine_settings.game_code_addr);
 			
-			for(;;);
+			kernel_panic_screen();
 			
 			return -1;
 		}

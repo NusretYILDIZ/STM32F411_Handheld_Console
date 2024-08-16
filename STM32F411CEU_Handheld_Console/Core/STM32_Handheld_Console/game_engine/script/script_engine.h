@@ -48,23 +48,28 @@ typedef union
 	STACK_PTR stack_ptr;
 } MEM_BUF;
 
+#define PANIC_CODES(X)  X(NONE) \
+                        X(UNKNOWN_DATA_TYPE) \
+                        X(UNKNOWN_ADDR_MODE) \
+                        X(INVALID_INSTRUCTION) \
+                        X(DATA_TYPE_DISCREPANCY) \
+                        X(STACK_OVERFLOW) \
+                        X(STACK_UNDERFLOW) \
+                        X(RPN_SOLVER_FAILED) \
+                        X(RPN_SOLVER_TOO_MANY_RESULTS) \
+                        X(RPN_SOLVER_UNKNOWN_TYPE) \
+                        X(RPN_SOLVER_UNKNOWN_ADDR_MODE) \
+                        X(RPN_SOLVER_UNKNOWN_OPERATOR) \
+                        X(RPN_SOLVER_DIVIDE_BY_ZERO) \
+                        X(RPN_STACK_OVERFLOW) \
+                        X(RPN_STACK_UNDERFLOW)
+
+#define PANIC_ENUMS(CODE) PANIC_##CODE,
+#define PANIC_NAMES(CODE) #CODE,
+
 typedef enum
 {
-	PANIC_NONE,
-	PANIC_UNKNOWN_DATA_TYPE,
-	PANIC_UNKNOWN_ADDR_MODE,
-	PANIC_INVALID_INSTRUCTION,
-	PANIC_DATA_TYPE_DISCREPANCY,
-	PANIC_STACK_OVERFLOW,
-	PANIC_STACK_UNDERFLOW,
-	PANIC_RPN_SOLVER_FAILED,
-	PANIC_RPN_SOLVER_TOO_MANY_RESULTS,
-	PANIC_RPN_SOLVER_UNKNOWN_TYPE,
-	PANIC_RPN_SOLVER_UNKNOWN_ADDR_MODE,
-	PANIC_RPN_SOLVER_UNKNOWN_OPERATOR,
-	PANIC_RPN_SOLVER_DIVIDE_BY_ZERO,
-	PANIC_RPN_STACK_OVERFLOW,
-	PANIC_RPN_STACK_UNDERFLOW,
+	PANIC_CODES(PANIC_ENUMS)
 } PANIC_CODE;
 
 extern PANIC_CODE panic_code;

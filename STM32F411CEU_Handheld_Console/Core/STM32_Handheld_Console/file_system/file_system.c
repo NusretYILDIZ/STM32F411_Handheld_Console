@@ -306,8 +306,8 @@ uint8_t get_games_list(RAM_PTR list_addr)
 			HANDLE game_files_handler = 0;
 			
 			sprintf(path, DIR_ROOT DIR_GAMES "%s/*.bin", find_data_file.cFileName);
-			
 			game_files_handler = FindFirstFileA(path, &game_files);
+			
 			if(game_files_handler == INVALID_HANDLE_VALUE)
 			{
 				sprintf(get_menu_item(list_addr, item_count)->menu_text.text, get_str(STR_CORRUPTED_DATA));
@@ -319,18 +319,26 @@ uint8_t get_games_list(RAM_PTR list_addr)
 			
 			do
 			{
+				// If current file is MANIFEST.BIN
 				if(strcmp(game_files.cFileName, ".") != 0 && strcmp(game_files.cFileName, "..") != 0 && 
 					!(game_files.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
 					strcmp(game_files.cFileName, FILE_GAME_MANIFEST) == 0)
 				{
 					GAME_MANIFEST manifest;
 					sprintf(path, DIR_ROOT DIR_GAMES "%s/%s", find_data_file.cFileName, game_files.cFileName);
-					//if(file_size())
 					
-					sprintf(get_menu_item(list_addr, item_count)->menu_text.text, "%s", find_data_file.cFileName);
-					//get_menu_item(list_addr, item_count)->action = corrupted_game_error;
-					item_count++;
-					
+					if(file_size(path) != sizeof(GAME_MANIFEST))
+					{
+						sprintf(get_menu_item(list_addr, item_count)->menu_text.text, get_str(STR_CORRUPTED_DATA));
+						get_menu_item(list_addr, item_count)->action = corrupted_game_error;
+						item_count++;
+					}
+					else
+					{
+						sprintf(get_menu_item(list_addr, item_count)->menu_text.text, "%s", find_data_file.cFileName);
+						//get_menu_item(list_addr, item_count)->action = corrupted_game_error;
+						item_count++;
+					}
 					break;
 				}
 			}

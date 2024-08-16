@@ -1247,7 +1247,7 @@ __inline void vm_inst_evaluate_rpn()
 		}
 		else status_flag &= ~SIGN_FLAG;
 	}
-	else if(result_type == RPNS_TYPE_FLOAT)
+	else if(result.type == RPNS_TYPE_FLOAT)
 	{
 		if(is_zero_float(result.value.float32))
 		{

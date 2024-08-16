@@ -4,7 +4,6 @@
 #include "./mem_access_def.h"
 #include <string.h>
 
-// TODO: Implement flags properly using bitwise.
 PANIC_CODE panic_code = PANIC_NONE;
 
 uint8_t ram[RAM_SIZE];
@@ -53,7 +52,6 @@ void vm_run()  // Continuously executes instructions until reaches "end_of_loop"
 		}
 	}
 }
-#undef INST_SWITCHCASE
 
 void vm_push(uint32_t data)
 {

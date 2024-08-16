@@ -9,6 +9,7 @@ const char *strings_en[] = {
 	"-- Corrupted Data --",
 	"Corrupted Game",
 	"The game you want to play cannot be started.\n\nMake sure that the game is installed properly.",
+	"Software has been closed because an\nerror occured.\n\nError code: ",
 	
 	// System Menu
 	"Games",
@@ -37,6 +38,7 @@ const char *strings_tr[] = {
 	"-- Bozulmu"TR_s" Veri --",
 	"Bozuk Oyun",
 	"Oynamak istedi"TR_g"iniz oyun ba"TR_s"lat"TR_i"lam"TR_i"yor.\n\nOyunu do"TR_g"ru bi"TR_c"imde kurdu"TR_g"unuzdan emin olun.",
+	"Yaz"TR_i"l"TR_i"m kapat"TR_i"ld"TR_i" "TR_c TR_u"nk"TR_u" bir hata meydana\ngeldi.\n\nHata kodu: ",
 	
 	// System Menu
 	"Oyunlar",

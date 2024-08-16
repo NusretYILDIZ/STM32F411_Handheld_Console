@@ -33,6 +33,7 @@ const uint8_t test_code[] = {
 	                            RPN_TYPE_TERMINATE, 0, 0, 0, 0, 0, 0, 0, 
 	get_opcode(print_int     ), ADDR_ABS | TYPE_INT32   , 255, 5 , 0, 0, 
 	get_opcode(end_of_loop   ),
+	get_opcode(invalid       ),
 	get_opcode(jump          ), ADDR_ABS | TYPE_RAM_PTR, 8  , 0 , 0, 0,
 };
 

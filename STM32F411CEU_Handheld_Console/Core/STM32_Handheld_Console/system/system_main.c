@@ -117,7 +117,7 @@ void fs_init_error()
 	uint16_t tw, th;
 	
 	fill_display(system_settings.theme_color);
-	set_text_area(9, 9, 230, 150);
+	set_text_area(9, 9 + get_font_height(), 230, 150);
 	set_text_color(rgb888_to_rgb332(255, 255, 255), 0xff);
 	
 	text_bounds(get_str(STR_INIT_FS_ERROR), 9, 9, &tx, &ty, &tw, &th);
@@ -152,6 +152,8 @@ uint8_t system_main()
 	
 	if(!file_exists(DIR_ROOT FILE_SYSTEM_SETTINGS)) first_setup();
 	else file_full_read(DIR_ROOT FILE_SYSTEM_SETTINGS, &system_settings);
+	
+	apply_lang(system_settings.current_lang);
 	
 	vm_init();
 	
