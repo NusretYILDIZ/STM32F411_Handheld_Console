@@ -1,7 +1,6 @@
 #ifndef __game_engine_h
 #define __game_engine_h
 
-#include "./script/mem_access_def.h"
 #include "./script/script_engine.h"
 #include "./script/instructions.h"
 
@@ -68,6 +67,7 @@ typedef struct s_ENGINE_SETTINGS
 extern ENGINE_SETTINGS engine_settings;
 
 extern uint32_t elapsed_time;
+extern uint8_t delta_time;
 
 void wait_frame_time(void);
 void load_game(void *game);

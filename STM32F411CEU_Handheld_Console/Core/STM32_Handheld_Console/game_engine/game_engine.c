@@ -2,6 +2,7 @@
 
 #include "../input/input_driver.h"
 #include "../system/locals/strings.h"
+#include "../system/timer.h"
 
 const char *panic_code_names[] = {
 	PANIC_CODES(PANIC_NAMES)
@@ -9,16 +10,17 @@ const char *panic_code_names[] = {
 
 ENGINE_SETTINGS engine_settings;
 uint32_t elapsed_time;
+uint8_t delta_time;
 
 void kernel_panic_screen()
 {
 	fill_display(0xE0);
 	set_text_area(10, 10 + get_font_height(), 229, 159);
 	set_cursor(10, 50);
-	printf_str("%s%s", get_str(STR_KERNEL_PANIC_MSG), panic_code_names[panic_code]);
+	printf_str("%s%s, %d", get_str(STR_KERNEL_PANIC_MSG), panic_code_names[panic_code], prg_counter - engine_settings.game_code_addr);
 	
 	set_cursor(10, 156);
-	printf_str(GP_HOME "%s", get_str(STR_BACK));
+	printf_str(STR_GP_HOME "%s", get_str(STR_BACK));
 	update_display();
 	
 	for(;;)
@@ -31,6 +33,14 @@ void kernel_panic_screen()
 void wait_frame_time()
 {
 	while(get_tick() - elapsed_time < 33);
+	
+	uint32_t frame_time = get_tick() - elapsed_time;
+	if(frame_time > 255)
+	{
+		KERNEL_PANIC(PANIC_DELTA_TIME_TOO_LONG);
+	}
+	
+	delta_time = (uint8_t)frame_time;
 	elapsed_time = get_tick();
 }
 
@@ -41,6 +51,9 @@ void load_game(void *game)
 
 uint8_t game_engine_loop(void)
 {
+	delta_time = 33;
+	elapsed_time = get_tick();
+	
 	while(!(status_flag & EXIT_GAME_FLAG))
 	{
 		update_inputs();
@@ -48,21 +61,16 @@ uint8_t game_engine_loop(void)
 		
 		if(status_flag & KERNEL_PANIC_FLAG)
 		{
-			// Panic here.
-			// TODO: Implement a panic screen.
-			printf("KERNEL_PANIC: %s", panic_code_names[panic_code]);
-			printf("\nProgram counter: %d\n", prg_counter - engine_settings.game_code_addr);
-			
 			kernel_panic_screen();
-			
-			return -1;
+			return 0;
 		}
 		
 		// Render functions
 		update_display();
 		wait_frame_time();
+		
 		status_flag &= ~END_OF_LOOP_FLAG;
 	}
 	
-	return 0;
+	return 1;
 }

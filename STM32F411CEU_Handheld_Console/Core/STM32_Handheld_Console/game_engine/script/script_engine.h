@@ -5,7 +5,7 @@
 #include "../../display/display_driver.h"
 
 #define RAM_SIZE        (1024 * 80) // 80 KB
-#define STACK_SIZE      (256)
+#define STACK_SIZE      (255)
 #define RPN_STACK_SIZE  (32)
 
 typedef int8_t int8;
@@ -28,7 +28,7 @@ typedef uint32_t uint32;
 #endif
 
 extern uint8_t ram[RAM_SIZE];
-//extern uint32_t stack[STACK_SIZE];
+extern uint32_t *stack;
 
 extern RAM_PTR prg_counter;
 extern STACK_PTR stack_ptr;
@@ -48,6 +48,39 @@ typedef union
 	STACK_PTR stack_ptr;
 } MEM_BUF;
 
+#define CARRY_FLAG         0x01
+#define ZERO_FLAG          0x02
+#define OVERFLOW_FLAG      0x04
+#define SIGN_FLAG          0x08
+#define END_OF_LOOP_FLAG   0x10
+#define KERNEL_PANIC_FLAG  0x20
+#define EXIT_GAME_FLAG     0x40
+
+#define TYPE_MASK        0x1F
+#define ADDR_MASK        0xE0
+
+typedef enum
+{
+	TYPE_NONE,
+	TYPE_TERMINATE,
+	TYPE_FLOAT,  // Uses big-endian format
+	TYPE_INT32,
+	TYPE_UINT32,
+	TYPE_INT16,
+	TYPE_UINT16,
+	TYPE_INT8,
+	TYPE_UINT8,
+	TYPE_RAM_PTR,
+	TYPE_STRING,
+	TYPE_STACK_PTR,
+	TYPE_DELTA_TIME,
+} TYPE_FLAG;
+
+#define ADDR_IMM         (1 << 5)
+#define ADDR_ABS         (2 << 5)
+#define ADDR_PTR         (3 << 5)
+#define ADDR_ARG         (4 << 5)
+
 #define PANIC_CODES(X)  X(NONE) \
                         X(UNKNOWN_DATA_TYPE) \
                         X(UNKNOWN_ADDR_MODE) \
@@ -62,7 +95,8 @@ typedef union
                         X(RPN_SOLVER_UNKNOWN_OPERATOR) \
                         X(RPN_SOLVER_DIVIDE_BY_ZERO) \
                         X(RPN_STACK_OVERFLOW) \
-                        X(RPN_STACK_UNDERFLOW)
+                        X(RPN_STACK_UNDERFLOW) \
+						X(DELTA_TIME_TOO_LONG)
 
 #define PANIC_ENUMS(CODE) PANIC_##CODE,
 #define PANIC_NAMES(CODE) #CODE,
@@ -150,7 +184,7 @@ extern uint8_t rpn_stack_ptr;
 void vm_init(void);
 void vm_execute(void);
 void vm_run(void);
-void vm_push(uint32_t data);
-uint32_t vm_pop(void);
+void vm_push_stack(uint32_t data);
+uint32_t vm_pop_stack(void);
 
 #endif //__script_engine_h

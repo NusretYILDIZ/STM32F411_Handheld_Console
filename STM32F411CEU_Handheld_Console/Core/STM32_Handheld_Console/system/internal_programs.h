@@ -32,8 +32,12 @@ const uint8_t test_code[] = {
 								RPN_TYPE_MUL, 0, 0, 0, 0, 0, 0, 0,                           // *
 	                            RPN_TYPE_TERMINATE, 0, 0, 0, 0, 0, 0, 0, 
 	get_opcode(print_int     ), ADDR_ABS | TYPE_INT32   , 255, 5 , 0, 0, 
-	get_opcode(end_of_loop   ),
+	get_opcode(set_cursor    ), ADDR_IMM | TYPE_INT16   , 10 , 0 , ADDR_IMM | TYPE_INT16, 150, 0,
+	get_opcode(print_str     ), ADDR_IMM | TYPE_STRING  , CHR_GP_X, 'C', 'r', 'a', 's', 'h', ' ', CHR_GP_UP, 'A', 'r', 't', 't', CHR_TR_i, 'r', ' ', CHR_GP_DOWN, 'A', 'z', 'a', 'l', 't', ' ', CHR_GP_HOME, CHR_TR_C, CHR_TR_i, 'k', CHR_TR_i, CHR_TR_s, '\0',
+	get_opcode(get_key_down  ), ADDR_IMM | TYPE_UINT16  , 16 , 0,
+	get_opcode(jump_if_zero  ), ADDR_ABS | TYPE_RAM_PTR , 239 , 0 , 0, 0,
 	get_opcode(invalid       ),
+	get_opcode(end_of_loop   ),
 	get_opcode(jump          ), ADDR_ABS | TYPE_RAM_PTR, 8  , 0 , 0, 0,
 };
 

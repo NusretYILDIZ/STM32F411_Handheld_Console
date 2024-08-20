@@ -6,8 +6,9 @@
 						X(increase) \
 						X(decrease) \
                         X(evaluate_rpn) \
-                        X(jsr) \
-                        X(rts) \
+                        X(call_no_arg) \
+                        X(call_with_arg) \
+                        X(return) \
 						X(jump_if_carry) \
 						X(jump_if_zero) \
                         X(jump_if) \

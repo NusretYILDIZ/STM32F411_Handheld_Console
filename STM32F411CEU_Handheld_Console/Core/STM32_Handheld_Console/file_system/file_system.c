@@ -4,7 +4,7 @@
 
 uint8_t fs_init(void)
 {
-	
+	return 1;
 }
 
 void fs_deinit(void)
@@ -19,7 +19,7 @@ void fs_use_relpath(uint8_t enable)
 
 uint8_t file_exists(const char *filename)
 {
-	
+	return 0;
 }
 
 uint8_t dir_exists(const char *path)
@@ -84,7 +84,7 @@ uint8_t format_disk(void)
 
 uint8_t get_games_list(RAM_PTR index)
 {
-	
+	return 0;
 }
 
 uint8_t get_projects_list(RAM_PTR index)

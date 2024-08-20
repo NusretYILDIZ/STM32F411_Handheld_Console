@@ -1,6 +1,5 @@
 #include "./instructions.h"
 #include "./script_engine.h"
-#include "./mem_access_def.h"
 #include "../game_engine.h"
 #include "../../input/input_driver.h"
 #include <math.h>
@@ -65,6 +64,10 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 		if(dest) *(STACK_PTR *)dest = stack_ptr;
 		break;
 	
+	case TYPE_DELTA_TIME:
+		if(dest) *(float *)dest = 1.0f / (float)delta_time;
+		break;
+	
 	default:
 		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
 		break;
@@ -100,9 +103,19 @@ __inline TYPE_FLAG read_param(void *dest)
 		
 		read_memory(&var_addr, dest, type_flag);
 	}
+	else if(var_attr & ADDR_ARG)
+	{
+		uint8_t arg_no = ram[prg_counter];
+		prg_counter++;
+		
+		// If this is an argument, then we are inside a function that we called.
+		// This means there is a return address on top of the stack.
+		// When searching for an argument, we need to skip that return address.
+		RAM_PTR var_addr = (RAM_PTR)stack[stack_ptr - 1 - arg_no];
+		read_memory(&var_addr, dest, type_flag);
+	}
 	else 
 	{
-		//printf("addr_mode = %d\n", var_attr & ADDR_MASK);
 		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
 	}
 	
@@ -133,9 +146,15 @@ __inline TYPE_FLAG read_addr(RAM_PTR *dest)
 		
 		*dest = *(RAM_PTR *)(&ram[*dest]);
 	}
+	else if(var_attr & ADDR_ARG)
+	{
+		uint8_t arg_no = ram[prg_counter];
+		prg_counter++;
+		
+		if(dest) *dest = (RAM_PTR)(stack[stack_ptr - 1 - arg_no]);
+	}
 	else 
 	{
-		//printf("addr_mode = %d\n", var_attr & ADDR_MASK);
 		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
 	}
 	
@@ -576,7 +595,8 @@ __inline MEM_BUF convert_data_type(TYPE_FLAG dest_type, MEM_BUF src_data, TYPE_F
 
 __inline RPN_DATA read_rpn_data()
 {
-	RPN_DATA rpn_data = *(RPN_DATA *)(&ram[prg_counter]);
+	RPN_DATA rpn_data; // = *(RPN_DATA *)(&ram[prg_counter]);
+	memcpy(&rpn_data, &ram[prg_counter], sizeof(RPN_DATA));
 	prg_counter += sizeof(RPN_DATA);
 	
 	if(rpn_data.type == RPN_TYPE_NUMERAL)  // Get the absolute values so we won't have to deal with addresses.
@@ -663,14 +683,13 @@ __inline RPN_STACK_DATA get_rpn_solver_data(RPN_DATA rpn_data)
 
 __inline void push_rpn_stack(RPN_STACK_DATA rpn_data)
 {
-	rpn_stack[rpn_stack_ptr] = rpn_data;
-	
-	if(rpn_stack_ptr + 1 >= RPN_STACK_SIZE)
+	if(rpn_stack_ptr >= RPN_STACK_SIZE)
 	{
 		KERNEL_PANIC(PANIC_RPN_STACK_OVERFLOW);
 		return;
 	}
 	
+	rpn_stack[rpn_stack_ptr] = rpn_data;
 	rpn_stack_ptr++;
 }
 
@@ -1349,18 +1368,79 @@ __inline void vm_inst_evaluate_rpn()
 	}
 }
 
-__inline void vm_inst_jsr()
+#define arg_count_pos()  (sizeof(RAM_PTR) * 8 - 4)
+
+__inline uint32_t get_func_arg()
 {
-    RAM_PTR jmp_addr = *(RAM_PTR *) (&ram[prg_counter]);
-    prg_counter += sizeof(RAM_PTR);
-    
-    vm_push(prg_counter);
-    prg_counter = jmp_addr;
+	uint8_t arg_attr = ram[prg_counter];
+	prg_counter++;
+	
+	uint32_t arg;
+	
+	if(arg_attr & ADDR_IMM)
+	{
+		read_memory(&prg_counter, &arg, arg_attr & TYPE_MASK);
+	}
+	else if(arg_attr & ADDR_ABS || arg_attr & ADDR_PTR)
+	{
+		RAM_PTR arg_addr = *(RAM_PTR *)(&ram[prg_counter]);
+		prg_counter += sizeof(RAM_PTR);
+		
+		read_memory(&arg_addr, &arg, arg_attr & TYPE_MASK);
+	}
+	else
+	{
+		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
+	}
+	
+	return arg;
 }
 
-__inline void vm_inst_rts()
+__inline void vm_inst_call_no_arg()
 {
-    prg_counter = (RAM_PTR) vm_pop();
+	RAM_PTR func_addr;
+	read_addr(&func_addr);
+	
+	// 4 most significant bits will be used as argument count for that function (therefore a function can take up to 15 arguments).
+	// Since that function doesn't take any arguments, we zero out these bits so argument count becomes zero.
+	// Also size of RAM_PTR is determined according to RAM size, so we need to calculate the position of these bits.
+	func_addr &= ~(15 << arg_count_pos());
+	
+	vm_push_stack((uint32_t)(prg_counter));
+	prg_counter = func_addr;
+}
+
+__inline void vm_inst_call_with_arg()
+{
+	RAM_PTR func_addr;
+	read_addr(&func_addr);
+	
+	unsigned int arg_count = func_addr >> arg_count_pos();
+	
+	for(unsigned int i = 0; i < arg_count; i++)
+	{
+		vm_push_stack(get_func_arg());
+	}
+	
+	// We also need to clear the argument count bits to get the correct jump address.
+	func_addr &= ~(15 << arg_count_pos());
+	
+	vm_push_stack((uint32_t)(prg_counter));
+	prg_counter = func_addr;
+}
+
+__inline void vm_inst_return()
+{
+	RAM_PTR return_addr = (RAM_PTR)vm_pop_stack();
+	unsigned int arg_count = return_addr >> arg_count_pos();
+	
+	for(; arg_count > 0; arg_count--)
+	{
+		(void)vm_pop_stack();  // Clear leftovers.
+	}
+	
+	return_addr &= ~(15 << arg_count_pos());
+	prg_counter = return_addr;
 }
 
 __inline void vm_inst_jump_if_carry()
@@ -1440,35 +1520,6 @@ __inline void vm_inst_set_text_area()
 	}
 	
 	set_text_area(sx, sy, ex, ey);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	RAM_PTR src_addr;
-	
-	int16_t sx, sy, ex, ey;
-	
-	// Read start X
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(sx, src_addr);
-	
-	// Read start Y
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(sy, src_addr);
-	
-	// Read end X
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(ex, src_addr);
-	
-	// Read end Y
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(ey, src_addr);
-	
-	//printf("set_text_area(%d, %d, %d, %d)\n\n", sx, sy, ex, ey);
-	
-	set_text_area(sx, sy, ex, ey);*/
 }
 
 __inline void vm_inst_set_cursor()
@@ -1488,25 +1539,6 @@ __inline void vm_inst_set_cursor()
 	}
 	
 	set_cursor(x, y);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	RAM_PTR src_addr;
-	
-	int16_t x, y;
-
-	// Read X position
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);	
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(x, src_addr);
-	
-	// Read Y position
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_int16(y, src_addr);
-	
-	//printf("set_cursor(%d, %d)\n\n", x, y);
-	
-	set_cursor(x, y);*/
 }
 
 __inline void vm_inst_set_text_color()
@@ -1527,31 +1559,6 @@ __inline void vm_inst_set_text_color()
 	}
 	
 	set_text_color(fg, bg);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	RAM_PTR src_addr;
-	
-	uint8_t fg, bg;
-
-	// Read foreground color
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);	
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_uint8(fg, src_addr);
-
-	// Read background color
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
-	if(src_data_type == TYPE_TERMINATE)
-		bg = fg;
-	else
-	{
-		set_read_addr(src_addr, src_addr_mode, src_data_type);
-		read_uint8(bg, src_addr);
-	}
-	
-	//printf("set_text_color(%d, %d)\n\n", fg, bg);
-	
-	set_text_color(fg, bg);*/
 }
 
 __inline void vm_inst_set_text_size()
@@ -1572,31 +1579,6 @@ __inline void vm_inst_set_text_size()
 	}
 	
 	set_text_size(x, y);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	RAM_PTR src_addr;
-	
-	uint8_t x, y;
-	
-	// Read X size
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	read_uint8(x, src_addr);
-	
-	// Read Y size
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
-	if(src_data_type == TYPE_TERMINATE)
-		y = x;
-	else
-	{
-		set_read_addr(src_addr, src_addr_mode, src_data_type);
-		read_uint8(y, src_addr);
-	}
-	
-	//printf("set_text_size(%d, %d)\n\n", x, y);
-	
-	set_text_size(x, y);*/
 }
 
 // The text that doesn't fit in text area now pushed into next line.
@@ -1623,12 +1605,6 @@ __inline void vm_inst_set_font()
 	}
 	
 	set_font(font);
-	
-    /*uint8_t font;
-	read_uint8(font, prg_counter);
-	++prg_counter;
-	
-	set_font(font);*/
 }
 
 // Print a single character into VRAM.
@@ -1643,14 +1619,6 @@ __inline void vm_inst_print_chr()
 	}
 	
 	print_chr(chr);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
-	RAM_PTR src_addr;
-	read_addr(src_addr, src_addr_mode);
-	
-	print_chr(ram_ptr_uint8(src_addr));*/
 }
 
 // Print a string into VRAM.
@@ -1665,26 +1633,6 @@ __inline void vm_inst_print_str()
 	}
 	
 	print_str(&ram[str_addr]);
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	RAM_PTR src_addr;
-	
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
-	if(src_addr_mode == ADDR_IMM)
-	{
-		src_addr = prg_counter;
-		while(ram[prg_counter] != '\0') ++prg_counter;
-		++prg_counter;
-	}
-	else
-	{
-		read_addr(src_addr, src_addr_mode);
-	}
-	
-	//printf("print_str(\"%s\")\n\n", &ram[src_addr]);
-	
-	print_str(&ram[src_addr]);*/
 }
 
 // Print a integer into VRAM.
@@ -1723,49 +1671,6 @@ __inline void vm_inst_print_int()
 		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
 		break;
 	}
-	
-    /*uint8_t src_addr_mode, src_data_type, src_oper_mode;
-	read_attrib(src_addr_mode, src_data_type, src_oper_mode);
-	
-	RAM_PTR src_addr;
-	set_read_addr(src_addr, src_addr_mode, src_data_type);
-	
-	MEM_BUF tmp;
-	
-	switch(src_data_type)
-	{
-	case TYPE_FLOAT:
-		// Kernel panic. This instruction cannot print floats.
-		break;
-	
-	case TYPE_INT32:
-		tmp.int32 = ram_ptr_int32(src_addr);
-		break;
-	
-	case TYPE_INT16:
-		tmp.int32 = (int32_t) ram_ptr_int16(src_addr);
-		break;
-	
-	case TYPE_INT8:
-		tmp.int32 = (int32_t) ram_ptr_int8(src_addr);
-		break;
-	
-	case TYPE_UINT32:
-		tmp.int32 = (int32_t) ram_ptr_uint32(src_addr);
-		break;
-	
-	case TYPE_UINT16:
-		tmp.int32 = (int32_t) ram_ptr_uint16(src_addr);
-		break;
-	
-	case TYPE_UINT8:
-		tmp.int32 = (int32_t) ram_ptr_uint8(src_addr);
-		break;
-	}
-	
-	//printf("print_int(%d)\n\n", tmp.int32);
-	
-	print_int(tmp.int32);*/
 }
 
 // Print a formatted text into VRAM.
@@ -1845,27 +1750,6 @@ __inline void vm_inst_mem_set()
 	}
 	
 	memset(&ram[dest], data, len);
-	
-    /*uint8_t addr_mode, data_type, oper_mode;
-	read_attrib(addr_mode, data_type, oper_mode);
-	
-	RAM_PTR dest_addr;
-	read_addr(dest_addr, addr_mode);
-	
-	RAM_PTR val_addr;
-	read_attrib(addr_mode, data_type, oper_mode);
-	set_read_addr(val_addr, addr_mode, data_type);
-	
-	uint8_t val = ram_ptr_uint8(val_addr);
-	
-	RAM_PTR len_addr;
-	read_attrib(addr_mode, data_type, oper_mode);
-	set_read_addr(len_addr, addr_mode, data_type);
-	
-	RAM_PTR length = ram_ptr_addr(len_addr);
-	
-	//printf("mem_set(%d, %d, %d)\n\n", dest_addr, val, length);
-	memset(&ram[dest_addr], val, length);*/
 }
 
 __inline void vm_inst_fill_display()
@@ -1884,15 +1768,12 @@ __inline void vm_inst_fill_display()
 // Update the display with VRAM content.
 __inline void vm_inst_update_display()
 {
-    //printf("update_display()\n\n");
 	update_display();
 }
 
 // Notify game engine that we reached end of game logic loop, so it can do other stuff and start over.
 __inline void vm_inst_end_of_loop()
 {
-	// TODO: Set program counter to start of the game logic loop.
-	// Second thought: Maybe we can handle it by adding a jump instruction after this, so we won't have to store address of start of loop in RAM.
 	status_flag |= END_OF_LOOP_FLAG;
 }
 

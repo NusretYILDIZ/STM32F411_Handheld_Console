@@ -1,14 +1,13 @@
 #include "./script_engine.h"
 #include "./instructions.h"
 #include "./syscalls.h"
-#include "./mem_access_def.h"
 #include <string.h>
 
 PANIC_CODE panic_code = PANIC_NONE;
 
 uint8_t ram[RAM_SIZE];
 RPN_STACK_DATA rpn_stack[RPN_STACK_SIZE];
-//uint32_t stack[STACK_SIZE] = { 0 };
+uint32_t *stack = ram;  // The stack is always at the start of ram.
 
 RAM_PTR prg_counter = 0;
 STACK_PTR stack_ptr = 0;
@@ -23,13 +22,16 @@ void vm_init()
 	prg_counter = 0;
 	stack_ptr = 0;
 	rpn_stack_ptr = 0;
+	status_flag = 0;
+	panic_code = PANIC_NONE;
 }
 
 // Switch-case is faster than function table on embedded systems.
 // https://stackoverflow.com/a/35846099
 
-//#define INST_SWITCHCASE(ins)  case enum_inst_##ins: prg_counter++; vm_inst_##ins(); break;
-#define INST_SWITCHCASE(ins)  case enum_inst_##ins: printf("%s\n", #ins); prg_counter++; vm_inst_##ins(); break;
+#define INST_SWITCHCASE(ins)  case enum_inst_##ins: prg_counter++; vm_inst_##ins(); break;
+//#define INST_SWITCHCASE(ins)  case enum_inst_##ins: prg_counter++; show_info_window("", #ins); vm_inst_##ins(); break;
+//#define INST_SWITCHCASE(ins)  case enum_inst_##ins: printf("%s\n", #ins); prg_counter++; vm_inst_##ins(); break;
 void vm_execute()    // Executes a single instruction.
 {
     switch(ram[prg_counter])
@@ -53,15 +55,27 @@ void vm_run()  // Continuously executes instructions until reaches "end_of_loop"
 	}
 }
 
-void vm_push(uint32_t data)
+void vm_push_stack(uint32_t data)
 {
-    write_uint32(data, stack_ptr * sizeof(uint32_t));
+	if(stack_ptr >= STACK_SIZE)
+	{
+		KERNEL_PANIC(PANIC_STACK_OVERFLOW);
+		return;
+	}
+	
+	stack[stack_ptr] = data;
     ++stack_ptr;
 }
 
-uint32_t vm_pop(void)
+uint32_t vm_pop_stack(void)
 {
+	if(stack_ptr == 0)
+	{
+		KERNEL_PANIC(PANIC_STACK_UNDERFLOW);
+		return (uint32_t)(-1);
+	}
+	
     --stack_ptr;
-    return ram_ptr_uint32(stack_ptr * sizeof(uint32_t));
+    return stack[stack_ptr];
 }
 

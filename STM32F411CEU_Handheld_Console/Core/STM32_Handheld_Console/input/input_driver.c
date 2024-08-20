@@ -46,6 +46,7 @@ uint32_t gpioa_moder = 0;
 void update_inputs()
 {
 	enable_input();
+	HAL_Delay(1);
 	previous_keys = current_keys;
 	current_keys = get_input_status();
 	disable_input();

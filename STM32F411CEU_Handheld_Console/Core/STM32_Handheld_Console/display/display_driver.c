@@ -42,7 +42,7 @@ const uint16_t rgb332_to_rgb565[256] = {
 };
 
 //uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
-uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH] = { 0 };
+uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 GFXfont *gfx_font = NULL;
 
 int16_t cursor_x = 0;
@@ -641,6 +641,7 @@ void printf_str(const char *text, ...)
 
 uint8_t init_display()
 {
+	memset(vram, 0, sizeof(vram));
 	tft_start_write();
 	init_ili9486l();
 	clear_display();

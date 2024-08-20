@@ -19,7 +19,7 @@ const char *system_ver = "Konsol Sistemi "SYSTEM_VER;
 //char **current_lang = strings_en;
 
 SYSTEM_SETTINGS system_settings = {
-	.current_lang = LANG_EN,
+	.current_lang = LANG_TR,
 	.screen_brightness = 255,
 	.theme_color = rgb888_to_rgb332(50, 50, 255),
 	.username = "NusretY_Official"
@@ -57,7 +57,7 @@ void game_list()
 	
 	if(!games_count)
 	{
-		
+		show_error_window(get_str(STR_GAME_CORRUPTED_TITLE), get_str(STR_GAME_CORRUPTED_MSG));
 	}
 	else
 	{
