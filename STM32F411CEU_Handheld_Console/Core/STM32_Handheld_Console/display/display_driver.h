@@ -11,7 +11,6 @@
 #define rgb888_to_rgb332(r, g, b)    ((((r) >> 5) << 5) | (((g) >> 5) << 2) | ((b) >> 6))
 
 extern const uint16_t rgb332_to_rgb565[256];
-//extern uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT];
 extern uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 extern GFXfont *gfx_font;
 
@@ -57,7 +56,7 @@ void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color);
 void fill_display(uint8_t color);
 void clear_display(void);
-void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image, uint8_t tint);
+void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image);
 
 void set_cursor(int16_t x, int16_t y);
 void set_text_size(uint8_t x, uint8_t y);

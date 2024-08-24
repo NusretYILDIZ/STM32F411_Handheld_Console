@@ -8,7 +8,8 @@
                         X(evaluate_rpn) \
                         X(call_no_arg) \
                         X(call_with_arg) \
-                        X(return) \
+                        X(return_no_val) \
+                        X(return_with_val) \
 						X(jump_if_carry) \
 						X(jump_if_zero) \
                         X(jump_if) \
@@ -36,6 +37,7 @@
 						X(get_key_down) \
 						X(get_key_up) \
 						X(get_key_held) \
+						X(get_key_held_for_time) \
 						X(sdcard_init) \
 						X(sdcard_deinit) \
 						X(file_exists) \

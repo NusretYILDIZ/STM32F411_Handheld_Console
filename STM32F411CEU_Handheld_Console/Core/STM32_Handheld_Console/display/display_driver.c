@@ -39,9 +39,10 @@ const uint16_t rgb332_to_rgb565[256] = {
     0xfa40, 0xfa4a, 0xfa55, 0xfa5f, 0xfb60, 0xfb6a, 0xfb75, 0xfb7f, 
     0xfc80, 0xfc8a, 0xfc95, 0xfc9f, 0xfda0, 0xfdaa, 0xfdb5, 0xfdbf, 
     0xfec0, 0xfeca, 0xfed5, 0xfedf, 0xffe0, 0xffea, 0xfff5, 0xfff5
+    //                                                      ^^^^^^
+    // The last value should be 0xffff instead of 0xfff5, but for some reason the breadboard circuit goes nuts.
 };
 
-//uint8_t vram[DISPLAY_WIDTH][DISPLAY_HEIGHT] = { 0 };
 uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
 GFXfont *gfx_font = NULL;
 
@@ -66,20 +67,11 @@ int8_t glyph_yo = 0;
 
 void draw_raw_pixel(int16_t x, int16_t y, uint8_t color)
 {
-	//vram[x][y] = color;
 	vram[y][x] = color;
 }
 
 void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 {
-	/* while(h)
-	{
-		vram[x][(y + h - 1)] = color;
-		--h;
-	} */
-	
-	//memset(&vram[x][y], color, h);
-	
 	while(h)
 	{
 		--h;
@@ -89,12 +81,6 @@ void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 
 void draw_raw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 {
-	/* while(w)
-	{
-		--w;
-		vram[(x + w)][y] = color;
-	} */
-	
 	memset(&vram[y][x], color, w);
 }
 
@@ -108,25 +94,6 @@ void draw_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 
 void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 {
-	/* while(h)
-	{
-		int16_t tmp_w = w;
-		
-		while(tmp_w)
-		{
-			vram[(x + tmp_w - 1)][(y + h - 1)] = color;
-			--tmp_w;
-		}
-		
-		--h;
-	} */
-	
-	/*while(w)
-	{
-		--w;
-		memset(&vram[(x + w)][y], color, h);
-	}*/
-	
 	while(h)
 	{
 		--h;
@@ -138,7 +105,6 @@ void draw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	if(x < 0 || x >= DISPLAY_WIDTH || y < 0 || y >= DISPLAY_HEIGHT) return;
 	
-	//vram[x][y] = color;
 	vram[y][x] = color;
 }
 
@@ -149,14 +115,6 @@ void draw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 	if(y < 0) { h += y;  y = 0; }
 	if(y + h > DISPLAY_HEIGHT) h = DISPLAY_HEIGHT - y;
 	if(h < 1) return;
-	
-	/* while(h)
-	{
-		vram[x][(y + h - 1)] = color;
-		--h;
-	} */
-	
-	//memset(&vram[x][y], color, h);
 	
 	while(h)
 	{
@@ -172,12 +130,6 @@ void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 	if(x < 0) { w += x;  x = 0; }
 	if(x + w > DISPLAY_WIDTH) w = DISPLAY_WIDTH - x;
 	if(w < 1) return;
-	
-	/* while(w)
-	{
-		--w;
-		vram[(x + w)][y] = color;
-	} */
 	
 	memset(&vram[y][x], color, w);
 }
@@ -203,25 +155,6 @@ void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 	if(x + w > DISPLAY_WIDTH) w = DISPLAY_WIDTH - x;
 	if(w < 1) return;
 	
-	/* while(h)
-	{
-		int16_t tmp_w = w;
-		
-		while(tmp_w)
-		{
-			vram[(x + tmp_w - 1)][(y + h - 1)] = color;
-			--tmp_w;
-		}
-		
-		--h;
-	} */
-	
-	/*while(w)
-	{
-		--w;
-		memset(&vram[(x + w)][y], color, h);
-	}*/
-	
 	while(h)
 	{
 		--h;
@@ -239,37 +172,42 @@ void clear_display()
 	memset(vram, 0, sizeof(vram));
 }
 
-void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image, uint8_t tint)
+void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image)
 {
-	int16_t tx = x, ty = y;
+	if(x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT || x + w < 0 || y + h < 0) return;
+	
+	int16_t  tx = x, ty = y;
 	uint16_t tw = w, th = h;
 	
-	if(tx >= DISPLAY_WIDTH || ty >= DISPLAY_HEIGHT) return;
+	int16_t offset_x = 0, offset_y = 0;
 	
-	if(ty < 0) { th += ty; ty = 0; }
+	if(ty < 0) 
+	{ 
+		th += ty; 
+		offset_y = -ty; 
+		ty = 0;
+	}
 	if(ty + th > DISPLAY_HEIGHT) th = DISPLAY_HEIGHT - ty;
 	if(th < 1) return;
 	
-	if(tx < 0) { tw += tx; tx = 0; }
+	if(tx < 0)
+	{
+		tw += tx;
+		offset_x = -tx;
+		tx = 0;
+	}
 	if(tx + tw > DISPLAY_WIDTH) tw = DISPLAY_WIDTH - tx;
 	if(tw < 1) return;
-	
-	/*while(tw)
-	{
-		--tw;
-		if(x < 0 || y < 0)
-			memcpy(&vram[(tx + tw)][ty], &image[(tw - x) * h + (ty - y)], th);
-		else
-			memcpy(&vram[(tx + tw)][ty], &image[tw * h], th);
-	}*/
 	
 	while(th)
 	{
 		--th;
-		if(x < 0 || y < 0)
-			memcpy(&vram[(ty + th)][tx], &image[(th - y) * w + (tx - x)], tw);
-		else
-			memcpy(&vram[(ty + th)][tx], &image[th * w], tw);
+		memcpy(&vram[ty + th][tx], &image[(th + offset_y) * w + offset_x], tw);
+		
+		//if(x < 0 || y < 0)
+		//	memcpy(&vram[ty + th][tx], &image[(th - y) * w + (tx - x)], tw);
+		//else
+		//	memcpy(&vram[ty + th][tx], &image[th * w], tw);
 	}
 }
 
@@ -357,8 +295,8 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 			*x = text_area.start_x;
 			*y += text_size_y * gfx_font->yAdvance;
 		}
-		else /*if(c != '\r')
-		{*/
+		else //if(c != '\r')
+		{
 			if((c >= gfx_font->first) && (c <= gfx_font->last))
 			{
 				c     -= gfx_font->first;
@@ -382,7 +320,7 @@ void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_
 				
 				*x += glyph->xAdvance * text_size_x;
 			}
-		//}
+		}
 	}
 	else
 	{
@@ -451,13 +389,13 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 		   (y + 8 * size_y < text_area.start_y))
 			return;
 		
-		for(int8_t i = 0; i < 5; ++i)
+		for(int i = 0; i < 5; ++i)
 		{
 			if(x + i * size_x > text_area.end_x || x + i * size_x < text_area.start_x) continue;
 			
 			uint8_t line = font[c * 5 + i];
 			
-			for(int8_t j = 0; j < 8; ++j, line >>= 1)
+			for(int j = 0; j < 8; ++j, line >>= 1)
 			{
 				if(y + j * size_y > text_area.end_y || y + j * size_y < text_area.start_y) continue;
 			
@@ -497,7 +435,8 @@ void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_c
 		glyph_h = glyph->height;
 		glyph_xo = glyph->xOffset;
 		glyph_yo = glyph->yOffset;
-		uint8_t xx, yy, bits = 0, bit = 0;
+		uint8_t bits = 0, bit = 0;
+		int xx, yy;
 		
 		for(yy = 0; yy < glyph_h; ++yy)
 		{
@@ -537,7 +476,7 @@ void print_chr(uint8_t c)
 			cursor_x = text_area.start_x;
 			cursor_y += text_size_y * 8;
 		}
-		else //if(c != '\r')
+		else if(c != '\r')
 		{
 			if(wrap_text && (cursor_x + text_size_x * 6 > text_area.end_x))
 			{
@@ -656,11 +595,10 @@ void update_display()
 	tft_start_write();
 	tft_set_write_window(0, 0, SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1);
 	
-	for(uint16_t y = 0; y < SCREEN_HEIGHT; ++y)
+	for(int y = 0; y < SCREEN_HEIGHT; ++y)
 	{
-		for(uint16_t x = 0; x < SCREEN_WIDTH / 2; ++x)
+		for(int x = 0; x < SCREEN_WIDTH / 2; ++x)
 		{
-			//tft_set_data_16(rgb332_to_rgb565[(vram[(x)][(y / 2)])]);
 			tft_set_data_16(rgb332_to_rgb565[(vram[(y / 2)][(x)])]);
 			tft_write_pulse();
 			tft_write_pulse();
@@ -684,8 +622,6 @@ SDL_Surface *display_surface = 0;
 
 uint8_t init_display()
 {
-	//assert(0 && "WIN32 support for init_display() has not been implemented yet.");
-	
 	display_window = SDL_CreateWindow("STM32F411CEU Handheld Console Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 240 * 6, 160 * 6, 0);
 	if(!display_window)
 	{
@@ -713,7 +649,6 @@ void update_display()
 	SDL_DestroyTexture(display_texture);
 	SDL_FreeSurface(display_surface);
 	
-	//display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 160, 240, 8, 160, 0b11100000, 0b00011100, 0b00000011, 0);
 	display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 240, 160, 8, 240, 0b11100000, 0b00011100, 0b00000011, 0);
 	if(!display_surface)
 	{
@@ -722,8 +657,7 @@ void update_display()
 	}
 	
 	display_texture = SDL_CreateTextureFromSurface(display_renderer, display_surface);
-	//SDL_RendererFlip flip = SDL_FLIP_VERTICAL;
-	//SDL_RenderCopyEx(display_renderer, display_texture, 0, 0, 90.0, 0, flip);
+	
 	SDL_RenderCopy(display_renderer, display_texture, 0, 0);
 	SDL_RenderPresent(display_renderer);
 }

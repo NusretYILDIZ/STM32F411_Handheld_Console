@@ -11,7 +11,7 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 {
 	switch(var_type)
 	{
-	case TYPE_NONE:
+	case TYPE_NULL:
 	case TYPE_TERMINATE:
 		break;
 	
@@ -68,6 +68,26 @@ __inline void read_memory(RAM_PTR *addr, void *dest, uint8_t var_type)
 		if(dest) *(float *)dest = 1.0f / (float)delta_time;
 		break;
 	
+	case TYPE_GET_KEY:
+		if(dest) *(uint8_t *)dest = get_key(*(uint16_t *)(&ram[*addr]));
+		break;
+	
+	case TYPE_GET_KEY_DOWN:
+		if(dest) *(uint8_t *)dest = get_key_down(*(uint16_t *)(&ram[*addr]));
+		break;
+	
+	case TYPE_GET_KEY_UP:
+		if(dest) *(uint8_t *)dest = get_key_up(*(uint16_t *)(&ram[*addr]));
+		break;
+	
+	case TYPE_GET_KEY_HELD:
+		if(dest) *(uint8_t *)dest = get_key_held(*(uint16_t *)(&ram[*addr]));
+		break;
+	
+	case TYPE_GET_KEY_HELD_FOR_TIME:
+		if(dest) *(uint8_t *)dest = get_key_held_for_time(*(uint16_t *)(&ram[*addr]));
+		break;
+	
 	default:
 		KERNEL_PANIC(PANIC_UNKNOWN_DATA_TYPE);
 		break;
@@ -81,7 +101,7 @@ __inline TYPE_FLAG read_param(void *dest)
 	
 	TYPE_FLAG type_flag = var_attr & TYPE_MASK;
 	
-	if(type_flag == TYPE_TERMINATE || type_flag == TYPE_NONE) return type_flag;
+	if(type_flag == TYPE_TERMINATE || type_flag == TYPE_NULL) return type_flag;
 	
 	if(var_attr & ADDR_IMM)
 	{
@@ -103,7 +123,7 @@ __inline TYPE_FLAG read_param(void *dest)
 		
 		read_memory(&var_addr, dest, type_flag);
 	}
-	else if(var_attr & ADDR_ARG)
+	else if(var_attr & ADDR_ARG_ABS)
 	{
 		uint8_t arg_no = ram[prg_counter];
 		prg_counter++;
@@ -112,6 +132,16 @@ __inline TYPE_FLAG read_param(void *dest)
 		// This means there is a return address on top of the stack.
 		// When searching for an argument, we need to skip that return address.
 		RAM_PTR var_addr = (RAM_PTR)stack[stack_ptr - 1 - arg_no];
+		read_memory(&var_addr, dest, type_flag);
+	}
+	else if(var_attr & ADDR_ARG_PTR)
+	{
+		uint8_t arg_no = ram[prg_counter];
+		prg_counter++;
+		
+		RAM_PTR var_addr = (RAM_PTR)stack[stack_ptr - 1 - arg_no];
+		var_addr = *(RAM_PTR *)(&ram[var_addr]);
+		
 		read_memory(&var_addr, dest, type_flag);
 	}
 	else 
@@ -144,14 +174,25 @@ __inline TYPE_FLAG read_addr(RAM_PTR *dest)
 		if(dest) *dest = *(RAM_PTR *)(&ram[prg_counter]);
 		prg_counter += sizeof(RAM_PTR);
 		
-		*dest = *(RAM_PTR *)(&ram[*dest]);
+		if(dest) *dest = *(RAM_PTR *)(&ram[*dest]);
 	}
-	else if(var_attr & ADDR_ARG)
+	else if(var_attr & ADDR_ARG_ABS)
 	{
 		uint8_t arg_no = ram[prg_counter];
 		prg_counter++;
 		
 		if(dest) *dest = (RAM_PTR)(stack[stack_ptr - 1 - arg_no]);
+	}
+	else if(var_attr & ADDR_ARG_PTR)
+	{
+		uint8_t arg_no = ram[prg_counter];
+		prg_counter++;
+		
+		if(dest)
+		{
+			*dest = (RAM_PTR)(stack[stack_ptr - 1 - arg_no]);
+			*dest = *(RAM_PTR *)(&ram[*dest]);
+		}
 	}
 	else 
 	{
@@ -161,11 +202,11 @@ __inline TYPE_FLAG read_addr(RAM_PTR *dest)
 	return type_flag;
 }
 
-__inline void copy_data(TYPE_FLAG data_type, RAM_PTR dest, MEM_BUF src)
+__inline void copy_data(TYPE_FLAG data_type, RAM_PTR dest, VAR_BUFFER src)
 {
 	switch(data_type)
 	{
-	case TYPE_NONE:
+	case TYPE_NULL:
 		break;
 		
 	case TYPE_FLOAT:
@@ -235,7 +276,7 @@ __inline void vm_inst_assign()
 	RAM_PTR dest_addr;
 	TYPE_FLAG dest_type = read_addr(&dest_addr);
 	
-	MEM_BUF data;
+	VAR_BUFFER data;
 	TYPE_FLAG data_type = read_param(&data);
 	
 	if(dest_type == data_type)
@@ -320,9 +361,9 @@ __inline void vm_inst_decrease()
 	}
 }
 
-__inline MEM_BUF convert_data_type(TYPE_FLAG dest_type, MEM_BUF src_data, TYPE_FLAG src_type)
+__inline VAR_BUFFER convert_data_type(TYPE_FLAG dest_type, VAR_BUFFER src_data, TYPE_FLAG src_type)
 {
-	MEM_BUF mem_buf;
+	VAR_BUFFER mem_buf;
 	
 	switch(dest_type)  // There it is, a horrible solution for an average problem.
 	{
@@ -1203,7 +1244,7 @@ __inline RPN_STACK_DATA solve_rpn()
 	{
 		rpn_data = read_rpn_data();
 		
-		if(rpn_data.type == RPN_TYPE_NONE) continue;
+		if(rpn_data.type == RPN_TYPE_NULL) continue;
 		if(rpn_data.type == RPN_TYPE_ERROR || rpn_data.type == RPN_TYPE_TERMINATE) break;
 		
 		if(rpn_data.type == RPN_TYPE_NUMERAL) push_rpn_stack(get_rpn_solver_data(rpn_data));
@@ -1368,43 +1409,36 @@ __inline void vm_inst_evaluate_rpn()
 	}
 }
 
-#define arg_count_pos()  (sizeof(RAM_PTR) * 8 - 4)
-
-__inline uint32_t get_func_arg()
+__inline TYPE_FLAG get_func_arg(uint32_t *arg)
 {
 	uint8_t arg_attr = ram[prg_counter];
 	prg_counter++;
 	
-	uint32_t arg;
+	TYPE_FLAG arg_type = arg_attr & TYPE_MASK;
 	
 	if(arg_attr & ADDR_IMM)
 	{
-		read_memory(&prg_counter, &arg, arg_attr & TYPE_MASK);
+		read_memory(&prg_counter, arg, arg_type);
 	}
 	else if(arg_attr & ADDR_ABS || arg_attr & ADDR_PTR)
 	{
 		RAM_PTR arg_addr = *(RAM_PTR *)(&ram[prg_counter]);
 		prg_counter += sizeof(RAM_PTR);
 		
-		read_memory(&arg_addr, &arg, arg_attr & TYPE_MASK);
+		read_memory(&arg_addr, arg, arg_type);
 	}
 	else
 	{
 		KERNEL_PANIC(PANIC_UNKNOWN_ADDR_MODE);
 	}
 	
-	return arg;
+	return arg_type;
 }
 
 __inline void vm_inst_call_no_arg()
 {
 	RAM_PTR func_addr;
 	read_addr(&func_addr);
-	
-	// 4 most significant bits will be used as argument count for that function (therefore a function can take up to 15 arguments).
-	// Since that function doesn't take any arguments, we zero out these bits so argument count becomes zero.
-	// Also size of RAM_PTR is determined according to RAM size, so we need to calculate the position of these bits.
-	func_addr &= ~(15 << arg_count_pos());
 	
 	vm_push_stack((uint32_t)(prg_counter));
 	prg_counter = func_addr;
@@ -1415,31 +1449,48 @@ __inline void vm_inst_call_with_arg()
 	RAM_PTR func_addr;
 	read_addr(&func_addr);
 	
-	unsigned int arg_count = func_addr >> arg_count_pos();
+	uint32_t arg_val;
+	TYPE_FLAG arg_type = get_func_arg(&arg_val);
 	
-	for(unsigned int i = 0; i < arg_count; i++)
+	while(arg_type != TYPE_TERMINATE)
 	{
-		vm_push_stack(get_func_arg());
+		vm_push_stack(arg_val);
+		arg_type = get_func_arg(&arg_val);
 	}
-	
-	// We also need to clear the argument count bits to get the correct jump address.
-	func_addr &= ~(15 << arg_count_pos());
 	
 	vm_push_stack((uint32_t)(prg_counter));
 	prg_counter = func_addr;
 }
 
-__inline void vm_inst_return()
+__inline void vm_inst_return_no_val()
 {
 	RAM_PTR return_addr = (RAM_PTR)vm_pop_stack();
-	unsigned int arg_count = return_addr >> arg_count_pos();
+
+	uint8_t arg_count = ram[prg_counter];
+	prg_counter++;
 	
 	for(; arg_count > 0; arg_count--)
 	{
 		(void)vm_pop_stack();  // Clear leftovers.
 	}
 	
-	return_addr &= ~(15 << arg_count_pos());
+	prg_counter = return_addr;
+}
+
+__inline void vm_inst_return_with_val()
+{
+	RAM_PTR return_addr = (RAM_PTR)vm_pop_stack();
+
+	uint8_t arg_count = ram[prg_counter];
+	prg_counter++;
+	
+	for(; arg_count > 0; arg_count--)
+	{
+		(void)vm_pop_stack();  // Clear leftovers.
+	}
+	
+	read_param(&func_return_val);
+	
 	prg_counter = return_addr;
 }
 
@@ -1638,7 +1689,7 @@ __inline void vm_inst_print_str()
 // Print a integer into VRAM.
 __inline void vm_inst_print_int()
 {
-	MEM_BUF number;
+	VAR_BUFFER number;
 	TYPE_FLAG data_type = read_param(&number);
 	
 	switch(data_type)
@@ -1716,7 +1767,7 @@ __inline void vm_inst_draw_image()
 		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
 	}
 	
-	draw_image(x, y, w, h, &ram[image], 0xff);
+	draw_image(x, y, w, h, &ram[image]);
 }
 
 // Load a script file from SD card to RAM to execute.
@@ -1864,6 +1915,29 @@ __inline void vm_inst_get_key_held()
 	}
 	
 	if(get_key_held(key))
+	{
+		status_flag |= CARRY_FLAG;
+		status_flag &= ~ZERO_FLAG;
+	}
+	else
+	{
+		status_flag &= ~CARRY_FLAG;
+		status_flag |= ZERO_FLAG;
+	}
+}
+
+// Check if a key is currently held for a while.
+__inline void vm_inst_get_key_held_for_time()
+{
+    uint16_t key;
+	
+	TYPE_FLAG data_type = read_param(&key);
+	if(data_type != TYPE_UINT16) 
+	{
+		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
+	}
+	
+	if(get_key_held_for_time(key))
 	{
 		status_flag |= CARRY_FLAG;
 		status_flag &= ~ZERO_FLAG;

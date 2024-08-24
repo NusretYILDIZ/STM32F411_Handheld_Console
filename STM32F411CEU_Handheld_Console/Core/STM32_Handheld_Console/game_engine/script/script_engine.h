@@ -27,14 +27,6 @@ typedef uint32_t uint32;
 	typedef uint8_t STACK_PTR;
 #endif
 
-extern uint8_t ram[RAM_SIZE];
-extern uint32_t *stack;
-
-extern RAM_PTR prg_counter;
-extern STACK_PTR stack_ptr;
-
-extern uint8_t status_flag;
-
 typedef union
 {
 	float flt;
@@ -46,7 +38,16 @@ typedef union
 	uint8_t uint8;
 	RAM_PTR ram_ptr;
 	STACK_PTR stack_ptr;
-} MEM_BUF;
+} VAR_BUFFER;
+
+extern uint8_t ram[RAM_SIZE];
+extern uint32_t *stack;
+
+extern RAM_PTR prg_counter;
+extern STACK_PTR stack_ptr;
+
+extern uint8_t status_flag;
+extern VAR_BUFFER func_return_val;
 
 #define CARRY_FLAG         0x01
 #define ZERO_FLAG          0x02
@@ -61,7 +62,7 @@ typedef union
 
 typedef enum
 {
-	TYPE_NONE,
+	TYPE_NULL,
 	TYPE_TERMINATE,
 	TYPE_FLOAT,  // Uses big-endian format
 	TYPE_INT32,
@@ -74,12 +75,18 @@ typedef enum
 	TYPE_STRING,
 	TYPE_STACK_PTR,
 	TYPE_DELTA_TIME,
+	TYPE_GET_KEY,
+	TYPE_GET_KEY_DOWN,
+	TYPE_GET_KEY_UP,
+	TYPE_GET_KEY_HELD,
+	TYPE_GET_KEY_HELD_FOR_TIME,
 } TYPE_FLAG;
 
 #define ADDR_IMM         (1 << 5)
 #define ADDR_ABS         (2 << 5)
 #define ADDR_PTR         (3 << 5)
-#define ADDR_ARG         (4 << 5)
+#define ADDR_ARG_ABS     (4 << 5)
+#define ADDR_ARG_PTR     (5 << 5)
 
 #define PANIC_CODES(X)  X(NONE) \
                         X(UNKNOWN_DATA_TYPE) \
@@ -123,7 +130,7 @@ extern PANIC_CODE panic_code;
 
 typedef enum
 {
-	RPN_TYPE_NONE,
+	RPN_TYPE_NULL,
 	RPN_TYPE_TERMINATE,
 	RPN_TYPE_ERROR,
 	RPN_TYPE_NUMERAL,
@@ -158,7 +165,7 @@ typedef struct
 {
 	uint8_t type;
 	uint8_t attr;
-	MEM_BUF value;
+	VAR_BUFFER value;
 } RPN_DATA;
 
 

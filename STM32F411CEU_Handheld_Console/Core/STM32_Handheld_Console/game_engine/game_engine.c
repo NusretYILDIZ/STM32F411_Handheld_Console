@@ -10,7 +10,7 @@ const char *panic_code_names[] = {
 
 ENGINE_SETTINGS engine_settings;
 uint32_t elapsed_time;
-uint8_t delta_time;
+uint32_t delta_time;
 
 void kernel_panic_screen()
 {
@@ -34,13 +34,15 @@ void wait_frame_time()
 {
 	while(get_tick() - elapsed_time < 33);
 	
-	uint32_t frame_time = get_tick() - elapsed_time;
-	if(frame_time > 255)
-	{
-		KERNEL_PANIC(PANIC_DELTA_TIME_TOO_LONG);
-	}
+	//uint32_t frame_time = get_tick() - elapsed_time;
+	//if(frame_time > 255)
+	//{
+	//	KERNEL_PANIC(PANIC_DELTA_TIME_TOO_LONG);
+	//}
+	//
+	//delta_time = (uint8_t)frame_time;
 	
-	delta_time = (uint8_t)frame_time;
+	delta_time = get_tick() - elapsed_time;
 	elapsed_time = get_tick();
 }
 

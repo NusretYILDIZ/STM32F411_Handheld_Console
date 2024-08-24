@@ -14,6 +14,7 @@ STACK_PTR stack_ptr = 0;
 uint8_t rpn_stack_ptr = 0;
 
 uint8_t status_flag = 0;
+VAR_BUFFER func_return_val = { 0 };
 
 void vm_init()
 {
@@ -36,7 +37,11 @@ void vm_execute()    // Executes a single instruction.
 {
     switch(ram[prg_counter])
     {
-       INST_TABLE(INST_SWITCHCASE)
+	default:
+		KERNEL_PANIC(PANIC_INVALID_INSTRUCTION);
+		break;
+		
+    INST_TABLE(INST_SWITCHCASE)
     }
 }
 

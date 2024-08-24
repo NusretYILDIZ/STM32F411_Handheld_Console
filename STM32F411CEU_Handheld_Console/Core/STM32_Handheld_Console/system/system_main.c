@@ -98,7 +98,7 @@ void game_list()
 
 void show_boot_screen()
 {
-	draw_image(69, 29, 100, 100, boot_image, 0);
+	draw_image(69, 29, 100, 100, boot_image);
 	update_display();
 	system_sleep(2000);
 	

@@ -1,9 +1,50 @@
 #include "./input_driver.h"
 
+const uint16_t keys[15] = {
+	GAMEPAD_DPAD_UP,
+	GAMEPAD_DPAD_RIGHT,
+	GAMEPAD_DPAD_DOWN,
+	GAMEPAD_DPAD_LEFT,
+	GAMEPAD_X,
+	GAMEPAD_Y,
+	GAMEPAD_A,
+	GAMEPAD_B,
+	GAMEPAD_SELECT,
+	GAMEPAD_HOME,
+	GAMEPAD_START,
+	GAMEPAD_L1,
+	GAMEPAD_R1,
+	GAMEPAD_L2,
+	GAMEPAD_R2,
+};
+
 uint16_t current_keys = 0;
 uint16_t previous_keys = 0;
 
+uint16_t key_held_frames[15];
+uint16_t first_hold_time = 30;
+uint16_t hold_interval = 1;
+
 //Joystick joysticks[2] = { 0 };
+
+void update_status()
+{
+	//printf("\nKey held timers\n");
+	
+	for(int key_index = 0; key_index < 15; key_index++)
+	{
+		//if(key == 0x0800) continue;  // Unused bit, skip.
+		
+		if(get_key_held(keys[key_index]))
+		{
+			key_held_frames[key_index]++;
+		}
+		else if(get_key_up(keys[key_index]))
+		{
+			key_held_frames[key_index] = 0;
+		}
+	}
+}
 
 uint8_t get_key(uint16_t key_code)
 {
@@ -23,6 +64,25 @@ uint8_t get_key_up(uint16_t key_code)
 uint8_t get_key_held(uint16_t key_code)
 {
 	return ((previous_keys & key_code) && (current_keys & key_code));
+}
+
+uint8_t get_key_held_for_time(uint16_t key_code)
+{
+	uint8_t result = 0;
+	
+	for(int key_index = 0; key_index < 15; key_index++)
+	{
+		if(keys[key_index] & key_code)
+		{
+			result &= (key_held_frames[key_index] == 1) || (key_held_frames[key_index] >= first_hold_time);
+			if(key_held_frames[key_index] >= first_hold_time) key_held_frames[key_index] = first_hold_time - hold_interval;
+			
+			printf("%d, %d\n", key_index, result);
+		}
+	}
+	printf("\n");
+	
+	return result;
 }
 
 /*
@@ -50,6 +110,8 @@ void update_inputs()
 	previous_keys = current_keys;
 	current_keys = get_input_status();
 	disable_input();
+	
+	update_status();
 }
 
 
@@ -58,10 +120,10 @@ void update_inputs()
 #include <stdlib.h>
 #include "./win32/win32_sdl2_include.h"
 
-SDL_Event input_event;
 
 void update_inputs()
 {
+	SDL_Event input_event;
 	previous_keys = current_keys;
 	uint8_t first_handle = 1;
 	
@@ -152,6 +214,8 @@ void update_inputs()
 			break;
 		}
 	}
+	
+	update_status();
 }
 
 #elif defined(__ANDROID__)
