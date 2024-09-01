@@ -2,7 +2,7 @@
 #define __system_menu_h
 
 #include "./locals/strings.h"
-#include "../display/YILDIZsoft_5x7.h"
+#include "../display/fonts/fonts.h"
 
 void change_lang(void);
 void game_list(void);
@@ -31,7 +31,7 @@ const MENU_DATA system_menu_data = {
 	.selected_bg_color = rgb888_to_rgb332(21, 72, 92),
 	
 	.attrib = CENTER_ALIGN | SYSTEM_MENU,
-	.font = &YILDIZsoft_5x7,
+	.font = &Minecraft_5x7,
 	.capacity = 5,
 	//.selection = 0,
 	//.item_offset = 0,

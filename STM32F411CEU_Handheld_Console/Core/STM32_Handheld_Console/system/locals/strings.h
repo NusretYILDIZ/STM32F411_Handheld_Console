@@ -18,6 +18,10 @@ typedef enum
 	STR_GAME_CORRUPTED_MSG,
 	STR_KERNEL_PANIC_MSG,
 	
+	// Keyboard
+	STR_ENTER_LETTER,
+	STR_DONE,
+	
 	// System Menu
 	STR_GAMES,
 	STR_EDITOR,

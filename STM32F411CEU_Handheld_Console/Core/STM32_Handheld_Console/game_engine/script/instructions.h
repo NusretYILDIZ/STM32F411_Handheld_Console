@@ -26,7 +26,7 @@
                         X(print_str) \
                         X(print_int) \
                         X(printf_str) \
-                        X(draw_image) \
+                        X(draw_bitmap) \
 						X(fill_display) \
                         X(update_display) \
                         X(load_prg) \

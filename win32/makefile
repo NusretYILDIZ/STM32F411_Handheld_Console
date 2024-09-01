@@ -12,7 +12,7 @@ EXE = ./Release/STM32F411CEU_Handheld_Console_Emulator.exe
 
 all: $(EXE) clean
 
-$(EXE): main.o display_driver.o glcdfont.o file_system.o game_engine.o instructions.o script_engine.o syscalls.o editor.o compiler.o input_driver.o menu.o popup.o timer.o system_main.o strings.o
+$(EXE): main.o display_driver.o glcdfont.o file_system.o game_engine.o instructions.o script_engine.o syscalls.o editor.o compiler.o graphics_2d.o keyboard.o input_driver.o menu.o popup.o timer.o system_main.o strings.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 main.o: main.c
@@ -43,6 +43,12 @@ editor.o: 				$(STM_INCLUDE)game_engine/editor/editor.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 compiler.o: 			$(STM_INCLUDE)game_engine/editor/compiler/compiler.c
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+graphics_2d.o: 			$(STM_INCLUDE)game_engine/graphics/graphics_2d.c
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+keyboard.o: 			$(STM_INCLUDE)game_engine/utils/keyboard.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 input_driver.o: 		$(STM_INCLUDE)input/input_driver.c

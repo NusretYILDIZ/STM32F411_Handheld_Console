@@ -11,6 +11,10 @@ const char *strings_en[] = {
 	"The game you want to play cannot be started.\n\nMake sure that the game is installed properly.",
 	"Software has been closed because an\nerror occured.\n\nError code: ",
 	
+	// Keyboard
+	"Enter letter",
+	"Done",
+	
 	// System Menu
 	"Games",
 	"Editor",
@@ -39,6 +43,10 @@ const char *strings_tr[] = {
 	"Bozuk Oyun",
 	"Oynamak istedi"STR_TR_g"iniz oyun ba"STR_TR_s"lat"STR_TR_i"lam"STR_TR_i"yor.\n\nOyunu do"STR_TR_g"ru bi"STR_TR_c"imde kurdu"STR_TR_g"unuzdan emin olun.",
 	"Yaz"STR_TR_i"l"STR_TR_i"m kapat"STR_TR_i"ld"STR_TR_i" "STR_TR_c STR_TR_u"nk"STR_TR_u" bir hata meydana\ngeldi.\n\nHata kodu: ",
+	
+	// Keyboard
+	"Harf gir",
+	"Tamamla",
 	
 	// System Menu
 	"Oyunlar",

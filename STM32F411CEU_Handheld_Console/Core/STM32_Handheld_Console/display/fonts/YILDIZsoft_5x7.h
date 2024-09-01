@@ -190,6 +190,6 @@ const GFXglyph YILDIZsoft_5x7_Glyphs[] PROGMEM = {
   {   681,  11,   9,  13,    0,  -10 }    // 0x9A 'non-printable'
 };
 
-const GFXfont YILDIZsoft_5x7 PROGMEM = {(uint8_t *) YILDIZsoft_5x7_Bitmaps,      (GFXglyph *)YILDIZsoft_5x7_Glyphs, 0x20, 0x9A,      11};
+const GFXfont YILDIZsoft_5x7 PROGMEM = {(uint8_t *) YILDIZsoft_5x7_Bitmaps, (GFXglyph *)YILDIZsoft_5x7_Glyphs, 0x20, 0x9A, 11};
 
 #endif //__yildizsoft_5x7_h

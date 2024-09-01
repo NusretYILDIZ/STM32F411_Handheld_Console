@@ -11,6 +11,10 @@
 
 #include "./units/coordinate.h"
 
+#include "./utils/keyboard.h"
+
+#include "./graphics/graphics_2d.h"
+
 #define NAMEOF(X) #X
 #define DATA_TYPE_INIT(X) { #X, sizeof(X) }
 

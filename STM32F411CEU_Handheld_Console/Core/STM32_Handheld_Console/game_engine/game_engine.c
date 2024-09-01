@@ -4,6 +4,8 @@
 #include "../system/locals/strings.h"
 #include "../system/timer.h"
 
+#define FRAME_TIME  33
+
 const char *panic_code_names[] = {
 	PANIC_CODES(PANIC_NAMES)
 };
@@ -32,15 +34,8 @@ void kernel_panic_screen()
 
 void wait_frame_time()
 {
-	while(get_tick() - elapsed_time < 33);
-	
-	//uint32_t frame_time = get_tick() - elapsed_time;
-	//if(frame_time > 255)
-	//{
-	//	KERNEL_PANIC(PANIC_DELTA_TIME_TOO_LONG);
-	//}
-	//
-	//delta_time = (uint8_t)frame_time;
+	int32_t sleep_time = FRAME_TIME - get_tick() + elapsed_time;
+	if(sleep_time > 0) system_sleep(sleep_time);
 	
 	delta_time = get_tick() - elapsed_time;
 	elapsed_time = get_tick();
@@ -53,7 +48,7 @@ void load_game(void *game)
 
 uint8_t game_engine_loop(void)
 {
-	delta_time = 33;
+	delta_time = FRAME_TIME;
 	elapsed_time = get_tick();
 	
 	while(!(status_flag & EXIT_GAME_FLAG))

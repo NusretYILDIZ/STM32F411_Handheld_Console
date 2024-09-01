@@ -19,6 +19,11 @@
 #define GAMEPAD_L2          0x4000
 #define GAMEPAD_R2          0x8000
 
+#define AXIS_LEFT_X         0
+#define AXIS_LEFT_Y         1
+#define AXIS_RIGHT_X        2
+#define AXIS_RIGHT_Y        3
+
 extern const uint16_t keys[15];
 
 //#define JOYSTICK_LEFT     0
@@ -26,6 +31,7 @@ extern const uint16_t keys[15];
 
 extern uint16_t current_keys;
 extern uint16_t previous_keys;
+extern int8_t axises[4];
 
 extern uint16_t key_held_frames[15];
 extern uint16_t first_hold_time;
@@ -39,6 +45,7 @@ extern uint16_t hold_interval;
 
 extern Joystick joysticks[2];*/
 
+void init_inputs(void);
 void update_inputs(void);
 void update_status(void);
 

@@ -4,15 +4,16 @@
 #include <stdint.h>
 #include "./locals/strings.h"
 
-typedef struct s_SYSTEM_SETTINGS
+typedef struct
 {
 	LANG current_lang;
 	uint8_t screen_brightness;
-	uint8_t theme_color;
+	uint8_t theme_color_primary;
+	uint8_t theme_color_secondary;
 	char username[32];
 } SYSTEM_SETTINGS;
 
-typedef struct s_GAME_MANIFEST
+typedef struct
 {
 	char name[64];
 	uint8_t version;

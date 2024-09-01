@@ -172,7 +172,7 @@ void clear_display()
 	memset(vram, 0, sizeof(vram));
 }
 
-void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image)
+void draw_bitmap(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *image)
 {
 	if(x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT || x + w < 0 || y + h < 0) return;
 	

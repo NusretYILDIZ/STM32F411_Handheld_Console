@@ -1731,7 +1731,7 @@ __inline void vm_inst_printf_str()
 }
 
 // Copy a pixel sequence into specified VRAM coordinates.
-__inline void vm_inst_draw_image()
+__inline void vm_inst_draw_bitmap()
 {
     int16_t x, y;
 	uint16_t w, h;
@@ -1767,7 +1767,7 @@ __inline void vm_inst_draw_image()
 		KERNEL_PANIC(PANIC_DATA_TYPE_DISCREPANCY);
 	}
 	
-	draw_image(x, y, w, h, &ram[image]);
+	draw_bitmap(x, y, w, h, &ram[image]);
 }
 
 // Load a script file from SD card to RAM to execute.

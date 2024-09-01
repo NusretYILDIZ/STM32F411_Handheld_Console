@@ -6,7 +6,7 @@
 #include "./internal_programs.h"
 
 #include "./locals/locals.h"
-#include "../display/YILDIZsoft_5x7.h"
+#include "../display/fonts/fonts.h"
 #include "../file_system/file_system.h"
 
 #include <string.h>
@@ -21,7 +21,8 @@ const char *system_ver = "Konsol Sistemi "SYSTEM_VER;
 SYSTEM_SETTINGS system_settings = {
 	.current_lang = LANG_TR,
 	.screen_brightness = 255,
-	.theme_color = rgb888_to_rgb332(50, 50, 255),
+	.theme_color_primary = rgb888_to_rgb332(50, 50, 255),
+	.theme_color_secondary = 0xff,
 	.username = "NusretY_Official"
 };
 
@@ -46,7 +47,8 @@ void change_lang(void)
 
 void game_list()
 {
-	fill_display(system_settings.theme_color);
+	fill_display(system_settings.theme_color_primary);
+	set_text_color(system_settings.theme_color_secondary, system_settings.theme_color_secondary);
 	set_cursor(5, 10);
 	print_str(get_str(STR_GAME_LIST_TITLE));
 	set_cursor(5, 50);
@@ -68,7 +70,7 @@ void game_list()
 		game_list_menu_data->w = 220;
 		game_list_menu_data->visible_rows = 8;
 		game_list_menu_data->non_selected_text_color = rgb888_to_rgb332(23, 139, 180);
-		game_list_menu_data->non_selected_bg_color = system_settings.theme_color;
+		game_list_menu_data->non_selected_bg_color = system_settings.theme_color_primary;
 		game_list_menu_data->selected_text_color = rgb888_to_rgb332(105, 253, 255);
 		game_list_menu_data->selected_bg_color = rgb888_to_rgb332(21, 72, 92);
 		game_list_menu_data->attrib = 0;
@@ -81,7 +83,7 @@ void game_list()
 		
 		for(;;)
 		{
-			fill_display(system_settings.theme_color);
+			fill_display(system_settings.theme_color_primary);
 			menu_render(game_list_menu);
 			update_display();
 			
@@ -98,7 +100,7 @@ void game_list()
 
 void show_boot_screen()
 {
-	draw_image(69, 29, 100, 100, boot_image);
+	draw_bitmap(69, 29, 100, 100, boot_image);
 	update_display();
 	system_sleep(2000);
 	
@@ -116,9 +118,9 @@ void fs_init_error()
 	int16_t tx, ty;
 	uint16_t tw, th;
 	
-	fill_display(system_settings.theme_color);
+	fill_display(system_settings.theme_color_primary);
 	set_text_area(9, 9 + get_font_height(), 230, 150);
-	set_text_color(rgb888_to_rgb332(255, 255, 255), 0xff);
+	set_text_color(system_settings.theme_color_secondary, system_settings.theme_color_secondary);
 	
 	text_bounds(get_str(STR_INIT_FS_ERROR), 9, 9, &tx, &ty, &tw, &th);
 	set_cursor((DISPLAY_WIDTH - tw) / 2, (DISPLAY_HEIGHT - th) / 2);
@@ -139,9 +141,12 @@ uint8_t system_main()
 	init_display();
 	clear_display();
 	update_display();
-	set_text_color(rgb888_to_rgb332(255, 255, 255), 0xff);
+	init_inputs();
 	
-	set_font_helper(&YILDIZsoft_5x7);
+	set_text_color(system_settings.theme_color_secondary, system_settings.theme_color_secondary);
+	
+	//set_font_helper(&YILDIZsoft_5x7);
+	set_font_helper(&Minecraft_5x7);
 	set_text_wrap(1);
 	
 	show_boot_screen();
@@ -160,6 +165,8 @@ uint8_t system_main()
 	prg_counter = sizeof(ram) - sizeof(test_code);
 	memcpy(&ram[prg_counter], test_code, sizeof(test_code));
 	engine_settings.game_code_addr = prg_counter;
+	
+	show_input_screen(0, 0);
 	
 	game_engine_loop();
 	
@@ -182,7 +189,7 @@ uint8_t system_main()
 	
 	for(;;)
 	{
-		fill_display(system_settings.theme_color);
+		fill_display(system_settings.theme_color_primary);
 		menu_render(system_menu);
 		update_display();
 		
