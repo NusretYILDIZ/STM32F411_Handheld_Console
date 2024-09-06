@@ -2,6 +2,7 @@
 #include "./script_engine.h"
 #include "../game_engine.h"
 #include "../../input/input_driver.h"
+#include "../../system/timer.h"
 #include <math.h>
 #include <string.h>
 

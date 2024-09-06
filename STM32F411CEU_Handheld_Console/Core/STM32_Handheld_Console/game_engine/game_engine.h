@@ -70,10 +70,6 @@ typedef struct s_ENGINE_SETTINGS
 
 extern ENGINE_SETTINGS engine_settings;
 
-extern uint32_t elapsed_time;
-extern uint32_t delta_time;
-
-void wait_frame_time(void);
 void load_game(void *game);
 uint8_t game_engine_loop(void);
 

@@ -148,6 +148,7 @@ uint8_t system_main()
 	//set_font_helper(&YILDIZsoft_5x7);
 	set_font_helper(&Minecraft_5x7);
 	set_text_wrap(1);
+	set_text_area(0, 0, 239, 159);
 	
 	show_boot_screen();
 	
@@ -166,7 +167,7 @@ uint8_t system_main()
 	memcpy(&ram[prg_counter], test_code, sizeof(test_code));
 	engine_settings.game_code_addr = prg_counter;
 	
-	show_input_screen(0, 0);
+	show_input_screen(0, 0, "Keyboard Test");
 	
 	game_engine_loop();
 	

@@ -5,6 +5,7 @@
 #include "../../display/display_driver.h"
 #include "../../input/input_driver.h"
 #include "../../system/settings.h"
+#include "../../system/timer.h"
 
 /**
  *    Keyboard Layout
@@ -17,16 +18,44 @@
  *    Row 3  ^ Z X C V B N M , . - enter
  *    Row 4  ^ #!& ! [Space] ? bck enter
  */
+
+typedef enum
+{
+	KEY_TYPE_LETTER,
+	KEY_TYPE_CURSOR_LEFT,
+	KEY_TYPE_CURSOR_RIGHT,
+	KEY_TYPE_UPPERCASE,
+	KEY_TYPE_SYMBOLS,
+	KEY_TYPE_SPACE,
+	KEY_TYPE_BACKSPACE,
+	KEY_TYPE_ENTER,
+} KB_KEY_TYPE;
+
+const uint8_t kb_layout[5][12] = {
+	{ KEY_TYPE_CURSOR_LEFT, KEY_TYPE_LETTER , KEY_TYPE_LETTER , KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER   , KEY_TYPE_LETTER   , KEY_TYPE_CURSOR_RIGHT },
+	{ KEY_TYPE_CURSOR_LEFT, KEY_TYPE_LETTER , KEY_TYPE_LETTER , KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER   , KEY_TYPE_LETTER   , KEY_TYPE_CURSOR_RIGHT },
+	{ KEY_TYPE_CURSOR_LEFT, KEY_TYPE_LETTER , KEY_TYPE_LETTER , KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER   , KEY_TYPE_LETTER   , KEY_TYPE_CURSOR_RIGHT },
+	{ KEY_TYPE_UPPERCASE  , KEY_TYPE_LETTER , KEY_TYPE_LETTER , KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER, KEY_TYPE_LETTER   , KEY_TYPE_LETTER   , KEY_TYPE_ENTER        },
+	{ KEY_TYPE_UPPERCASE  , KEY_TYPE_SYMBOLS, KEY_TYPE_SYMBOLS, KEY_TYPE_SPACE , KEY_TYPE_SPACE , KEY_TYPE_SPACE , KEY_TYPE_SPACE , KEY_TYPE_SPACE , KEY_TYPE_SPACE , KEY_TYPE_BACKSPACE, KEY_TYPE_BACKSPACE, KEY_TYPE_ENTER        },
+};
  
-const uint8_t kb_layout[4][10] = {
-	{ '1', '2', '3', '4', '5', '6', '7', '8', '9', '0' },
-	{ 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p' },
+const int8_t kb_layout_lowercase[4][10] = {
+	{ '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'  },
+	{ 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'  },
 	{ 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '\'' },
-	{ 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-' },
+	{ 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '-'  },
+};
+ 
+const int8_t kb_layout_uppercase[4][10] = {
+	{ '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'  },
+	{ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'  },
+	{ 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '"'  },
+	{ 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ';', ':', '_'  },
 };
 
 uint8_t selected_row = 2;
 uint8_t selected_col = 5;
+uint8_t kb_flags = 0;
 
 void go_left_on_keyboard()
 {
@@ -37,8 +66,8 @@ void go_left_on_keyboard()
 	{
 		if(selected_col == 1 || selected_col == 2)  // Symbols key
 			selected_col = 0;
-		else if(selected_col >= 4 && selected_col <= 7)  // Space key
-			selected_col = 3;
+		else if(selected_col >= 3 && selected_col <= 8)  // Space key
+			selected_col = 2;
 		else if(selected_col == 9 || selected_col == 10)  // Backspace key
 			selected_col = 8;
 		else
@@ -55,8 +84,8 @@ void go_right_on_keyboard()
 	{
 		if(selected_col == 1 || selected_col == 2)  // Symbols key
 			selected_col = 3;
-		else if(selected_col >= 4 && selected_col <= 7)  // Space key
-			selected_col = 8;
+		else if(selected_col >= 3 && selected_col <= 8)  // Space key
+			selected_col = 9;
 		else if(selected_col == 9 || selected_col == 10)  // Backspace key
 			selected_col = 11;
 		else
@@ -83,6 +112,13 @@ void go_down_on_keyboard()
 	else if(selected_row >= 0 || selected_row <= 2)  // Move cursor to left & Move cursor to right keys
 		selected_row = 3;
 }
+
+void render_input_box(char *title)
+{
+	set_text_color(system_settings.theme_color_secondary, system_settings.theme_color_secondary);
+	draw_text(120, 5, TEXT_H_ALIGN_CENTER | TEXT_V_ALIGN_CENTER, title);
+}
+
 
 #define set_key_color(cond)  do { \
                                  if(cond) { \
@@ -136,26 +172,11 @@ void render_keyboard()
 	set_cursor(44, 146);
 	print_chr(CHR_GP_R2);
 	
-	// Render exclamation mark key
-	set_key_color(selected_row == 4 && selected_col == 3);
-	key_img.image = (RAM_PTR)letter_keys;
-	draw_image_from_flash(60, 134, 19, 13, key_img);
-	set_cursor(69, 146);
-	print_chr('!');
-	
 	// Render space key
-	set_key_color(selected_row == 4 && selected_col >= 4 && selected_col <= 7);
+	set_key_color(selected_row == 4 && selected_col >= 3 && selected_col <= 8);
 	key_img.image = (RAM_PTR)space_key;
-	draw_image_from_flash(80, 134, 79, 13, key_img);
-	set_cursor(98, 146);
-	print_str("Space "STR_GP_X);
-	
-	// Render question mark key
-	set_key_color(selected_row == 4 && selected_col == 8);
-	key_img.image = (RAM_PTR)letter_keys;
-	draw_image_from_flash(160, 134, 19, 13, key_img);
-	set_cursor(167, 146);
-	print_chr('?');
+	draw_image_from_flash(60, 134, 119, 13, key_img);
+	draw_formatted_text(119, 135, TEXT_H_ALIGN_CENTER | TEXT_V_ALIGN_CENTER, "%s %c", get_str(STR_SPACE), CHR_GP_X);
 	
 	// Render backspace key
 	set_key_color(selected_row == 4 && selected_col >= 9 && selected_col <= 10);
@@ -188,27 +209,33 @@ void render_keyboard()
 		{
 			set_key_color(selected_row == r && selected_col == (c + 1));
 			draw_image_from_flash(20 + c*20, 78 + r*14, 19, 13, key_img);
-			set_cursor(27 + c*20, 90 + r*14);
-			print_chr(kb_layout[r][c]);
+			
+			draw_char(29 + c*20, 79 + r*14, TEXT_H_ALIGN_CENTER | TEXT_V_ALIGN_CENTER, (kb_flags & KB_UPPERCASE) ? kb_layout_uppercase[r][c] : kb_layout_lowercase[r][c]);
 		}
 	}
 }
 
 #undef set_key_color
 
-void show_input_screen(RAM_PTR dest, INPUT_LEN max_len)
+void show_input_screen(RAM_PTR dest, INPUT_LEN max_len, char *title)
 {
 	for(;;)
 	{
+		render_input_box(title);
 		render_keyboard();
 		update_display();
 		
 		update_inputs();
 		
 		if(get_key_down(GAMEPAD_START)) return;
-		if(get_key_down(GAMEPAD_DPAD_UP)) go_up_on_keyboard();
-		if(get_key_down(GAMEPAD_DPAD_RIGHT)) go_right_on_keyboard();
-		if(get_key_down(GAMEPAD_DPAD_DOWN)) go_down_on_keyboard();
-		if(get_key_down(GAMEPAD_DPAD_LEFT)) go_left_on_keyboard();
+		
+		if(get_key_down(GAMEPAD_DPAD_UP   ) || get_key_held_for_time(GAMEPAD_DPAD_UP   )) go_up_on_keyboard();
+		if(get_key_down(GAMEPAD_DPAD_RIGHT) || get_key_held_for_time(GAMEPAD_DPAD_RIGHT)) go_right_on_keyboard();
+		if(get_key_down(GAMEPAD_DPAD_DOWN ) || get_key_held_for_time(GAMEPAD_DPAD_DOWN )) go_down_on_keyboard();
+		if(get_key_down(GAMEPAD_DPAD_LEFT ) || get_key_held_for_time(GAMEPAD_DPAD_LEFT )) go_left_on_keyboard();
+		
+		if(get_key_down(GAMEPAD_L2)) kb_flags ^= KB_UPPERCASE;
+		
+		wait_frame_time();
 	}
 }

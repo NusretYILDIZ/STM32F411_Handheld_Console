@@ -38,22 +38,6 @@ void draw_image_from_flash_helper_4_colors(int16_t x, int16_t y, uint16_t w, uin
 		}
 		if(w & 3) bits = 0;
 	}
-	
-	/*for(int row = 0; row < h; row++)
-	{
-		for(int col = 0; col < w; col++)
-		{
-			uint8_t img_byte = image[row * w / 4 + col / 4];
-			uint8_t pixel = 0;
-			
-			for(int k = 3; k >= 0; k--)
-			{
-				draw_pixel(x + col, y + row, color[pixel & 0x3]);
-				pixel = img_byte >> 2;
-				col++;
-			}
-		}
-	}*/
 }
 
 void draw_image_from_flash_helper_16_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t *color, uint8_t *image)
@@ -73,22 +57,6 @@ void draw_image_from_flash_helper_16_colors(int16_t x, int16_t y, uint16_t w, ui
 		}
 		if(w & 1) bits = 0;
 	}
-	
-	/*for(int row = 0; row < h; row++)
-	{
-		for(int col = 0; col < w; col++)
-		{
-			uint8_t img_byte = image[row * w / 2 + col / 2];
-			uint8_t pixel = 0;
-			
-			for(int k = 1; k >= 0; k--)
-			{
-				draw_pixel(x + col, y + row, color[pixel & 0xf]);
-				pixel = img_byte >> 4;
-				col++;
-			}
-		}
-	}*/
 }
 
 void draw_image_helper_2_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, IMAGE image)
@@ -108,22 +76,6 @@ void draw_image_helper_2_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, IM
 		}
 		if(w & 7) bits = 0;
 	}
-	
-	/*for(int row = 0; row < h; row++)
-	{
-		for(int col = 0; col < w; col++)
-		{
-			uint8_t img_byte = ram[image.image + row * w / 8 + col / 8];
-			uint8_t pixel = 0;
-			
-			for(int k = 7; k >= 0; k--)
-			{
-				pixel = img_byte >> k;
-				draw_pixel(x + col, y + row, ram[image.colors + (pixel & 0x1)]);
-				col++;
-			}
-		}
-	}*/
 }
 
 void draw_image_helper_4_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, IMAGE image)
@@ -143,22 +95,6 @@ void draw_image_helper_4_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, IM
 		}
 		if(w & 3) bits = 0;
 	}
-	
-	/*for(int row = 0; row < h; row++)
-	{
-		for(int col = 0; col < w; col++)
-		{
-			uint8_t img_byte = ram[image.image + row * w / 4 + col / 4];
-			uint8_t pixel = 0;
-			
-			for(int k = 3; k >= 0; k--)
-			{
-				pixel = img_byte >> (k * 2);
-				draw_pixel(x + col, y + row, ram[image.colors + (pixel & 0x3)]);
-				col++;
-			}
-		}
-	}*/
 }
 
 void draw_image_helper_16_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, IMAGE image)
@@ -178,22 +114,6 @@ void draw_image_helper_16_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, I
 		}
 		if(w & 1) bits = 0;
 	}
-	
-	/*for(int row = 0; row < h; row++)
-	{
-		for(int col = 0; col < w; col++)
-		{
-			uint8_t img_byte = ram[image.image + row * w / 2 + col / 2];
-			uint8_t pixel = 0;
-			
-			for(int k = 1; k >= 0; k--)
-			{
-				pixel = img_byte >> (k * 4);
-				draw_pixel(x + col, y + row, ram[image.colors + (pixel & 0xf)]);
-				col++;
-			}
-		}
-	}*/
 }
 
 void draw_image(int16_t x, int16_t y, uint16_t w, uint16_t h, IMAGE image)
@@ -238,4 +158,74 @@ void draw_image_from_flash(int16_t x, int16_t y, uint16_t w, uint16_t h, IMAGE i
 		draw_image_from_flash_helper_16_colors(x, y, w, h, (uint8_t *)(image.colors), (uint8_t *)(image.image));
 		break;
 	}
+}
+
+void draw_text(int16_t x, int16_t y, uint8_t text_flags, char *text)
+{
+	uint8_t text_h_align = get_text_h_align(text_flags);
+	uint8_t text_v_align = get_text_v_align(text_flags);
+	
+	int16_t text_x, text_y;
+	uint16_t text_w, text_h;
+	
+	text_bounds(text, 0, 0, &text_x, &text_y, &text_w, &text_h);
+	
+	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
+	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	
+	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + text_h;
+	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + text_h / 2;
+	
+	set_cursor(text_x, text_y);
+	print_str(text);
+}
+
+void draw_formatted_text(int16_t x, int16_t y, uint8_t text_flags, char *text, ...)
+{
+	uint8_t text_h_align = get_text_h_align(text_flags);
+	uint8_t text_v_align = get_text_v_align(text_flags);
+	
+	int16_t text_x, text_y;
+	uint16_t text_w, text_h;
+	
+	static char str[128] = { '\0' };
+	va_list args;
+	
+	va_start(args, text);
+	vsnprintf(str, sizeof(str), text, args);
+	va_end(args);
+	
+	text_bounds(str, 0, 0, &text_x, &text_y, &text_w, &text_h);
+	
+	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
+	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	
+	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + text_h;
+	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + text_h / 2;
+	
+	set_cursor(text_x, text_y);
+	print_str(str);
+}
+
+void draw_char(int16_t x, int16_t y, uint8_t text_flags, char c)
+{
+	uint8_t text_h_align = get_text_h_align(text_flags);
+	uint8_t text_v_align = get_text_v_align(text_flags);
+	
+	int16_t text_x, text_y;
+	uint16_t text_w, text_h;
+	
+	char text[2] = { '\0' };
+	text[0] = c;
+	
+	text_bounds(text, 0, 0, &text_x, &text_y, &text_w, &text_h);
+	
+	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
+	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	
+	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + get_font_height();
+	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + get_font_height() / 2;
+	
+	set_cursor(text_x, text_y);
+	print_str(text);
 }

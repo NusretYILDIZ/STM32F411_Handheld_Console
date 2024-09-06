@@ -20,6 +20,7 @@ typedef enum
 	
 	// Keyboard
 	STR_ENTER_LETTER,
+	STR_SPACE,
 	STR_DONE,
 	
 	// System Menu

@@ -4,15 +4,11 @@
 #include "../system/locals/strings.h"
 #include "../system/timer.h"
 
-#define FRAME_TIME  33
-
 const char *panic_code_names[] = {
 	PANIC_CODES(PANIC_NAMES)
 };
 
 ENGINE_SETTINGS engine_settings;
-uint32_t elapsed_time;
-uint32_t delta_time;
 
 void kernel_panic_screen()
 {
@@ -30,15 +26,6 @@ void kernel_panic_screen()
 		update_inputs();
 		if(get_key_down(GAMEPAD_HOME)) return;
 	}
-}
-
-void wait_frame_time()
-{
-	int32_t sleep_time = FRAME_TIME - get_tick() + elapsed_time;
-	if(sleep_time > 0) system_sleep(sleep_time);
-	
-	delta_time = get_tick() - elapsed_time;
-	elapsed_time = get_tick();
 }
 
 void load_game(void *game)

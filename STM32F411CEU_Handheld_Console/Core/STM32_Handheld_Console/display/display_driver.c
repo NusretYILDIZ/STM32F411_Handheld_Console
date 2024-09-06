@@ -379,7 +379,7 @@ void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1
 	}
 }
 
-void draw_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y)
+void display_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y)
 {
 	if(!gfx_font)
 	{
@@ -483,7 +483,7 @@ void print_chr(uint8_t c)
 				cursor_x = text_area.start_x;
 				cursor_y += text_size_y * 8;
 			}
-			draw_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
+			display_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
 			cursor_x += text_size_x * 6;
 		}
 	}
@@ -513,7 +513,7 @@ void print_chr(uint8_t c)
 						cursor_x = text_area.start_x;
 						cursor_y += text_size_y * gfx_font->yAdvance;
 					}
-					draw_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
+					display_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
 				}
 				
 				cursor_x += text_size_x * glyph->xAdvance;

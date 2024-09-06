@@ -23,7 +23,7 @@ uint16_t previous_keys = 0;
 int8_t axises[4];
 
 uint16_t key_held_frames[15];
-uint16_t first_hold_time = 15;
+uint16_t first_hold_time = 10;
 uint16_t hold_interval = 2;
 
 //Joystick joysticks[2] = { 0 };

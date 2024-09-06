@@ -13,6 +13,7 @@ const char *strings_en[] = {
 	
 	// Keyboard
 	"Enter letter",
+	"Space",
 	"Done",
 	
 	// System Menu
@@ -46,6 +47,7 @@ const char *strings_tr[] = {
 	
 	// Keyboard
 	"Harf gir",
+	"Bo"STR_TR_s"luk",
 	"Tamamla",
 	
 	// System Menu
