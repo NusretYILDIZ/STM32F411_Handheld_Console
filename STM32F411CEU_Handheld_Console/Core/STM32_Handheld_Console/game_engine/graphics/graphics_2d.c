@@ -2,6 +2,9 @@
 
 #include "../../display/display_driver.h"
 
+#include <stdio.h>
+#include <string.h>
+
 void draw_image_from_flash_helper_2_colors(int16_t x, int16_t y, uint16_t w, uint16_t h, uint8_t *color, uint8_t *image)
 {
 	uint8_t pixel = 0;
@@ -172,9 +175,11 @@ void draw_text(int16_t x, int16_t y, uint8_t text_flags, char *text)
 	
 	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
 	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	else text_x = x;
 	
 	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + text_h;
 	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + text_h / 2;
+	else text_y = y;
 	
 	set_cursor(text_x, text_y);
 	print_str(text);
@@ -188,23 +193,25 @@ void draw_formatted_text(int16_t x, int16_t y, uint8_t text_flags, char *text, .
 	int16_t text_x, text_y;
 	uint16_t text_w, text_h;
 	
-	static char str[128] = { '\0' };
+	memset(str_buffer, '\0', sizeof(str_buffer));
 	va_list args;
 	
 	va_start(args, text);
-	vsnprintf(str, sizeof(str), text, args);
+	vsnprintf(str_buffer, sizeof(str_buffer), text, args);
 	va_end(args);
 	
-	text_bounds(str, 0, 0, &text_x, &text_y, &text_w, &text_h);
+	text_bounds(str_buffer, 0, 0, &text_x, &text_y, &text_w, &text_h);
 	
 	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
 	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	else text_x = x;
 	
 	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + text_h;
 	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + text_h / 2;
+	else text_y = y;
 	
 	set_cursor(text_x, text_y);
-	print_str(str);
+	print_str(str_buffer);
 }
 
 void draw_char(int16_t x, int16_t y, uint8_t text_flags, char c)
@@ -222,9 +229,11 @@ void draw_char(int16_t x, int16_t y, uint8_t text_flags, char c)
 	
 	     if(text_h_align == TEXT_H_ALIGN_CENTER) text_x = x - text_w / 2;
 	else if(text_h_align == TEXT_H_ALIGN_RIGHT ) text_x = x - text_w;
+	else text_x = x;
 	
 	     if(text_v_align == TEXT_V_ALIGN_TOP   ) text_y = y + get_font_height();
 	else if(text_v_align == TEXT_V_ALIGN_CENTER) text_y = y + get_font_height() / 2;
+	else text_y = y;
 	
 	set_cursor(text_x, text_y);
 	print_str(text);

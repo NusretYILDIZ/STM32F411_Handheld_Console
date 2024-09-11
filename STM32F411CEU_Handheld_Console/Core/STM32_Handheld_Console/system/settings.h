@@ -6,7 +6,7 @@
 
 typedef struct
 {
-	LANG current_lang;
+	uint8_t current_lang;
 	uint8_t screen_brightness;
 	uint8_t theme_color_primary;
 	uint8_t theme_color_secondary;

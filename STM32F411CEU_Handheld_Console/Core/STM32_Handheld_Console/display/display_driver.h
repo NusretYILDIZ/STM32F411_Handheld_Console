@@ -3,15 +3,20 @@
 
 #include <stdint.h>
 #include "./gfxfont.h"
+#include "./fonts/fonts.h"
 #include "../system/locals/special_chars.h"
 
-#define DISPLAY_WIDTH  240
-#define DISPLAY_HEIGHT 160
+#define DISPLAY_WIDTH   240
+#define DISPLAY_HEIGHT  160
+
+#define MAX_STRING_LEN  128
 
 #define rgb888_to_rgb332(r, g, b)    ((((r) >> 5) << 5) | (((g) >> 5) << 2) | ((b) >> 6))
 
 extern const uint16_t rgb332_to_rgb565[256];
 extern uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
+extern int8_t str_buffer[MAX_STRING_LEN];
+
 extern GFXfont *gfx_font;
 
 extern int16_t cursor_x;
@@ -33,13 +38,6 @@ extern uint8_t wrap_text;
 
 extern uint8_t text_bg_color;
 extern uint8_t text_fg_color;
-
-extern GFXglyph *glyph;
-extern uint16_t glyph_bo;
-extern uint8_t glyph_w;
-extern uint8_t glyph_h;
-extern int8_t glyph_xo;
-extern int8_t glyph_yo;
 
 uint8_t init_display(void);
 void update_display(void);
@@ -67,6 +65,7 @@ void set_font_helper(const GFXfont *font);
 void set_font(const uint8_t font);
 GFXfont *get_current_font(void);
 uint8_t get_font_height(void);
+uint8_t get_char_width(unsigned char c);
 void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y);
 void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
 void display_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y);

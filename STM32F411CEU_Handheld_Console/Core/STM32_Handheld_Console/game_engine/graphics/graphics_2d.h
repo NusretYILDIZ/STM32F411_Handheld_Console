@@ -20,13 +20,13 @@ typedef struct
 	RAM_PTR image;
 } IMAGE;
 
-#define TEXT_H_ALIGN_LEFT    0
-#define TEXT_H_ALIGN_CENTER  1
-#define TEXT_H_ALIGN_RIGHT   2
+#define TEXT_H_ALIGN_LEFT    (0 << 0)
+#define TEXT_H_ALIGN_CENTER  (1 << 0)
+#define TEXT_H_ALIGN_RIGHT   (2 << 0)
 
-#define TEXT_V_ALIGN_TOP     4
-#define TEXT_V_ALIGN_CENTER  4
-#define TEXT_V_ALIGN_BOTTOM  4
+#define TEXT_V_ALIGN_TOP     (0 << 2)
+#define TEXT_V_ALIGN_CENTER  (1 << 2)
+#define TEXT_V_ALIGN_BOTTOM  (2 << 2)
 
 #define TEXT_H_ALIGN_MASK  (3 << 0)
 #define TEXT_V_ALIGN_MASK  (3 << 2)

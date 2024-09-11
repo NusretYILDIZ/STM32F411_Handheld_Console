@@ -1,5 +1,4 @@
 #include "./display_driver.h"
-#include "./glcdfont.c"
 
 #include <stdarg.h>
 #include <string.h>
@@ -44,7 +43,9 @@ const uint16_t rgb332_to_rgb565[256] = {
 };
 
 uint8_t vram[DISPLAY_HEIGHT][DISPLAY_WIDTH];
-GFXfont *gfx_font = NULL;
+int8_t str_buffer[MAX_STRING_LEN];
+
+GFXfont *gfx_font = &YILDIZsoft_5x7;
 
 int16_t cursor_x = 0;
 int16_t cursor_y = 0;
@@ -58,13 +59,6 @@ uint8_t wrap_text = 1;
 uint8_t text_fg_color = 0xff;
 uint8_t text_bg_color = 0x00;
 
-GFXglyph *glyph = 0;
-uint16_t glyph_bo = 0;
-uint8_t glyph_w = 0;
-uint8_t glyph_h = 0;
-int8_t glyph_xo = 0;
-int8_t glyph_yo = 0;
-
 void draw_raw_pixel(int16_t x, int16_t y, uint8_t color)
 {
 	vram[y][x] = color;
@@ -75,7 +69,7 @@ void draw_raw_v_line(int16_t x, int16_t y, int16_t h, uint8_t color)
 	while(h)
 	{
 		--h;
-		vram[(y + h)][x] = color;
+		vram[y + h][x] = color;
 	}
 }
 
@@ -86,10 +80,10 @@ void draw_raw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 
 void draw_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 {
-	draw_raw_h_line(x        , y        , w    , color);
-	draw_raw_h_line(x        , y + h - 1, w    , color);
-	draw_raw_v_line(x        , y + 1    , h - 2, color);
-	draw_raw_v_line(x + w - 1, y + 1    , h - 2, color);
+	draw_raw_h_line(x        , y        , w    , color);  // Top horizontal line
+	draw_raw_h_line(x        , y + h - 1, w    , color);  // Bottom horizontal line
+	draw_raw_v_line(x        , y + 1    , h - 2, color);  // Left vertical line
+	draw_raw_v_line(x + w - 1, y + 1    , h - 2, color);  // Right vertical line
 }
 
 void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
@@ -97,7 +91,7 @@ void fill_raw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 	while(h)
 	{
 		--h;
-		memset(&vram[(y + h)][x], color, w);
+		memset(&vram[y + h][x], color, w);
 	}
 }
 
@@ -136,10 +130,10 @@ void draw_h_line(int16_t x, int16_t y, int16_t w, uint8_t color)
 
 void draw_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
 {
-	draw_h_line(x        , y        , w    , color);
-	draw_h_line(x        , y + h - 1, w    , color);
-	draw_v_line(x        , y + 1    , h - 2, color);
-	draw_v_line(x + w - 1, y + 1    , h - 2, color);
+	draw_h_line(x        , y        , w    , color);  // Top horizontal line
+	draw_h_line(x        , y + h - 1, w    , color);  // Bottom horizontal line
+	draw_v_line(x        , y + 1    , h - 2, color);  // Left vertical line
+	draw_v_line(x + w - 1, y + 1    , h - 2, color);  // Right vertical line
 }
 
 void fill_rect(int16_t x, int16_t y, int16_t w, int16_t h, uint8_t color)
@@ -203,11 +197,6 @@ void draw_bitmap(int16_t x, int16_t y, uint16_t w, uint16_t h, const uint8_t *im
 	{
 		--th;
 		memcpy(&vram[ty + th][tx], &image[(th + offset_y) * w + offset_x], tw);
-		
-		//if(x < 0 || y < 0)
-		//	memcpy(&vram[ty + th][tx], &image[(th - y) * w + (tx - x)], tw);
-		//else
-		//	memcpy(&vram[ty + th][tx], &image[th * w], tw);
 	}
 }
 
@@ -240,37 +229,25 @@ void set_text_area(int16_t sx, int16_t sy, int16_t ex, int16_t ey)
 	text_area.start_y = (sy >= 0) ? sy : 0;
 	text_area.end_x = (ex < DISPLAY_WIDTH) ? ex : DISPLAY_WIDTH - 1;
 	text_area.end_y = (ey < DISPLAY_HEIGHT) ? ey : DISPLAY_HEIGHT - 1;
-	
-	//cursor_x = text_area.start_x;
-	//cursor_y = text_area.start_y;
 }
 
 void set_font_helper(const GFXfont *new_font)
 {
-	if(new_font)
-	{
-		if(!gfx_font) cursor_y += 6;
-	}
-	else if(gfx_font)
-	{
-		cursor_y -= 6;
-	}
-	
 	gfx_font = (GFXfont *) new_font;
 }
 
 void set_font(const uint8_t font)
 {
-	/*switch(font)
+	switch(font)
 	{
 	case 1:
-		set_font_helper(&YILDIZsoft_5x7);
+		set_font_helper(&Minecraft_5x7);
 		break;
 	
 	default:
-		set_font_helper(0);
+		set_font_helper(&YILDIZsoft_5x7);
 		break;
-	}*/
+	}
 }
 
 GFXfont *get_current_font(void)
@@ -280,81 +257,52 @@ GFXfont *get_current_font(void)
 
 uint8_t get_font_height(void)
 {
-	return (gfx_font) ? gfx_font->yAdvance : 8;
+	return gfx_font->yAdvance * text_size_y;
+}
+
+uint8_t get_char_width(unsigned char c)
+{
+	return (gfx_font->glyph + c - gfx_font->first)->xAdvance * text_size_x;
 }
 
 void char_bounds(unsigned char c, int16_t *x, int16_t *y, int16_t *min_x, int16_t *min_y, int16_t *max_x, int16_t *max_y)
 {
-	// Null check
-	//if(!(x && y && min_x && min_y && max_x && max_y)) return;
-	
-	if(gfx_font)
+	if(c == '\n')
 	{
-		if(c == '\n')
-		{
-			*x = text_area.start_x;
-			*y += text_size_y * gfx_font->yAdvance;
-		}
-		else //if(c != '\r')
-		{
-			if((c >= gfx_font->first) && (c <= gfx_font->last))
-			{
-				c     -= gfx_font->first;
-				glyph  = gfx_font->glyph + c;
-				
-				if(wrap_text && ((*x + ((glyph->xOffset + glyph->width) * text_size_x)) > text_area.end_x))
-				{
-					*x  = text_area.start_x;
-					*y += text_size_y * gfx_font->yAdvance;
-				}
-				
-				int16_t x1 = *x + glyph->xOffset * text_size_x    ,
-						y1 = *y + glyph->yOffset * text_size_y    ,
-						x2 = x1 + glyph->width   * text_size_x - 1,
-						y2 = y1 + glyph->height  * text_size_y - 1;
-				
-				if(x1 < *min_x) *min_x = x1;
-				if(y1 < *min_y) *min_y = y1;
-				if(x2 > *max_x) *max_x = x2;
-				if(y2 > *max_y) *max_y = y2;
-				
-				*x += glyph->xAdvance * text_size_x;
-			}
-		}
+		*x = text_area.start_x;
+		*y += text_size_y * gfx_font->yAdvance;
 	}
-	else
+	else if(c != '\r')
 	{
-		if(c == '\n')
+		if((c >= gfx_font->first) && (c <= gfx_font->last))
 		{
-			*x  = text_area.start_x;
-			*y += text_size_y * 8;
-		}
-		else if(c != '\r')
-		{
-			if(wrap_text && ((*x + text_size_x * 6) > text_area.end_x))
+			c -= gfx_font->first;
+			GFXglyph *glyph  = gfx_font->glyph + c;
+			
+			if(wrap_text && ((*x + ((glyph->xOffset + glyph->width) * text_size_x)) > text_area.end_x))
 			{
 				*x  = text_area.start_x;
-				*y += text_size_y * 8;
+				*y += text_size_y * gfx_font->yAdvance;
 			}
 			
-			int16_t x2 = *x + text_size_x * 6 - 1,
-					y2 = *y + text_size_y * 8 - 1;
-
-			if(*x < *min_x) *min_x = *x;
-			if(*y < *min_y) *min_y = *y;
+			int16_t x1 = *x, // + glyph->xOffset * text_size_x    ,
+					y1 = *y, // + glyph->yOffset * text_size_y    ,
+					x2 = x1 + glyph->width * text_size_x - 1,
+					y2 = y1 + gfx_font->yAdvance * text_size_y - 1;
+					//y2 = y1 + glyph->height  * text_size_y - 1;
+			
+			if(x1 < *min_x) *min_x = x1;
+			if(y1 < *min_y) *min_y = y1;
 			if(x2 > *max_x) *max_x = x2;
 			if(y2 > *max_y) *max_y = y2;
 			
-			*x += text_size_x * 6;
+			*x += glyph->xAdvance * text_size_x;
 		}
 	}
 }
 
 void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
 {
-	// Null check
-	//if(!(x1 && y1 && w && h)) return;
-	
 	unsigned char c;
 	int16_t min_x = 0x7FFF, min_y = 0x7FFF, max_x = -1, max_y = -1;
 	
@@ -380,144 +328,77 @@ void text_bounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1
 }
 
 void display_char(int16_t x, int16_t y, uint8_t c, uint8_t text_color, uint8_t bg_color, uint8_t size_x, uint8_t size_y)
-{
-	if(!gfx_font)
+{	
+	c -= gfx_font->first;
+	GFXglyph *glyph = gfx_font->glyph + c;
+	uint8_t *bitmap = gfx_font->bitmap;
+	
+	uint16_t glyph_bo = glyph->bitmapOffset;
+	uint8_t glyph_w = glyph->width;
+	uint8_t glyph_h = glyph->height;
+	int8_t glyph_xo = glyph->xOffset;
+	int8_t glyph_yo = glyph->yOffset;
+	uint8_t bits = 0, bit = 0;
+	int xx, yy;
+	
+	for(yy = 0; yy < glyph_h; ++yy)
 	{
-		if((x - 6 * size_x > text_area.end_x) || 
-		   (y - 8 * size_y > text_area.end_y) || 
-		   (x + 6 * size_x < text_area.start_x) || 
-		   (y + 8 * size_y < text_area.start_y))
-			return;
+		if((y + (yy + glyph_yo) * size_y < text_area.start_y) || (y + (yy + glyph_yo) * size_y > text_area.end_y)) continue;
 		
-		for(int i = 0; i < 5; ++i)
+		for(xx = 0; xx < glyph_w; ++xx)
 		{
-			if(x + i * size_x > text_area.end_x || x + i * size_x < text_area.start_x) continue;
+			if(!(bit++ & 7))
+				bits = bitmap[glyph_bo++];
 			
-			uint8_t line = font[c * 5 + i];
-			
-			for(int j = 0; j < 8; ++j, line >>= 1)
+			if(x + (xx + glyph_xo) * size_x < text_area.start_x || x + (xx + glyph_xo) * size_x > text_area.end_x)
 			{
-				if(y + j * size_y > text_area.end_y || y + j * size_y < text_area.start_y) continue;
-			
-				if(line & 1)
-				{
-					if(size_x == 1 && size_y == 1)
-						draw_raw_pixel(x + i, y + j, text_color);
-					else
-						fill_raw_rect(x + i * size_x, y + j * size_y, size_x, size_y, text_color);
-				}
-				else if(text_color != bg_color)
-				{
-					if(size_x == 1 && size_y == 1)
-						draw_raw_pixel(x + i, y + j, bg_color);
-					else
-						fill_raw_rect(x + i * size_x, y + j * size_y, size_x, size_y, bg_color);
-				}
+				bits <<= 1;
+				continue;
 			}
-			
-			if(text_color != bg_color)
+
+			if(bits & 0x80)
 			{
 				if(size_x == 1 && size_y == 1)
-					draw_raw_v_line(x + 5, y, 8, bg_color);
+					draw_raw_pixel(x + glyph_xo + xx, y + glyph_yo + yy, text_color);
 				else
-					fill_raw_rect(x + 5 * size_x, y, size_x, 8 * size_y, bg_color);
+					fill_raw_rect(x + (glyph_xo + xx) * size_x, y + (glyph_yo + yy) * size_y, size_x, size_y, text_color);
 			}
-		}
-	}
-	else
-	{
-		c -= gfx_font->first;
-		glyph = gfx_font->glyph + c;
-		uint8_t *bitmap = gfx_font->bitmap;
-		
-		glyph_bo = glyph->bitmapOffset;
-		glyph_w = glyph->width;
-		glyph_h = glyph->height;
-		glyph_xo = glyph->xOffset;
-		glyph_yo = glyph->yOffset;
-		uint8_t bits = 0, bit = 0;
-		int xx, yy;
-		
-		for(yy = 0; yy < glyph_h; ++yy)
-		{
-			if((y + (yy + glyph_yo) * size_y < text_area.start_y) || (y + (yy + glyph_yo) * size_y > text_area.end_y)) continue;
 			
-			for(xx = 0; xx < glyph_w; ++xx)
-			{
-				if(!(bit++ & 7))
-					bits = bitmap[glyph_bo++];
-				
-				if(x + (xx + glyph_xo) * size_x < text_area.start_x || x + (xx + glyph_xo) * size_x > text_area.end_x)
-				{
-					bits <<= 1;
-					continue;
-				}
-
-				if(bits & 0x80)
-				{
-					if(size_x == 1 && size_y == 1)
-						draw_raw_pixel(x + glyph_xo + xx, y + glyph_yo + yy, text_color);
-					else
-						fill_raw_rect(x + (glyph_xo + xx) * size_x, y + (glyph_yo + yy) * size_y, size_x, size_y, text_color);
-				}
-				
-				bits <<= 1;
-			}
+			bits <<= 1;
 		}
 	}
 }
 
 void print_chr(uint8_t c)
 {
-	if(!gfx_font)
+	if(c == '\n')
 	{
-		if(c == '\n')
-		{
-			cursor_x = text_area.start_x;
-			cursor_y += text_size_y * 8;
-		}
-		else if(c != '\r')
-		{
-			if(wrap_text && (cursor_x + text_size_x * 6 > text_area.end_x))
-			{
-				cursor_x = text_area.start_x;
-				cursor_y += text_size_y * 8;
-			}
-			display_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
-			cursor_x += text_size_x * 6;
-		}
+		cursor_x = text_area.start_x;
+		cursor_y += text_size_y * gfx_font->yAdvance;
 	}
-	else
+	else if(c != '\r')
 	{
-		if(c == '\n')
+		uint8_t first = gfx_font->first;
+		
+		if((c >= first) && (c <= gfx_font->last))
 		{
-			cursor_x = text_area.start_x;
-			cursor_y += text_size_y * gfx_font->yAdvance;
-		}
-		else //if(c != '\r')
-		{
-			uint8_t first = gfx_font->first;
+			GFXglyph *glyph = gfx_font->glyph + c - first;
+			uint8_t w = glyph->width;
+			uint8_t h = glyph->height;
 			
-			if((c >= first) && (c <= gfx_font->last))
+			if(w > 0 && h > 0)
 			{
-				GFXglyph *glyph = gfx_font->glyph + c - first;
-				uint8_t w = glyph->width;
-				uint8_t h = glyph->height;
+				int16_t xo = glyph->xOffset;
 				
-				if(w > 0 && h > 0)
+				if(wrap_text && (cursor_x + text_size_x * (xo + w)) > text_area.end_x)
 				{
-					int16_t xo = glyph->xOffset;
-					
-					if(wrap_text && (cursor_x + text_size_x * (xo + w)) > text_area.end_x)
-					{
-						cursor_x = text_area.start_x;
-						cursor_y += text_size_y * gfx_font->yAdvance;
-					}
-					display_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
+					cursor_x = text_area.start_x;
+					cursor_y += text_size_y * gfx_font->yAdvance;
 				}
-				
-				cursor_x += text_size_x * glyph->xAdvance;
+				display_char(cursor_x, cursor_y, c, text_fg_color, text_bg_color, text_size_x, text_size_y);
 			}
+			
+			cursor_x += text_size_x * glyph->xAdvance;
 		}
 	}
 }
@@ -563,14 +444,14 @@ void print_int(long num)
 
 void printf_str(const char *text, ...)
 {
-	static char str[128] = { '\0' };
+	memset(str_buffer, '\0', sizeof(str_buffer));
 	va_list args;
 	
 	va_start(args, text);
-	vsnprintf(str, sizeof(str), text, args);
+	vsnprintf(str_buffer, sizeof(str_buffer), text, args);
 	va_end(args);
 	
-	print_str(str);
+	print_str(str_buffer);
 }
 
 
@@ -581,11 +462,13 @@ void printf_str(const char *text, ...)
 uint8_t init_display()
 {
 	memset(vram, 0, sizeof(vram));
+	memset(str_buffer, '\0', sizeof(str_buffer));
+	
 	tft_start_write();
 	init_ili9486l();
 	clear_display();
 	tft_end_write();
-	set_font(1);
+	//set_font(1);
 	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 	return 0;
 }
@@ -614,31 +497,33 @@ void update_display()
 #include <stdlib.h>
 #include "./win32/win32_sdl2_include.h"
 
-SDL_Window *display_window = 0;
-SDL_Renderer *display_renderer = 0;
-SDL_Rect display_rect = { 0 };
-SDL_Texture *display_texture = 0;
-SDL_Surface *display_surface = 0;
+SDL_Window   *sdl_display_window   = 0;
+SDL_Renderer *sdl_display_renderer = 0;
+SDL_Texture  *sdl_display_texture  = 0;
+SDL_Surface  *sdl_display_surface  = 0;
 
 uint8_t init_display()
 {
-	display_window = SDL_CreateWindow("STM32F411CEU Handheld Console Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 240 * 6, 160 * 6, 0);
-	if(!display_window)
+	memset(vram, 0, sizeof(vram));
+	memset(str_buffer, '\0', sizeof(str_buffer));
+	
+	sdl_display_window = SDL_CreateWindow("STM32F411 Handheld Console Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 240 * 4, 160 * 4, SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE | SDL_WINDOW_INPUT_FOCUS);
+	if(!sdl_display_window)
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateWindow failed in init_display function.", 0);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411 Handheld Console Emulator", "SDL_CreateWindow failed in init_display() function.", 0);
 		exit(1);
 	}
 	
-	display_renderer = SDL_CreateRenderer(display_window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
-	if(!display_renderer)
+	sdl_display_renderer = SDL_CreateRenderer(sdl_display_window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
+	if(!sdl_display_renderer)
 	{
-		SDL_DestroyWindow(display_window);
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateRenderer failed in init_display function.", 0);
+		SDL_DestroyWindow(sdl_display_window);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411 Handheld Console Emulator", "SDL_CreateRenderer failed in init_display() function.", 0);
 		exit(1);
 	}
 	
 	clear_display();
-	set_font(1);
+	//set_font(1);
 	set_text_area(0, 0, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 	
 	return 0;
@@ -646,20 +531,48 @@ uint8_t init_display()
 
 void update_display()
 {
-	SDL_DestroyTexture(display_texture);
-	SDL_FreeSurface(display_surface);
+	sdl_display_surface = SDL_CreateRGBSurfaceFrom(vram, 240, 160, 8, 240, 0b11100000, 0b00011100, 0b00000011, 0);
 	
-	display_surface = SDL_CreateRGBSurfaceFrom(&vram[0][0], 240, 160, 8, 240, 0b11100000, 0b00011100, 0b00000011, 0);
-	if(!display_surface)
+	if(!sdl_display_surface)
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411CEU Handheld Console Emulator", "SDL_CreateRGBSurfaceFrom failed in update_display function.", 0);
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "STM32F411 Handheld Console Emulator", "SDL_CreateRGBSurfaceFrom failed in update_display() function.", 0);
 		exit(1);
 	}
 	
-	display_texture = SDL_CreateTextureFromSurface(display_renderer, display_surface);
+	sdl_display_texture = SDL_CreateTextureFromSurface(sdl_display_renderer, sdl_display_surface);
 	
-	SDL_RenderCopy(display_renderer, display_texture, 0, 0);
-	SDL_RenderPresent(display_renderer);
+	int window_w, window_h;
+	SDL_GetWindowSize(sdl_display_window, &window_w, &window_h);
+	
+	SDL_Rect sdl_display_rect = { 0 };
+	
+	if((window_w * 2) > (3 * window_h))  // Window is wider than rendered display
+	{
+		sdl_display_rect.w = window_h * 3 / 2;
+		sdl_display_rect.h = window_h;
+		sdl_display_rect.x = (window_w - sdl_display_rect.w) / 2;
+		sdl_display_rect.y = 0;
+	}
+	else if((window_w * 2) < (3 * window_h))  // Window is narrower than rendered display
+	{
+		sdl_display_rect.w = window_w;
+		sdl_display_rect.h = window_w * 2 / 3;
+		sdl_display_rect.x = 0;
+		sdl_display_rect.y = (window_h - sdl_display_rect.h) / 2;
+	}
+	else  // Window's aspect ratio is same as rendered display
+	{
+		sdl_display_rect.w = window_w;
+		sdl_display_rect.h = window_h;
+		sdl_display_rect.x = 0;
+		sdl_display_rect.y = 0;
+	}
+	
+	SDL_RenderCopy(sdl_display_renderer, sdl_display_texture, 0, &sdl_display_rect);
+	SDL_RenderPresent(sdl_display_renderer);
+	
+	SDL_DestroyTexture(sdl_display_texture);
+	SDL_FreeSurface(sdl_display_surface);
 }
 
 #elif defined(__ANDROID__)

@@ -107,11 +107,13 @@ void update_inputs()
 {
 	// TODO: Take input from UART over USB. Connect to a computer that has a gamepad and start reading. This will be exclusive for the devkit.
 	
-	enable_input();
+	
+	// This is for hardware buttons
+	/*enable_input();
 	HAL_Delay(1);
 	previous_keys = current_keys;
 	current_keys = get_input_status();
-	disable_input();
+	disable_input();*/
 	
 	update_status();
 }

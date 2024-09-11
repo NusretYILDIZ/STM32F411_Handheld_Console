@@ -7,7 +7,7 @@ PANIC_CODE panic_code = PANIC_NONE;
 
 uint8_t ram[RAM_SIZE];
 RPN_STACK_DATA rpn_stack[RPN_STACK_SIZE];
-uint32_t *stack = ram;  // The stack is always at the start of ram.
+uint32_t *stack = (uint32_t *)ram;  // The stack is always at the start of ram.
 
 RAM_PTR prg_counter = 0;
 STACK_PTR stack_ptr = 0;

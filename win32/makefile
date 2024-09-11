@@ -12,7 +12,7 @@ EXE = ./Release/STM32F411CEU_Handheld_Console_Emulator.exe
 
 all: $(EXE) clean
 
-$(EXE): main.o display_driver.o glcdfont.o file_system.o game_engine.o instructions.o script_engine.o syscalls.o editor.o compiler.o graphics_2d.o keyboard.o input_driver.o menu.o popup.o timer.o system_main.o strings.o
+$(EXE): main.o display_driver.o Minecraft_5x7.o YILDIZsoft_5x7.o file_system.o game_engine.o instructions.o script_engine.o syscalls.o editor.o compiler.o graphics_2d.o keyboard.o input_driver.o menu.o popup.o timer.o system_main.o strings.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 main.o: main.c
@@ -21,7 +21,13 @@ main.o: main.c
 display_driver.o: 		$(STM_INCLUDE)display/display_driver.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-glcdfont.o: 			$(STM_INCLUDE)display/glcdfont.c
+#glcdfont.o: 			$(STM_INCLUDE)display/glcdfont.c
+#	$(CXX) $(CXXFLAGS) $^ -o $@
+
+Minecraft_5x7.o: 		$(STM_INCLUDE)display/fonts/Minecraft_5x7.c
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+YILDIZsoft_5x7.o: 		$(STM_INCLUDE)display/fonts/YILDIZsoft_5x7.c
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 file_system.o: 			$(STM_INCLUDE)file_system/file_system.c

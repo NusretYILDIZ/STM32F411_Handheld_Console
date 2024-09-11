@@ -6,7 +6,6 @@
 #include "./internal_programs.h"
 
 #include "./locals/locals.h"
-#include "../display/fonts/fonts.h"
 #include "../file_system/file_system.h"
 
 #include <string.h>
@@ -167,7 +166,7 @@ uint8_t system_main()
 	memcpy(&ram[prg_counter], test_code, sizeof(test_code));
 	engine_settings.game_code_addr = prg_counter;
 	
-	show_input_screen(0, 0, "Keyboard Test");
+	show_input_screen(0, 127, "Keyboard Test");
 	
 	game_engine_loop();
 	
